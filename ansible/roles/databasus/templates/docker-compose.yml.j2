@@ -1,0 +1,23 @@
+---
+# Managed by Ansible — do not edit by hand
+# Databasus — database backup manager
+
+networks:
+  infra_net:
+    external: true
+  komodo_komodo-net:
+    external: true
+
+services:
+  databasus:
+    image: "{{ databasus_image }}"
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:{{ databasus_port }}:4005"
+    volumes:
+      - "{{ databasus_dir }}/data:/databasus-data"
+    networks:
+      - infra_net
+      - komodo_komodo-net
+    mem_limit: 512m

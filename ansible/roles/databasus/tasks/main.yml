@@ -1,0 +1,46 @@
+---
+- name: Assert required databasus secrets are defined
+  ansible.builtin.assert:
+    that:
+      - databasus_secret_key is defined and databasus_secret_key | length > 0
+      - r2_access_key_id is defined and r2_access_key_id | length > 0
+      - r2_secret_access_key is defined and r2_secret_access_key | length > 0
+    fail_msg: "One or more required databasus secrets are missing in secrets.yml"
+
+- name: Create databasus directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0750"
+  loop:
+    - "{{ databasus_dir }}"
+    - "{{ databasus_dir }}/data"
+
+- name: Deploy databasus .env
+  ansible.builtin.template:
+    src: databasus.env.j2
+    dest: "{{ databasus_dir }}/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  notify: Restart databasus
+
+- name: Deploy databasus docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ databasus_dir }}/docker-compose.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+  notify: Restart databasus
+
+- name: Start databasus stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ databasus_dir }}"
+    project_name: databasus
+    env_files:
+      - .env
+    state: present
+    pull: missing

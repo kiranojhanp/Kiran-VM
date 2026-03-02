@@ -40,3 +40,13 @@
       - "{{ sure_dir }}/.env"
     state: present
     pull: missing
+    remove_orphans: true
+
+- name: Remove old Sure postgres and redis volumes
+  community.docker.docker_volume:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - sure_postgres-data
+    - sure_redis-data
+  ignore_errors: true

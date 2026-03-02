@@ -9,3 +9,7 @@ CREATE DATABASE sure_production OWNER sure_user;
 -- Gitea
 CREATE USER gitea_user WITH PASSWORD '{{ shared_postgres_gitea_password }}';
 CREATE DATABASE gitea OWNER gitea_user;
+
+-- NocoDB
+CREATE USER nocodb_user WITH PASSWORD '{{ shared_postgres_nocodb_password }}';
+CREATE DATABASE nocodb OWNER nocodb_user;

@@ -1,0 +1,8 @@
+---
+- name: Restart nocodb
+  community.docker.docker_compose_v2:
+    project_src: "{{ nocodb_dir }}"
+    project_name: nocodb
+    env_files:
+      - .env
+    state: restarted

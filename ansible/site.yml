@@ -37,5 +37,11 @@
     - role: gitea
       tags: [gitea, services]
 
+    - role: nocodb
+      tags: [nocodb, services]
+
+    - role: databasus
+      tags: [databasus, services]
+
     - role: caddy
       tags: [caddy, services]

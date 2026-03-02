@@ -1,0 +1,45 @@
+---
+- name: Assert required nocodb secrets are defined
+  ansible.builtin.assert:
+    that:
+      - shared_postgres_nocodb_password is defined and shared_postgres_nocodb_password | length > 0
+      - nocodb_jwt_secret is defined and nocodb_jwt_secret | length > 0
+    fail_msg: "One or more required nocodb secrets are missing in secrets.yml"
+
+- name: Create nocodb directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0750"
+  loop:
+    - "{{ nocodb_dir }}"
+    - "{{ nocodb_dir }}/data"
+
+- name: Deploy nocodb .env
+  ansible.builtin.template:
+    src: nocodb.env.j2
+    dest: "{{ nocodb_dir }}/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  notify: Restart nocodb
+
+- name: Deploy nocodb docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ nocodb_dir }}/docker-compose.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+  notify: Restart nocodb
+
+- name: Start nocodb stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ nocodb_dir }}"
+    project_name: nocodb
+    env_files:
+      - .env
+    state: present
+    pull: missing
