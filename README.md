@@ -152,25 +152,25 @@ kiran-vm/
 
 Creates **only** Oracle Cloud resources. Touches nothing on the server:
 
-| Resource | Details |
-|---|---|
-| VCN | `fewaapp-vcn`, CIDR `10.0.0.0/16` |
-| Internet Gateway | `fewaapp-igw` |
-| Route Table | Default route `0.0.0.0/0` → IGW |
-| Security List | Ingress: 22, 2222, 80, 443, ICMP. Egress: all |
-| Public Subnet | `10.0.0.0/24`, DNS label `public` |
-| Compute Instance | `VM.Standard.A1.Flex`, 4 OCPU, 24 GB RAM |
-| Boot Volume | 200 GB, Balanced (`vpusPerGb=20`) |
-| Public IP | Ephemeral, assigned to primary VNIC |
+| Resource         | Details                                       |
+| ---------------- | --------------------------------------------- |
+| VCN              | `fewaapp-vcn`, CIDR `10.0.0.0/16`             |
+| Internet Gateway | `fewaapp-igw`                                 |
+| Route Table      | Default route `0.0.0.0/0` → IGW               |
+| Security List    | Ingress: 22, 2222, 80, 443, ICMP. Egress: all |
+| Public Subnet    | `10.0.0.0/24`, DNS label `public`             |
+| Compute Instance | `VM.Standard.A1.Flex`, 4 OCPU, 24 GB RAM      |
+| Boot Volume      | 200 GB, Balanced (`vpusPerGb=20`)             |
+| Public IP        | Ephemeral, assigned to primary VNIC           |
 
 ### Ansible roles
 
-| Role | What it does |
-|---|---|
+| Role     | What it does                                                                                                                                                                                         |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `common` | Creates `deploy` user, hardens SSH (port 2222, key-only), configures iptables-persistent, installs fail2ban, sets sysctl, creates 2 GB swap, enables auditd + AppArmor, installs unattended-upgrades |
-| `docker` | Installs Docker CE from Docker's official ARM64 repo, configures `/etc/docker/daemon.json` (log rotation, live-restore), adds `deploy` to docker group |
-| `komodo` | Deploys MongoDB + Komodo via Docker Compose to `/opt/komodo`, binds Komodo to `127.0.0.1:9120`, never exposed directly |
-| `caddy` | Builds a custom Caddy image with the Cloudflare DNS plugin (using `xcaddy`), deploys via Docker Compose to `/opt/caddy`, obtains TLS certs via Cloudflare DNS challenge |
+| `docker` | Installs Docker CE from Docker's official ARM64 repo, configures `/etc/docker/daemon.json` (log rotation, live-restore), adds `deploy` to docker group                                               |
+| `komodo` | Deploys MongoDB + Komodo via Docker Compose to `/opt/komodo`, binds Komodo to `127.0.0.1:9120`, never exposed directly                                                                               |
+| `caddy`  | Builds a custom Caddy image with the Cloudflare DNS plugin (using `xcaddy`), deploys via Docker Compose to `/opt/caddy`, obtains TLS certs via Cloudflare DNS challenge                              |
 
 ---
 
@@ -188,6 +188,8 @@ pulumi version
 # via nvm (recommended)
 nvm install 20 && nvm use 20
 node --version   # should be v20.x
+
+npm install -g bun
 ```
 
 ### 3. Ansible + collections
@@ -253,10 +255,10 @@ Before you have a server IP, create DNS records with a placeholder. Cloudflare w
 
 In your Cloudflare dashboard for `fewa.app`:
 
-| Type | Name | Content | Proxy status |
-|---|---|---|---|
-| A | `fewa.app` | `1.2.3.4` (placeholder) | Proxied (orange cloud) |
-| A | `komodo` | `1.2.3.4` (placeholder) | Proxied (orange cloud) |
+| Type | Name       | Content                 | Proxy status           |
+| ---- | ---------- | ----------------------- | ---------------------- |
+| A    | `fewa.app` | `1.2.3.4` (placeholder) | Proxied (orange cloud) |
+| A    | `komodo`   | `1.2.3.4` (placeholder) | Proxied (orange cloud) |
 
 You will update these to the real IP in Step 3.
 
@@ -264,7 +266,7 @@ You will update these to the real IP in Step 3.
 
 ```bash
 cd infra
-npm install
+bun install
 ```
 
 Create the stack:
@@ -298,6 +300,7 @@ pulumi preview --stack prod
 ```
 
 Expected output:
+
 ```
 + oracle_cloud_infrastructure:core/vcn:Vcn                   fewaapp-vcn      create
 + oracle_cloud_infrastructure:core/internetGateway:InternetGateway fewaapp-igw create
@@ -326,10 +329,10 @@ pulumi stack output sshCommand  # → ssh -p 2222 deploy@161.33.67.234
 
 Take the `publicIp` from Step 2 and update your DNS records:
 
-| Type | Name | Content |
-|---|---|---|
-| A | `fewa.app` | `161.33.67.234` (your real IP) |
-| A | `komodo` | `161.33.67.234` (your real IP) |
+| Type | Name       | Content                        |
+| ---- | ---------- | ------------------------------ |
+| A    | `fewa.app` | `161.33.67.234` (your real IP) |
+| A    | `komodo`   | `161.33.67.234` (your real IP) |
 
 Leave proxy status as **Proxied** (orange cloud).
 
@@ -353,15 +356,15 @@ cat ~/.ssh/id_ed25519.pub
 
 `secrets.yml` fields:
 
-| Field | What it is | How to generate |
-|---|---|---|
-| `deploy_ssh_public_key` | SSH public key injected into the server | `cat ~/.ssh/id_ed25519.pub` |
-| `deploy_password` | sudo password for the `deploy` user | `openssl rand -base64 32` |
-| `mongo_password` | MongoDB root password (internal) | `openssl rand -base64 32` |
-| `komodo_password` | Komodo admin login password | `openssl rand -base64 32` |
-| `komodo_passkey` | Komodo API authentication token | `openssl rand -hex 32` |
-| `komodo_webhook_secret` | Komodo webhook validation secret | `openssl rand -hex 32` |
-| `cloudflare_api_token` | Cloudflare DNS API token for TLS | From Step 1 (Cloudflare dashboard) |
+| Field                   | What it is                              | How to generate                    |
+| ----------------------- | --------------------------------------- | ---------------------------------- |
+| `deploy_ssh_public_key` | SSH public key injected into the server | `cat ~/.ssh/id_ed25519.pub`        |
+| `deploy_password`       | sudo password for the `deploy` user     | `openssl rand -base64 32`          |
+| `mongo_password`        | MongoDB root password (internal)        | `openssl rand -base64 32`          |
+| `komodo_password`       | Komodo admin login password             | `openssl rand -base64 32`          |
+| `komodo_passkey`        | Komodo API authentication token         | `openssl rand -hex 32`             |
+| `komodo_webhook_secret` | Komodo webhook validation secret        | `openssl rand -hex 32`             |
+| `cloudflare_api_token`  | Cloudflare DNS API token for TLS        | From Step 1 (Cloudflare dashboard) |
 
 > `secrets.yml` is gitignored and never leaves your machine.
 > Optional: encrypt it with `ansible-vault encrypt secrets.yml` for added protection.
@@ -389,6 +392,7 @@ The script does this:
 **First run** (fresh instance, ~10–15 minutes):
 
 The `common` role:
+
 - Creates the `deploy` user with sudo rights
 - Injects your SSH public key into `deploy`'s `authorized_keys`
 - Changes SSH port from 22 to 2222
@@ -402,16 +406,19 @@ The `common` role:
 - Reboots if a kernel was upgraded
 
 The `docker` role:
+
 - Installs Docker CE from Docker's official ARM64 apt repository
 - Deploys `/etc/docker/daemon.json` (log rotation, live-restore)
 - Adds `deploy` to the `docker` group
 
 The `komodo` role:
+
 - Creates `/opt/komodo/`
 - Deploys `docker-compose.yaml` and `.env`
 - Starts MongoDB (mongo:7.0) and Komodo (v1.17) containers
 
 The `caddy` role:
+
 - Creates `/opt/caddy/`
 - Deploys `Dockerfile` (builds Caddy + Cloudflare DNS plugin)
 - Deploys `Caddyfile` and `.env`
@@ -419,6 +426,7 @@ The `caddy` role:
 - Caddy obtains TLS certificates via Cloudflare DNS challenge
 
 **Subsequent runs** (idempotent, ~2–3 minutes):
+
 - All tasks check current state before making changes
 - Only changed items are applied
 - Caddy config changes trigger `caddy reload` (zero downtime)
@@ -446,12 +454,13 @@ cd /opt/komodo && docker compose logs -f
 
 Open in browser:
 
-| URL | What you see |
-|---|---|
-| `https://komodo.fewa.app` | Komodo admin login |
-| `https://fewa.app` | "fewa.app — coming soon" |
+| URL                       | What you see             |
+| ------------------------- | ------------------------ |
+| `https://komodo.fewa.app` | Komodo admin login       |
+| `https://fewa.app`        | "fewa.app — coming soon" |
 
 Log in to Komodo:
+
 - Username: `fewaadmin` (set in `group_vars/all.yml`)
 - Password: value of `komodo_password` from your `secrets.yml`
 
@@ -462,7 +471,7 @@ After confirming you can SSH on port 2222 and Komodo is accessible, close the bo
 **In `ansible/group_vars/all.yml`:**
 
 ```yaml
-ssh_allow_port_22: false   # was: true
+ssh_allow_port_22: false # was: true
 ```
 
 Re-run the provisioner:
@@ -491,6 +500,7 @@ $(cd infra && pulumi stack output sshCommand)
 ### Deploying applications
 
 Use the Komodo UI at `https://komodo.fewa.app` to:
+
 - Create Docker Compose stacks
 - Manage deployments and restarts
 - View container logs
@@ -537,7 +547,7 @@ ANSIBLE_TAGS=common,docker ./scripts/provision.sh
 
 1. Edit `ansible/group_vars/all.yml`:
    ```yaml
-   komodo_image: "ghcr.io/moghtech/komodo:v1.18"  # new version
+   komodo_image: "ghcr.io/moghtech/komodo:v1.18" # new version
    ```
 2. Re-run:
    ```bash
@@ -630,18 +640,18 @@ graph TD
     L5 --> L6
 ```
 
-| Layer | Tool | What it blocks |
-|---|---|---|
-| Cloud firewall | OCI Security List | All ports except 22, 2222, 80, 443 — dropped before reaching VM |
-| Host firewall | iptables-persistent | Same rules at OS level; port 9120 explicitly dropped |
-| Brute-force protection | fail2ban | 3 failed SSH attempts → 24h IP ban, exponential backoff |
-| SSH hardening | sshd_config | No root login, no passwords, key-only, port 2222 |
-| TLS | Caddy + Let's Encrypt | Automatic HTTPS, auto-renew, Cloudflare DNS challenge |
-| Container isolation | Docker | Komodo bound to `127.0.0.1` — unreachable from outside host |
-| Kernel hardening | sysctl | SYN cookies, martian logging, redirect blocking, ASLR |
-| Mandatory access | AppArmor | Process confinement |
-| Audit trail | auditd | Syscall logging |
-| Patch management | unattended-upgrades | Security patches applied automatically |
+| Layer                  | Tool                  | What it blocks                                                  |
+| ---------------------- | --------------------- | --------------------------------------------------------------- |
+| Cloud firewall         | OCI Security List     | All ports except 22, 2222, 80, 443 — dropped before reaching VM |
+| Host firewall          | iptables-persistent   | Same rules at OS level; port 9120 explicitly dropped            |
+| Brute-force protection | fail2ban              | 3 failed SSH attempts → 24h IP ban, exponential backoff         |
+| SSH hardening          | sshd_config           | No root login, no passwords, key-only, port 2222                |
+| TLS                    | Caddy + Let's Encrypt | Automatic HTTPS, auto-renew, Cloudflare DNS challenge           |
+| Container isolation    | Docker                | Komodo bound to `127.0.0.1` — unreachable from outside host     |
+| Kernel hardening       | sysctl                | SYN cookies, martian logging, redirect blocking, ASLR           |
+| Mandatory access       | AppArmor              | Process confinement                                             |
+| Audit trail            | auditd                | Syscall logging                                                 |
+| Patch management       | unattended-upgrades   | Security patches applied automatically                          |
 
 ---
 
@@ -656,14 +666,14 @@ pie title Oracle Cloud Always Free Allocation Used
     "VCN: 1 of 2" : 50
 ```
 
-| Resource | Used | Always Free Limit |
-|---|---|---|
-| VM.Standard.A1.Flex OCPU | 4 | 4 total |
-| VM.Standard.A1.Flex RAM | 24 GB | 24 GB total |
-| Block storage | 200 GB | 200 GB total |
-| Public IPs | 1 | 2 |
-| VCNs | 1 | 2 |
-| Egress bandwidth | Pay-as-you-go | 10 TB/month free |
+| Resource                 | Used          | Always Free Limit |
+| ------------------------ | ------------- | ----------------- |
+| VM.Standard.A1.Flex OCPU | 4             | 4 total           |
+| VM.Standard.A1.Flex RAM  | 24 GB         | 24 GB total       |
+| Block storage            | 200 GB        | 200 GB total      |
+| Public IPs               | 1             | 2                 |
+| VCNs                     | 1             | 2                 |
+| Egress bandwidth         | Pay-as-you-go | 10 TB/month free  |
 
 > The Always Free tier is perpetual — these resources never expire as long as your account remains active.
 
@@ -715,6 +725,7 @@ cd /opt/caddy && docker compose logs caddy | grep -i "error\|acme\|cert"
 ```
 
 Common causes:
+
 - Cloudflare API token doesn't have "Edit zone DNS" permission for `fewa.app`
 - DNS records not updated to the server's real IP
 - Cloudflare TTL hasn't propagated yet (wait 5 minutes)
@@ -772,17 +783,18 @@ All secrets live in `ansible/secrets.yml` (gitignored). Use `ansible/secrets.yml
 cp ansible/secrets.yml.example ansible/secrets.yml
 ```
 
-| Secret | Where used | How to generate |
-|---|---|---|
-| `deploy_ssh_public_key` | Injected into `~deploy/.ssh/authorized_keys` | `cat ~/.ssh/id_ed25519.pub` |
-| `deploy_password` | `deploy` user sudo password | `openssl rand -base64 32` |
-| `mongo_password` | MongoDB root password + Komodo DB connection | `openssl rand -base64 32` |
-| `komodo_password` | Komodo web UI login | `openssl rand -base64 32` |
-| `komodo_passkey` | Komodo API authentication | `openssl rand -hex 32` |
-| `komodo_webhook_secret` | Komodo webhook validation | `openssl rand -hex 32` |
-| `cloudflare_api_token` | Caddy DNS-01 ACME challenge | Cloudflare dashboard → API Tokens |
+| Secret                  | Where used                                   | How to generate                   |
+| ----------------------- | -------------------------------------------- | --------------------------------- |
+| `deploy_ssh_public_key` | Injected into `~deploy/.ssh/authorized_keys` | `cat ~/.ssh/id_ed25519.pub`       |
+| `deploy_password`       | `deploy` user sudo password                  | `openssl rand -base64 32`         |
+| `mongo_password`        | MongoDB root password + Komodo DB connection | `openssl rand -base64 32`         |
+| `komodo_password`       | Komodo web UI login                          | `openssl rand -base64 32`         |
+| `komodo_passkey`        | Komodo API authentication                    | `openssl rand -hex 32`            |
+| `komodo_webhook_secret` | Komodo webhook validation                    | `openssl rand -hex 32`            |
+| `cloudflare_api_token`  | Caddy DNS-01 ACME challenge                  | Cloudflare dashboard → API Tokens |
 
 Secrets are passed to Ansible via:
+
 ```bash
 ansible-playbook site.yml --extra-vars "@ansible/secrets.yml"
 ```
@@ -821,15 +833,18 @@ Then verify in the OCI console that everything listed below is gone before conti
 Log in at [cloud.oracle.com](https://cloud.oracle.com) and clean up in this order (dependencies go deepest first):
 
 **Compute**
+
 1. Go to **Compute → Instances**
 2. Terminate any instance named `fewaapp-instance` (or similar)
 3. Check **"Permanently delete the attached boot volume"** — otherwise the boot volume keeps accruing storage charges
 
 **Boot volumes** (if not deleted with the instance)
+
 1. Go to **Block Storage → Boot Volumes**
 2. Delete any orphaned boot volumes in your compartment
 
 **Networking** (delete in this order — OCI won't let you delete a VCN that still has dependencies)
+
 1. **Compute → Instances** — confirm no instances remain
 2. **Networking → Virtual Cloud Networks → fewaapp-vcn**
    - Open the VCN, then delete each sub-resource:
@@ -888,35 +903,35 @@ It removes: VM, boot volume, subnet, security list, route table, IGW, VCN, and p
 
 ### Non-secret variables (`ansible/group_vars/all.yml`)
 
-| Variable | Default | Description |
-|---|---|---|
-| `deploy_user` | `deploy` | System user that runs Docker |
-| `ssh_port` | `2222` | SSH port after hardening |
-| `ssh_allow_port_22` | `true` | Set `false` after confirming 2222 works |
-| `timezone` | `UTC` | Server timezone |
-| `domain` | `fewa.app` | Primary domain |
-| `komodo_subdomain` | `komodo.fewa.app` | Komodo admin URL |
-| `komodo_port` | `9120` | Komodo internal port (never public) |
-| `komodo_image` | `ghcr.io/moghtech/komodo:v1.17` | Komodo container image |
-| `komodo_init_admin_username` | `fewaadmin` | Komodo admin username |
-| `mongo_image` | `mongo:7.0` | MongoDB container image |
-| `mongo_username` | `komodo` | MongoDB database user |
-| `caddy_email` | `admin@fewa.app` | Email for Let's Encrypt notifications |
-| `komodo_dir` | `/opt/komodo` | Komodo data directory on server |
-| `caddy_dir` | `/opt/caddy` | Caddy data directory on server |
+| Variable                     | Default                         | Description                             |
+| ---------------------------- | ------------------------------- | --------------------------------------- |
+| `deploy_user`                | `deploy`                        | System user that runs Docker            |
+| `ssh_port`                   | `2222`                          | SSH port after hardening                |
+| `ssh_allow_port_22`          | `true`                          | Set `false` after confirming 2222 works |
+| `timezone`                   | `UTC`                           | Server timezone                         |
+| `domain`                     | `fewa.app`                      | Primary domain                          |
+| `komodo_subdomain`           | `komodo.fewa.app`               | Komodo admin URL                        |
+| `komodo_port`                | `9120`                          | Komodo internal port (never public)     |
+| `komodo_image`               | `ghcr.io/moghtech/komodo:v1.17` | Komodo container image                  |
+| `komodo_init_admin_username` | `fewaadmin`                     | Komodo admin username                   |
+| `mongo_image`                | `mongo:7.0`                     | MongoDB container image                 |
+| `mongo_username`             | `komodo`                        | MongoDB database user                   |
+| `caddy_email`                | `admin@fewa.app`                | Email for Let's Encrypt notifications   |
+| `komodo_dir`                 | `/opt/komodo`                   | Komodo data directory on server         |
+| `caddy_dir`                  | `/opt/caddy`                    | Caddy data directory on server          |
 
 ### Pulumi stack config (`infra/Pulumi.prod.yaml`)
 
-| Config key | Required | Description |
-|---|---|---|
-| `oci:region` | yes | `ap-melbourne-1` |
-| `oci:tenancyOcid` | yes (secret) | OCI tenancy OCID |
-| `oci:userOcid` | yes (secret) | OCI user OCID |
-| `oci:fingerprint` | yes (secret) | API key fingerprint |
-| `oci:privateKey` | yes (secret) | OCI API private key PEM content |
-| `sshPublicKey` | yes | SSH public key for instance metadata |
-| `compartmentId` | no | Defaults to tenancy OCID |
-| `imageOcid` | no | Defaults to Ubuntu 22.04 ARM Melbourne |
+| Config key        | Required     | Description                            |
+| ----------------- | ------------ | -------------------------------------- |
+| `oci:region`      | yes          | `ap-melbourne-1`                       |
+| `oci:tenancyOcid` | yes (secret) | OCI tenancy OCID                       |
+| `oci:userOcid`    | yes (secret) | OCI user OCID                          |
+| `oci:fingerprint` | yes (secret) | API key fingerprint                    |
+| `oci:privateKey`  | yes (secret) | OCI API private key PEM content        |
+| `sshPublicKey`    | yes          | SSH public key for instance metadata   |
+| `compartmentId`   | no           | Defaults to tenancy OCID               |
+| `imageOcid`       | no           | Defaults to Ubuntu 22.04 ARM Melbourne |
 
 ---
 
