@@ -1,0 +1,28 @@
+<style>
+  /* ── Hide Gitea branding from header ──────────────────────────────────── */
+  .navbar .navbar-header .gitea-icon,
+  .navbar .navbar-header svg.gitea-logo {
+    display: none;
+  }
+
+  /* ── Tighten up the top nav ───────────────────────────────────────────── */
+  .navbar {
+    padding: 0 1rem;
+  }
+
+  /* ── Remove the footer ────────────────────────────────────────────────── */
+  .page-footer {
+    display: none !important;
+  }
+
+  /* ── Slightly rounded repo cards ─────────────────────────────────────── */
+  .explore.repos .item,
+  .repository.list .item {
+    border-radius: 8px !important;
+  }
+
+  /* ── Subtle dividers ──────────────────────────────────────────────────── */
+  .ui.divider {
+    opacity: 0.4;
+  }
+</style>

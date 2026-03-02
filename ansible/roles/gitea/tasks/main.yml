@@ -46,6 +46,39 @@
     mode: "0644"
   notify: Restart gitea
 
+- name: Create gitea custom templates directories (owned by uid 1000)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0750"
+  become: true
+  loop:
+    - "{{ gitea_dir }}/data/custom"
+    - "{{ gitea_dir }}/data/custom/templates"
+    - "{{ gitea_dir }}/data/custom/templates/custom"
+
+- name: Deploy gitea custom home template (redirect / → /explore)
+  ansible.builtin.copy:
+    src: custom/templates/home.tmpl
+    dest: "{{ gitea_dir }}/data/custom/templates/home.tmpl"
+    owner: "1000"
+    group: "1000"
+    mode: "0644"
+  become: true
+  notify: Restart gitea
+
+- name: Deploy gitea custom header CSS
+  ansible.builtin.copy:
+    src: custom/templates/custom/header.tmpl
+    dest: "{{ gitea_dir }}/data/custom/templates/custom/header.tmpl"
+    owner: "1000"
+    group: "1000"
+    mode: "0644"
+  become: true
+  notify: Restart gitea
+
 - name: Start gitea stack
   community.docker.docker_compose_v2:
     project_src: "{{ gitea_dir }}"
