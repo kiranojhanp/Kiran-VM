@@ -1,0 +1,33 @@
+---
+# fewa.app production server — full provisioning playbook
+#
+# Standalone usage:
+#   ansible-playbook site.yml --extra-vars "@secrets.yml"
+#
+# Required extra-vars (pass via @secrets.yml or -e key=value):
+#   deploy_password        — deploy user OS password
+#   mongo_password         — MongoDB root password
+#   komodo_password        — Komodo admin UI password
+#   cloudflare_api_token   — Cloudflare Edit zone DNS token
+#
+# Optional extra-vars:
+#   komodo_passkey         — random string (defaults to placeholder)
+#   komodo_webhook_secret  — random string (defaults to placeholder)
+
+- name: Provision fewa.app server
+  hosts: fewaapp
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: common
+      tags: [common, hardening]
+
+    - role: docker
+      tags: [docker]
+
+    - role: komodo
+      tags: [komodo, services]
+
+    - role: caddy
+      tags: [caddy, services]

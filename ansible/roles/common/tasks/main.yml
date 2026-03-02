@@ -1,0 +1,198 @@
+---
+# ── Phase 1: System update ────────────────────────────────────────────────
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gnupg2
+      - lsb-release
+      - ca-certificates
+      - apt-transport-https
+      - software-properties-common
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+      - auditd
+      - audispd-plugins
+      - htop
+      - iotop
+      - nethogs
+      - apparmor
+      - apparmor-utils
+    state: present
+
+# ── Phase 2: deploy user ─────────────────────────────────────────────────
+- name: Create deploy user
+  ansible.builtin.user:
+    name: "{{ deploy_user }}"
+    shell: /bin/bash
+    groups: sudo
+    append: true
+    create_home: true
+    state: present
+
+- name: Set deploy user password
+  ansible.builtin.user:
+    name: "{{ deploy_user }}"
+    password: "{{ deploy_password | password_hash('sha512') }}"
+
+- name: Copy SSH authorized_keys to deploy user
+  ansible.builtin.authorized_key:
+    user: "{{ deploy_user }}"
+    state: present
+    key: "{{ lookup('file', ssh_public_key_path) }}"
+
+# ── Phase 3: SSH hardening ────────────────────────────────────────────────
+- name: Configure sshd
+  ansible.builtin.template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: "0600"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Reload sshd
+
+# ── Phase 4: UFW ─────────────────────────────────────────────────────────
+- name: Reset UFW to defaults
+  community.general.ufw:
+    state: reset
+
+- name: UFW default deny incoming
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: UFW default allow outgoing
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+
+- name: UFW allow SSH (port 2222)
+  community.general.ufw:
+    rule: allow
+    port: "{{ ssh_port }}"
+    proto: tcp
+    comment: SSH
+
+- name: UFW allow HTTP
+  community.general.ufw:
+    rule: allow
+    port: "80"
+    proto: tcp
+    comment: HTTP
+
+- name: UFW allow HTTPS
+  community.general.ufw:
+    rule: allow
+    port: "443"
+    proto: tcp
+    comment: HTTPS
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+
+# ── Phase 5: Fail2Ban ─────────────────────────────────────────────────────
+- name: Deploy jail.local
+  ansible.builtin.template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart fail2ban
+
+- name: Enable and start fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true
+    state: started
+
+# ── Phase 6: Unattended upgrades ──────────────────────────────────────────
+- name: Configure unattended-upgrades
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    mode: "0644"
+
+# ── Phase 7: sysctl hardening ─────────────────────────────────────────────
+- name: Deploy sysctl hardening config
+  ansible.builtin.template:
+    src: 99-harden.conf.j2
+    dest: /etc/sysctl.d/99-harden.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Apply sysctl
+
+# ── Phase 8: /run/shm hardening ───────────────────────────────────────────
+- name: Mount /run/shm noexec,nosuid
+  ansible.posix.mount:
+    path: /run/shm
+    src: tmpfs
+    fstype: tmpfs
+    opts: defaults,noexec,nosuid
+    state: mounted
+
+# ── Phase 9: Swap ─────────────────────────────────────────────────────────
+- name: Check if swapfile exists
+  ansible.builtin.stat:
+    path: /swapfile
+  register: swapfile_stat
+
+- name: Create 2 GB swapfile
+  ansible.builtin.command: fallocate -l 2G /swapfile
+  when: not swapfile_stat.stat.exists
+
+- name: Set swapfile permissions
+  ansible.builtin.file:
+    path: /swapfile
+    owner: root
+    group: root
+    mode: "0600"
+  when: not swapfile_stat.stat.exists
+
+- name: Format swapfile
+  ansible.builtin.command: mkswap /swapfile
+  when: not swapfile_stat.stat.exists
+
+- name: Enable swapfile
+  ansible.builtin.command: swapon /swapfile
+  when: not swapfile_stat.stat.exists
+
+- name: Add swapfile to fstab
+  ansible.posix.mount:
+    path: none
+    src: /swapfile
+    fstype: swap
+    opts: sw
+    state: present
+
+# ── Phase 10: Timezone, auditd, AppArmor ──────────────────────────────────
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Enable and start auditd
+  ansible.builtin.systemd:
+    name: auditd
+    enabled: true
+    state: started
+
+- name: Verify AppArmor is active
+  ansible.builtin.command: aa-status
+  register: apparmor_status
+  changed_when: false
+  failed_when: false

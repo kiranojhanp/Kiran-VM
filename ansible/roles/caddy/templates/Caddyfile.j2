@@ -1,0 +1,19 @@
+{
+  email {{ caddy_email }}
+}
+
+# Komodo management UI
+{{ komodo_subdomain }} {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+  reverse_proxy 127.0.0.1:{{ komodo_port }}
+}
+
+# Root domain
+{{ domain }} {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+  respond "OK" 200
+}

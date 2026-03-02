@@ -1,0 +1,9 @@
+---
+- name: Restart komodo
+  community.docker.docker_compose_v2:
+    project_src: "{{ komodo_dir }}"
+    project_name: komodo
+    env_files:
+      - "{{ komodo_dir }}/.env"
+    state: present
+    restarted: true

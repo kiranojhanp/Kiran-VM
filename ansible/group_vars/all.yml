@@ -1,0 +1,31 @@
+---
+# Non-secret variables shared across all roles.
+# Secrets (passwords, tokens) are passed via --extra-vars from Pulumi
+# or manually via: ansible-playbook site.yml --extra-vars "@secrets.yml"
+
+# ── Server ──────────────────────────────────────────────
+deploy_user: deploy
+ssh_port: 2222
+timezone: UTC
+
+# ── Domain ──────────────────────────────────────────────
+domain: fewa.app
+komodo_subdomain: "komodo.{{ domain }}"
+
+# ── Komodo ──────────────────────────────────────────────
+komodo_port: 9120
+komodo_image: "ghcr.io/moghtech/komodo:latest"
+komodo_log_level: info
+komodo_init_admin_username: admin
+
+# ── MongoDB ─────────────────────────────────────────────
+mongo_image: "mongo:7"
+mongo_username: komodo
+
+# ── Caddy ───────────────────────────────────────────────
+caddy_image: "slothcroissant/caddy-cloudflaredns:latest"
+caddy_email: "admin@{{ domain }}"
+
+# ── Paths ───────────────────────────────────────────────
+komodo_dir: /opt/komodo
+caddy_dir: /opt/caddy

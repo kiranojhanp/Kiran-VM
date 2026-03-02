@@ -1,0 +1,46 @@
+---
+- name: Create Komodo directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0750"
+  loop:
+    - "{{ komodo_dir }}"
+    - "{{ komodo_dir }}/mongodb"
+    - "{{ komodo_dir }}/data"
+
+- name: Deploy Komodo .env
+  ansible.builtin.template:
+    src: komodo.env.j2
+    dest: "{{ komodo_dir }}/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  notify: Restart komodo
+
+- name: Deploy Komodo docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ komodo_dir }}/docker-compose.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+  notify: Restart komodo
+
+- name: Start Komodo stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ komodo_dir }}"
+    project_name: komodo
+    env_files:
+      - "{{ komodo_dir }}/.env"
+    state: present
+    pull: always
+
+- name: Block Komodo port in UFW (only accessible via Caddy)
+  community.general.ufw:
+    rule: deny
+    port: "{{ komodo_port }}"
+    proto: tcp
+    comment: "Komodo - use HTTPS via Caddy"

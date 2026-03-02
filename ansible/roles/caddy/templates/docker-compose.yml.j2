@@ -1,0 +1,11 @@
+services:
+  caddy:
+    image: {{ caddy_image }}
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - {{ caddy_dir }}/Caddyfile:/etc/caddy/Caddyfile:ro
+      - {{ caddy_dir }}/data:/data
+      - {{ caddy_dir }}/config:/config
+    environment:
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
