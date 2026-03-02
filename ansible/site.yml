@@ -29,5 +29,8 @@
     - role: komodo
       tags: [komodo, services]
 
+    - role: sure
+      tags: [sure, services]
+
     - role: caddy
       tags: [caddy, services]

@@ -34,3 +34,8 @@ caddy_email: "admin@{{ domain }}"
 # ── Paths ───────────────────────────────────────────────
 komodo_dir: /opt/komodo
 caddy_dir: /opt/caddy
+sure_dir: /opt/sure
+
+# ── Sure ────────────────────────────────────────────────
+sure_subdomain: "sure.{{ domain }}"
+sure_port: 3000
