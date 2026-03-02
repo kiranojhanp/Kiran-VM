@@ -8,6 +8,7 @@ net.ipv4.icmp_echo_ignore_broadcasts = 1
 # Disable source packet routing
 net.ipv4.conf.all.accept_source_route = 0
 net.ipv6.conf.all.accept_source_route = 0
+net.ipv6.conf.default.accept_source_route = 0
 
 # Ignore send redirects
 net.ipv4.conf.all.send_redirects = 0
@@ -25,3 +26,14 @@ net.ipv4.conf.all.log_martians = 1
 # Disable ICMP redirect acceptance
 net.ipv4.conf.all.accept_redirects = 0
 net.ipv6.conf.all.accept_redirects = 0
+net.ipv6.conf.default.accept_redirects = 0
+
+# ASLR — full randomisation (S10)
+kernel.randomize_va_space = 2
+
+# Reduce swap pressure (S9)
+vm.swappiness = 10
+
+# Performance: web server connection handling
+net.core.somaxconn = 65535
+net.ipv4.ip_local_port_range = 1024 65535

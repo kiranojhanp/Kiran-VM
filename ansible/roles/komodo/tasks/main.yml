@@ -1,4 +1,13 @@
 ---
+- name: Assert komodo secrets are set
+  ansible.builtin.assert:
+    that:
+      - komodo_passkey is defined
+      - komodo_passkey | length > 0
+      - komodo_webhook_secret is defined
+      - komodo_webhook_secret | length > 0
+    fail_msg: "komodo_passkey and komodo_webhook_secret must be set in secrets.yml (use: openssl rand -hex 32)"
+
 - name: Create Komodo directories
   ansible.builtin.file:
     path: "{{ item }}"
@@ -36,11 +45,8 @@
     env_files:
       - "{{ komodo_dir }}/.env"
     state: present
-    pull: always
+    pull: missing
 
-- name: Block Komodo port in UFW (only accessible via Caddy)
-  community.general.ufw:
-    rule: deny
-    port: "{{ komodo_port }}"
-    proto: tcp
-    comment: "Komodo - use HTTPS via Caddy"
+# Note: port {{ komodo_port }} is blocked at the host firewall level by the
+# common role (iptables rules.v4) and at the OCI Security List level (Pulumi).
+# No per-role firewall rule needed here.

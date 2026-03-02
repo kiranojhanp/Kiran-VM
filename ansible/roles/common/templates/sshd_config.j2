@@ -2,12 +2,20 @@ Port {{ ssh_port }}
 PermitRootLogin no
 PasswordAuthentication no
 PubkeyAuthentication yes
-ChallengeResponseAuthentication no
+AuthorizedKeysFile .ssh/authorized_keys
+# KbdInteractiveAuthentication replaces ChallengeResponseAuthentication (deprecated in OpenSSH 8.7+)
+KbdInteractiveAuthentication no
 UsePAM yes
 X11Forwarding no
 MaxAuthTries 3
-MaxSessions 2
-AllowUsers ubuntu {{ deploy_user }}
+MaxSessions 5
+# ubuntu is removed from AllowUsers post-hardening; only deploy_user is permitted.
+AllowUsers {{ deploy_user }}
 PrintMotd no
 AcceptEnv LANG LC_*
 Subsystem sftp /usr/lib/openssh/sftp-server
+
+# Idle session / brute-force mitigation
+LoginGraceTime 30
+ClientAliveInterval 300
+ClientAliveCountMax 3

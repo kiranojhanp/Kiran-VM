@@ -1,7 +1,11 @@
 services:
   caddy:
-    image: {{ caddy_image }}
+    build:
+      context: "{{ caddy_dir }}"
+      dockerfile: Dockerfile
     restart: unless-stopped
+    env_file:
+      - .env
     network_mode: host
     volumes:
       - {{ caddy_dir }}/Caddyfile:/etc/caddy/Caddyfile:ro
@@ -9,3 +13,7 @@ services:
       - {{ caddy_dir }}/config:/config
     environment:
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    deploy:
+      resources:
+        limits:
+          memory: 512m

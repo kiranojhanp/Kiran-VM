@@ -2,7 +2,7 @@ services:
   mongo:
     image: {{ mongo_image }}
     restart: unless-stopped
-    command: --quiet
+    command: --wiredTigerCacheSizeGB 1
     volumes:
       - {{ komodo_dir }}/mongodb:/data/db
     environment:
@@ -10,12 +10,23 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${KOMODO_DB_PASSWORD}
     networks:
       - komodo-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2g
 
   komodo:
     image: {{ komodo_image }}
     restart: unless-stopped
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     ports:
       - "127.0.0.1:{{ komodo_port }}:{{ komodo_port }}"
     environment:
@@ -33,6 +44,10 @@ services:
       - {{ komodo_dir }}/data:/etc/komodo
     networks:
       - komodo-net
+    deploy:
+      resources:
+        limits:
+          memory: 1g
 
 networks:
   komodo-net:

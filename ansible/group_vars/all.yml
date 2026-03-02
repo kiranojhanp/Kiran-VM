@@ -7,6 +7,8 @@
 deploy_user: deploy
 ssh_port: 2222
 timezone: UTC
+# Set to false after confirming port 2222 works to close port 22.
+ssh_allow_port_22: true
 
 # ── Domain ──────────────────────────────────────────────
 domain: fewa.app
@@ -14,16 +16,19 @@ komodo_subdomain: "komodo.{{ domain }}"
 
 # ── Komodo ──────────────────────────────────────────────
 komodo_port: 9120
-komodo_image: "ghcr.io/moghtech/komodo:latest"
+komodo_image: "ghcr.io/moghtech/komodo:v1.17"
 komodo_log_level: info
-komodo_init_admin_username: admin
+komodo_init_admin_username: fewaadmin
 
 # ── MongoDB ─────────────────────────────────────────────
-mongo_image: "mongo:7"
+mongo_image: "mongo:7.0"
 mongo_username: komodo
 
 # ── Caddy ───────────────────────────────────────────────
-caddy_image: "slothcroissant/caddy-cloudflaredns:latest"
+# caddy_image is intentionally omitted: the Caddy service uses a build: directive
+# in docker-compose.yml.j2 to build a custom image via xcaddy (adds Cloudflare DNS
+# module) from a Dockerfile deployed to {{ caddy_dir }}/Dockerfile. This replaces
+# the unofficial slothcroissant/caddy-cloudflaredns:latest image.
 caddy_email: "admin@{{ domain }}"
 
 # ── Paths ───────────────────────────────────────────────

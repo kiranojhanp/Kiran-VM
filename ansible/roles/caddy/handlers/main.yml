@@ -1,15 +1,5 @@
 ---
 - name: Reload caddy
-  community.docker.docker_compose_v2:
-    project_src: "{{ caddy_dir }}"
-    project_name: caddy
-    env_files:
-      - "{{ caddy_dir }}/.env"
-    state: present
-  # Then exec reload inside running container
-  notify: Exec caddy reload
-
-- name: Exec caddy reload
   ansible.builtin.command:
     cmd: docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
     chdir: "{{ caddy_dir }}"

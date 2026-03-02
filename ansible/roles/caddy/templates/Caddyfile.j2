@@ -7,13 +7,34 @@
   tls {
     dns cloudflare {env.CLOUDFLARE_API_TOKEN}
   }
+
+  encode gzip
+
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  }
+
+  log {
+    output file /var/log/caddy/komodo-access.log
+  }
+
   reverse_proxy 127.0.0.1:{{ komodo_port }}
 }
 
-# Root domain
+# Root domain — coming soon page
 {{ domain }} {
   tls {
     dns cloudflare {env.CLOUDFLARE_API_TOKEN}
   }
-  respond "OK" 200
+
+  encode gzip
+
+  log {
+    output file /var/log/caddy/root-access.log
+  }
+
+  respond "fewa.app — coming soon" 200
 }

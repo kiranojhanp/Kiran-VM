@@ -1,2 +1,5 @@
 ---
-ssh_public_key_path: "~/.ssh/id_ed25519.pub"
+# deploy_ssh_public_key: the SSH public key content to add to authorized_keys.
+# Set this in secrets.yml or pass via --extra-vars.
+# Example: deploy_ssh_public_key: "ssh-ed25519 AAAA... user@host"
+deploy_ssh_public_key: ""

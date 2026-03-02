@@ -38,6 +38,15 @@
     mode: "0644"
   notify: Reload caddy
 
+- name: Deploy Caddy Dockerfile
+  ansible.builtin.template:
+    src: Dockerfile.j2
+    dest: "{{ caddy_dir }}/Dockerfile"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+  notify: Reload caddy
+
 - name: Start Caddy stack
   community.docker.docker_compose_v2:
     project_src: "{{ caddy_dir }}"
@@ -45,4 +54,5 @@
     env_files:
       - "{{ caddy_dir }}/.env"
     state: present
-    pull: always
+    pull: missing
+    build: always
