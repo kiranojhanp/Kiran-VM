@@ -245,6 +245,8 @@ Caddy uses Cloudflare's DNS API to issue TLS certificates (DNS-01 ACME challenge
 
 ## Step-by-step deployment
 
+> **Before running `pulumi up`:** If you have any existing OCI resources from a previous run (VM, boot volume, VCN, etc.), clean them up first — see [Before running pulumi up: clean existing OCI resources](#before-running-pulumi-up-clean-existing-oci-resources) below.
+
 ### Step 1 — Set up Cloudflare DNS (placeholder IP)
 
 Before you have a server IP, create DNS records with a placeholder. Cloudflare will proxy them so the real IP doesn't matter yet.
@@ -786,6 +788,81 @@ ansible-playbook site.yml --extra-vars "@ansible/secrets.yml"
 ```
 
 They are never written to Pulumi state, never logged, and never committed to git.
+
+---
+
+## Before running pulumi up: clean existing OCI resources
+
+If you have previously provisioned anything in Oracle Cloud — manually or via an earlier `pulumi up` — those resources keep running and **you will be charged** (or hit Always Free limits that block new provisioning) unless you remove them first.
+
+OCI does not automatically detect or import existing resources. Pulumi will try to create new ones alongside whatever is already there.
+
+### When this applies
+
+- You ran `pulumi destroy` but skipped it or it failed partway through
+- You created resources manually in the OCI console
+- You re-created the Pulumi stack from scratch (e.g. lost state)
+- You're redeploying to a clean slate and want to avoid surprises
+
+### Step 1 — Destroy via Pulumi if state still exists
+
+If your local Pulumi state is intact, this is the cleanest path:
+
+```bash
+cd infra
+pulumi stack select prod
+pulumi destroy --stack prod
+```
+
+Then verify in the OCI console that everything listed below is gone before continuing.
+
+### Step 2 — Manual cleanup in OCI console
+
+Log in at [cloud.oracle.com](https://cloud.oracle.com) and clean up in this order (dependencies go deepest first):
+
+**Compute**
+1. Go to **Compute → Instances**
+2. Terminate any instance named `fewaapp-instance` (or similar)
+3. Check **"Permanently delete the attached boot volume"** — otherwise the boot volume keeps accruing storage charges
+
+**Boot volumes** (if not deleted with the instance)
+1. Go to **Block Storage → Boot Volumes**
+2. Delete any orphaned boot volumes in your compartment
+
+**Networking** (delete in this order — OCI won't let you delete a VCN that still has dependencies)
+1. **Compute → Instances** — confirm no instances remain
+2. **Networking → Virtual Cloud Networks → fewaapp-vcn**
+   - Open the VCN, then delete each sub-resource:
+     - **Subnets** → delete `fewaapp-subnet`
+     - **Security Lists** → delete `fewaapp-seclist` (default security list cannot be deleted; ignore it)
+     - **Route Tables** → delete `fewaapp-routetable`
+     - **Internet Gateways** → delete `fewaapp-igw`
+   - Then delete the VCN itself
+3. **Networking → Reserved Public IPs** → release any IP named `fewaapp-ip`
+
+**Verify**
+
+After cleanup, confirm nothing remains:
+
+```
+Compute → Instances          → empty
+Block Storage → Boot Volumes → empty
+Networking → VCNs            → empty (or only default)
+Networking → Reserved IPs    → empty
+```
+
+### Step 3 — Reset Pulumi state if needed
+
+If your Pulumi stack state is out of sync with what's actually in OCI (e.g. resources were deleted manually), clear the state so Pulumi starts fresh:
+
+```bash
+cd infra
+# Remove the stack entirely and re-create it
+pulumi stack rm prod --force
+pulumi stack init prod
+```
+
+Then re-run all `pulumi config set` commands from the prerequisites before doing `pulumi up`.
 
 ---
 
