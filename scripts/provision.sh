@@ -96,11 +96,18 @@ ansible-galaxy collection install -r requirements.yml --upgrade
 log "Running Ansible playbook..."
 cd "${ANSIBLE_DIR}"
 
+# Extract become password from secrets.yml for --become-password-file
+BECOME_PASS_FILE="$(mktemp)"
+trap 'rm -f "${BECOME_PASS_FILE}"' EXIT
+grep '^deploy_password:' "${ANSIBLE_DIR}/secrets.yml" | sed 's/^deploy_password: *//' | tr -d '"' > "${BECOME_PASS_FILE}"
+
 PLAYBOOK_ARGS=(
   "site.yml"
   "--inventory" "${INVENTORY_FILE}"
   "--extra-vars" "@${ANSIBLE_DIR}/secrets.yml"
   "--private-key" "${SSH_KEY}"
+  "--become"
+  "--become-password-file" "${BECOME_PASS_FILE}"
 )
 
 # First run: port 22 (before hardening changes SSH port to 2222)
