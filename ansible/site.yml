@@ -32,5 +32,8 @@
     - role: sure
       tags: [sure, services]
 
+    - role: postiz
+      tags: [postiz, services]
+
     - role: caddy
       tags: [caddy, services]

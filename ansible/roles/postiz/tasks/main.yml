@@ -1,0 +1,58 @@
+---
+# ── Postiz role tasks ─────────────────────────────────────────────────────────
+
+- name: Create Postiz directory
+  ansible.builtin.file:
+    path: "{{ postiz_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Create Temporal dynamic config directory
+  ansible.builtin.file:
+    path: "{{ postiz_dir }}/dynamicconfig"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Deploy Temporal dynamic config
+  ansible.builtin.template:
+    src: temporal-dynamicconfig.yaml.j2
+    dest: "{{ postiz_dir }}/dynamicconfig/development.yaml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+
+- name: Deploy Postiz .env
+  ansible.builtin.template:
+    src: postiz.env.j2
+    dest: "{{ postiz_dir }}/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  notify: Restart postiz
+
+- name: Deploy Postiz docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ postiz_dir }}/docker-compose.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0640"
+  notify: Restart postiz
+
+- name: Pull Postiz images
+  community.docker.docker_compose_v2_pull:
+    project_src: "{{ postiz_dir }}"
+    project_name: postiz
+
+- name: Start Postiz stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ postiz_dir }}"
+    project_name: postiz
+    env_files:
+      - "{{ postiz_dir }}/.env"
+    state: present
+    pull: missing
