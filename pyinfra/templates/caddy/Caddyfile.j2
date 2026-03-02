@@ -1,0 +1,128 @@
+{
+  email {{ host.data.caddy_email }}
+}
+
+# Komodo management UI
+{{ host.data.komodo_subdomain }} {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+
+  encode gzip
+
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  }
+
+  log {
+    output file /var/log/caddy/komodo-access.log
+  }
+
+  reverse_proxy 127.0.0.1:{{ host.data.komodo_port }}
+}
+
+# Sure — project management app
+{{ host.data.sure_subdomain }} {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+
+  encode gzip
+
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  }
+
+  log {
+    output file /var/log/caddy/sure-access.log
+  }
+
+  reverse_proxy 127.0.0.1:{{ host.data.sure_port }}
+}
+
+# Gitea — self-hosted git
+{{ host.data.gitea_subdomain }} {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+
+  encode gzip
+
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  }
+
+  log {
+    output file /var/log/caddy/gitea-access.log
+  }
+
+  reverse_proxy 127.0.0.1:{{ host.data.gitea_http_port }}
+}
+
+# NocoDB — no-code database
+{{ host.data.nocodb_subdomain }} {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+
+  encode gzip
+
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  }
+
+  log {
+    output file /var/log/caddy/nocodb-access.log
+  }
+
+  reverse_proxy 127.0.0.1:{{ host.data.nocodb_port }}
+}
+
+# Databasus — database backups
+{{ host.data.databasus_subdomain }} {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+
+  encode gzip
+
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  }
+
+  log {
+    output file /var/log/caddy/databasus-access.log
+  }
+
+  reverse_proxy 127.0.0.1:{{ host.data.databasus_port }}
+}
+
+# Root domain — coming soon page
+{{ host.data.domain }} {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+
+  encode gzip
+
+  log {
+    output file /var/log/caddy/root-access.log
+  }
+
+  respond "fewa.app — coming soon" 200
+}

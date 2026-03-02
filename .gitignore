@@ -1,0 +1,6 @@
+# Ansible secrets — never commit
+ansible/secrets.yml
+
+# pyinfra secrets — never commit
+pyinfra/group_data/secrets.py
+pyinfra/.env

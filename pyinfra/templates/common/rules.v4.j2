@@ -1,0 +1,70 @@
+# /etc/iptables/rules.v4
+# Managed by Ansible — do not edit manually.
+#
+# OCI Ubuntu instances require iptables rules for VNIC routing.
+# This file preserves the OCI baseline and adds application rules on top.
+# UFW is NOT used — it flushes iptables on reset, which breaks OCI networking.
+#
+# Applied by: netfilter-persistent (iptables-persistent) at boot
+# Reload:     netfilter-persistent reload
+#             — or —
+#             iptables-restore < /etc/iptables/rules.v4
+
+*filter
+:INPUT DROP [0:0]
+:FORWARD ACCEPT [0:0]
+# Note: FORWARD is ACCEPT — Docker requires this to route container traffic.
+# Docker's own DOCKER-USER chain handles inter-container isolation.
+:OUTPUT ACCEPT [0:0]
+
+# ── Loopback ────────────────────────────────────────────────────────────────
+-A INPUT -i lo -j ACCEPT
+
+# ── Established / Related ───────────────────────────────────────────────────
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+# ── ICMP ────────────────────────────────────────────────────────────────────
+# Required by OCI: Path MTU discovery (type 3 code 4) must be allowed
+-A INPUT -p icmp --icmp-type 3 -j ACCEPT
+-A INPUT -p icmp --icmp-type 8 -j ACCEPT
+
+# ── SSH ─────────────────────────────────────────────────────────────────────
+# Port 22: open on first run so Ansible can connect before hardening
+# After common role runs, sshd moves to {{ host.data.ssh_port }} (2222)
+# Set ssh_allow_port_22: false in group_vars/all.yml after confirming 2222 works.
+{% if host.data.ssh_allow_port_22 | default(true) %}
+-A INPUT -p tcp --dport 22 -j ACCEPT
+{% endif %}
+-A INPUT -p tcp --dport {{ host.data.ssh_port }} -j ACCEPT
+
+# ── Web traffic ─────────────────────────────────────────────────────────────
+-A INPUT -p tcp --dport 80 -j ACCEPT
+-A INPUT -p tcp --dport 443 -j ACCEPT
+
+# ── Gitea SSH ────────────────────────────────────────────────────────────────
+# Gitea runs rootless; its internal SSH listens on container port 2222
+# mapped to host port {{ host.data.gitea_ssh_port }}.
+-A INPUT -p tcp --dport {{ host.data.gitea_ssh_port }} -j ACCEPT
+
+# ── Explicit denies ─────────────────────────────────────────────────────────
+# Komodo (only accessible via Caddy reverse proxy on localhost)
+-A INPUT -p tcp --dport {{ host.data.komodo_port }} -j DROP
+
+# ── Default: DROP everything else (set by chain policy above) ──────────────
+
+COMMIT
+
+*nat
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+COMMIT
+
+*mangle
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+COMMIT
