@@ -9,19 +9,19 @@ Two tools, strict separation of concerns:
 
 ---
 
-## Architecture Overview
+## Architecture overview
 
-### High-Level: Internet to Application
+### High-level: Internet to application
 
 ```mermaid
 graph LR
     User([User / Browser])
-    CF[Cloudflare\nCDN · WAF · DNS]
-    OCI_FW[OCI Security List\nports 80 · 443 · 2222]
-    Caddy[Caddy\nHTTPS reverse proxy\nport 80 · 443]
-    Komodo[Komodo\nDocker manager\n127.0.0.1:9120]
-    App[Your App\nmanaged by Komodo]
-    MongoDB[(MongoDB\ninternal only)]
+    CF["Cloudflare<br/>CDN · WAF · DNS"]
+    OCI_FW["OCI Security List<br/>ports 80 · 443 · 2222"]
+    Caddy["Caddy<br/>HTTPS reverse proxy<br/>port 80 · 443"]
+    Komodo["Komodo<br/>Docker manager<br/>127.0.0.1:9120"]
+    App["Your App<br/>managed by Komodo"]
+    MongoDB[("MongoDB<br/>internal only")]
 
     User -->|HTTPS| CF
     CF -->|proxied| OCI_FW
@@ -31,25 +31,25 @@ graph LR
     Komodo --- MongoDB
 ```
 
-### Deployment Pipeline
+### Deployment pipeline
 
 ```mermaid
 flowchart TD
-    A([Developer machine]) -->|pulumi up| B[Pulumi\ninfra/]
-    B -->|creates| C[(OCI Cloud\nVCN · Subnet · IGW\nSecurity List · VM)]
+    A([Developer machine]) -->|pulumi up| B["Pulumi<br/>infra/"]
+    B -->|creates| C[("OCI Cloud<br/>VCN · Subnet · IGW<br/>Security List · VM")]
     C -->|outputs publicIp| D[scripts/provision.sh]
-    D -->|SSH probe\nubuntu:22 or deploy:2222| E{First run?}
-    E -->|yes — bootstrap| F[Ansible inventory\nubuntu · port 22]
-    E -->|no — hardened| G[Ansible inventory\ndeploy · port 2222]
+    D -->|"SSH probe<br/>ubuntu:22 or deploy:2222"| E{First run?}
+    E -->|"yes — bootstrap"| F["Ansible inventory<br/>ubuntu · port 22"]
+    E -->|"no — hardened"| G["Ansible inventory<br/>deploy · port 2222"]
     F --> H[ansible-playbook site.yml]
     G --> H
-    H -->|role: common| I[OS hardening\nSSH · iptables · fail2ban\nsysctl · swap · auditd]
-    H -->|role: docker| J[Docker CE\ndaemon config\nlog rotation]
-    H -->|role: komodo| K[Komodo + MongoDB\nDocker Compose\n127.0.0.1:9120]
-    H -->|role: caddy| L[Caddy\nDocker build + Compose\nTLS via Cloudflare DNS]
+    H -->|"role: common"| I["OS hardening<br/>SSH · iptables · fail2ban<br/>sysctl · swap · auditd"]
+    H -->|"role: docker"| J["Docker CE<br/>daemon config<br/>log rotation"]
+    H -->|"role: komodo"| K["Komodo + MongoDB<br/>Docker Compose<br/>127.0.0.1:9120"]
+    H -->|"role: caddy"| L["Caddy<br/>Docker build + Compose<br/>TLS via Cloudflare DNS"]
 ```
 
-### Network & Firewall Layers
+### Network and firewall layers
 
 ```mermaid
 graph TB
@@ -58,14 +58,14 @@ graph TB
     end
 
     subgraph OCI["OCI VCN — fewaapp-vcn (10.0.0.0/16)"]
-        SL["OCI Security List\n✅ TCP 22 — SSH bootstrap\n✅ TCP 2222 — SSH hardened\n✅ TCP 80 — HTTP\n✅ TCP 443 — HTTPS\n✅ ICMP type 3,8\n❌ everything else"]
+        SL["OCI Security List<br/>✅ TCP 22 — SSH bootstrap<br/>✅ TCP 2222 — SSH hardened<br/>✅ TCP 80 — HTTP<br/>✅ TCP 443 — HTTPS<br/>✅ ICMP type 3,8<br/>❌ everything else"]
         subgraph Subnet["Public Subnet — 10.0.0.0/24"]
-            subgraph VM["VM.Standard.A1.Flex\n4 OCPU · 24 GB RAM · 200 GB boot"]
-                IPT["iptables-persistent\n✅ lo ACCEPT\n✅ ESTABLISHED/RELATED\n✅ ICMP\n✅ TCP 22 (configurable)\n✅ TCP 2222\n✅ TCP 80 · 443\n❌ TCP 9120 DROP\n❌ INPUT default DROP"]
+            subgraph VM["VM.Standard.A1.Flex — 4 OCPU · 24 GB RAM · 200 GB boot"]
+                IPT["iptables-persistent<br/>✅ lo ACCEPT<br/>✅ ESTABLISHED/RELATED<br/>✅ ICMP<br/>✅ TCP 22 (configurable)<br/>✅ TCP 2222<br/>✅ TCP 80 · 443<br/>❌ TCP 9120 DROP<br/>❌ INPUT default DROP"]
                 subgraph Docker["Docker"]
-                    Caddy2["caddy\nhost network\n:80 :443"]
-                    Komodo2["komodo\n127.0.0.1:9120"]
-                    Mongo2["mongodb\ninternal net only"]
+                    Caddy2["caddy<br/>host network<br/>:80 :443"]
+                    Komodo2["komodo<br/>127.0.0.1:9120"]
+                    Mongo2["mongodb<br/>internal net only"]
                 end
             end
         end
@@ -76,7 +76,7 @@ graph TB
     Komodo2 --- Mongo2
 ```
 
-### TLS Certificate Flow (Cloudflare DNS Challenge)
+### TLS certificate flow (Cloudflare DNS challenge)
 
 ```mermaid
 sequenceDiagram
@@ -96,18 +96,18 @@ sequenceDiagram
     Note over Caddy,CF: Never needs port 80 to be reachable
 ```
 
-### Role Dependency Order
+### Role dependency order
 
 ```mermaid
 graph LR
-    common["common\nOS hardening\nSSH · iptables\nfail2ban · swap\nsysctl · auditd"] --> docker["docker\nDocker CE\ndaemon config"]
-    docker --> komodo["komodo\nMongoDB\nKomodo UI"]
-    docker --> caddy["caddy\nbuild image\nstart proxy"]
+    common["common<br/>OS hardening<br/>SSH · iptables<br/>fail2ban · swap<br/>sysctl · auditd"] --> docker["docker<br/>Docker CE<br/>daemon config"]
+    docker --> komodo["komodo<br/>MongoDB<br/>Komodo UI"]
+    docker --> caddy["caddy<br/>build image<br/>start proxy"]
 ```
 
 ---
 
-## Directory Structure
+## Directory structure
 
 ```
 kiran-vm/
@@ -146,7 +146,7 @@ kiran-vm/
 
 ---
 
-## What Each Component Does
+## What each component does
 
 ### Pulumi (`infra/`)
 
@@ -163,7 +163,7 @@ Creates **only** Oracle Cloud resources. Touches nothing on the server:
 | Boot Volume | 200 GB, Balanced (`vpusPerGb=20`) |
 | Public IP | Ephemeral, assigned to primary VNIC |
 
-### Ansible Roles
+### Ansible roles
 
 | Role | What it does |
 |---|---|
@@ -175,8 +175,6 @@ Creates **only** Oracle Cloud resources. Touches nothing on the server:
 ---
 
 ## Prerequisites
-
-### 1. Pulumi CLI
 
 ```bash
 curl -fsSL https://get.pulumi.com | sh
@@ -204,7 +202,7 @@ pip3 install --user ansible
 ansible --version   # should be 2.15+
 ```
 
-### 4. OCI API Key
+### 4. OCI API key
 
 Pulumi needs an OCI API key to call the Oracle Cloud API.
 
@@ -232,7 +230,7 @@ ls ~/.ssh/id_ed25519.pub
 ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -C "your_email@example.com"
 ```
 
-### 6. Cloudflare API Token
+### 6. Cloudflare API token
 
 Caddy uses Cloudflare's DNS API to issue TLS certificates (DNS-01 ACME challenge). This means HTTPS works even before any DNS record points to the server.
 
@@ -245,7 +243,7 @@ Caddy uses Cloudflare's DNS API to issue TLS certificates (DNS-01 ACME challenge
 
 ---
 
-## Step-by-Step Deployment
+## Step-by-step deployment
 
 ### Step 1 — Set up Cloudflare DNS (placeholder IP)
 
@@ -374,7 +372,7 @@ From the repo root:
 ./scripts/provision.sh
 ```
 
-The script does the following automatically:
+The script does this:
 
 ```
 1. reads publicIp from Pulumi stack 'prod'
@@ -477,7 +475,7 @@ This updates `/etc/iptables/rules.v4` and runs `netfilter-persistent reload` to 
 
 ---
 
-## Day-to-Day Operations
+## Day-to-day operations
 
 ### SSH access
 
@@ -600,27 +598,27 @@ docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
 
 ---
 
-## Security Model
+## Security model
 
 ```mermaid
 graph TD
     subgraph "Threat surface"
-        I1[Port 22 — SSH bootstrap\nclosed after hardening]
-        I2[Port 2222 — SSH hardened\nkey-only · fail2ban · 3 retries]
-        I3[Port 80 — HTTP\nCaddy redirects → HTTPS]
-        I4[Port 443 — HTTPS\nCaddy · TLS 1.2+ only]
-        BLOCK[Port 9120 — Komodo\nblocked at OCI + iptables\nnever reachable externally]
+        I1["Port 22 — SSH bootstrap<br/>closed after hardening"]
+        I2["Port 2222 — SSH hardened<br/>key-only · fail2ban · 3 retries"]
+        I3["Port 80 — HTTP<br/>Caddy redirects → HTTPS"]
+        I4["Port 443 — HTTPS<br/>Caddy · TLS 1.2+ only"]
+        BLOCK["Port 9120 — Komodo<br/>blocked at OCI + iptables<br/>never reachable externally"]
     end
 
     subgraph "Defence layers"
-        L1[OCI Security List\ncloud-level firewall]
-        L2[iptables-persistent\nhost-level firewall]
-        L3[fail2ban\n24h ban · exponential backoff]
-        L4[sshd hardening\nno root · no passwords\nkey-only · MaxAuthTries 3]
-        L5[Caddy TLS\nLet's Encrypt via Cloudflare\nauto-renew]
-        L6[Docker isolation\nKomodo on localhost only]
-        L7[AppArmor + auditd\nmandatory access control]
-        L8[Unattended upgrades\nsecurity patches auto-applied]
+        L1["OCI Security List<br/>cloud-level firewall"]
+        L2["iptables-persistent<br/>host-level firewall"]
+        L3["fail2ban<br/>24h ban · exponential backoff"]
+        L4["sshd hardening<br/>no root · no passwords<br/>key-only · MaxAuthTries 3"]
+        L5["Caddy TLS<br/>Let's Encrypt via Cloudflare<br/>auto-renew"]
+        L6["Docker isolation<br/>Komodo on localhost only"]
+        L7["AppArmor + auditd<br/>mandatory access control"]
+        L8["Unattended upgrades<br/>security patches auto-applied"]
     end
 
     I1 & I2 --> L1 --> L2 --> L3 --> L4
@@ -645,7 +643,7 @@ graph TD
 
 ---
 
-## Resource Usage (Always Free Tier)
+## Resource usage (Always Free tier)
 
 ```mermaid
 pie title Oracle Cloud Always Free Allocation Used
@@ -669,9 +667,7 @@ pie title Oracle Cloud Always Free Allocation Used
 
 ---
 
-## Troubleshooting
-
-### `provision.sh` fails: "Could not get publicIp from Pulumi stack"
+## Troubleshooting: "Could not get publicIp from Pulumi stack"
 
 ```bash
 # Check the stack exists and has been deployed
@@ -766,7 +762,7 @@ If you accidentally triggered fail2ban from your own IP:
 
 ---
 
-## Secrets Reference
+## Secrets reference
 
 All secrets live in `ansible/secrets.yml` (gitignored). Use `ansible/secrets.yml.example` as the template.
 
@@ -793,7 +789,7 @@ They are never written to Pulumi state, never logged, and never committed to git
 
 ---
 
-## Destroying the Infrastructure
+## Destroying the infrastructure
 
 > **Warning:** `preserveBootVolume: false` means destroying the stack **permanently deletes** all data on the boot volume, including MongoDB data and TLS certificates. Back up anything important first.
 
@@ -807,11 +803,11 @@ cd infra
 pulumi destroy --stack prod
 ```
 
-This removes: VM, boot volume, subnet, security list, route table, IGW, VCN, and public IP.
+It removes: VM, boot volume, subnet, security list, route table, IGW, VCN, and public IP.
 
 ---
 
-## Configuration Reference
+## Configuration reference
 
 ### Non-secret variables (`ansible/group_vars/all.yml`)
 
@@ -847,7 +843,7 @@ This removes: VM, boot volume, subnet, security list, route table, IGW, VCN, and
 
 ---
 
-## On-Server File Layout
+## On-server file layout
 
 ```
 /opt/komodo/
