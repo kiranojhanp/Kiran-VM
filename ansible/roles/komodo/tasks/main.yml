@@ -1,14 +1,15 @@
 ---
-- name: Assert komodo secrets are set
+- name: Assert required komodo secrets are defined
   ansible.builtin.assert:
     that:
-      - komodo_passkey is defined
-      - komodo_passkey | length > 0
-      - komodo_webhook_secret is defined
-      - komodo_webhook_secret | length > 0
-    fail_msg: "komodo_passkey and komodo_webhook_secret must be set in secrets.yml (use: openssl rand -hex 32)"
+      - komodo_passkey is defined and komodo_passkey | length > 0
+      - komodo_webhook_secret is defined and komodo_webhook_secret | length > 0
+      - komodo_password is defined and komodo_password | length > 0
+      - ferretdb_postgres_password is defined and ferretdb_postgres_password | length > 0
+      - komodo_jwt_secret is defined and komodo_jwt_secret | length > 0
+    fail_msg: "One or more required komodo secrets are missing in secrets.yml"
 
-- name: Create Komodo directories
+- name: Create komodo directories
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -17,10 +18,10 @@
     mode: "0750"
   loop:
     - "{{ komodo_dir }}"
-    - "{{ komodo_dir }}/mongodb"
     - "{{ komodo_dir }}/data"
+    - "{{ komodo_dir }}/periphery"
 
-- name: Deploy Komodo .env
+- name: Deploy komodo .env
   ansible.builtin.template:
     src: komodo.env.j2
     dest: "{{ komodo_dir }}/.env"
@@ -29,7 +30,7 @@
     mode: "0600"
   notify: Restart komodo
 
-- name: Deploy Komodo docker-compose.yml
+- name: Deploy komodo docker-compose.yml
   ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: "{{ komodo_dir }}/docker-compose.yml"
@@ -38,15 +39,11 @@
     mode: "0644"
   notify: Restart komodo
 
-- name: Start Komodo stack
+- name: Start komodo stack
   community.docker.docker_compose_v2:
     project_src: "{{ komodo_dir }}"
     project_name: komodo
     env_files:
-      - "{{ komodo_dir }}/.env"
+      - .env
     state: present
     pull: missing
-
-# Note: port {{ komodo_port }} is blocked at the host firewall level by the
-# common role (iptables rules.v4) and at the OCI Security List level (Pulumi).
-# No per-role firewall rule needed here.

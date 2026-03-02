@@ -1,0 +1,68 @@
+---
+# ── Infra role: shared Postgres + Redis ───────────────────────────────────────
+# This role owns the shared infrastructure containers used by all apps.
+# It must run before any app role (sure, postiz, komodo).
+
+- name: Create infra directory
+  ansible.builtin.file:
+    path: "{{ infra_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Deploy infra docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ infra_dir }}/docker-compose.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0640"
+  notify: Restart infra
+
+- name: Deploy infra .env
+  ansible.builtin.template:
+    src: infra.env.j2
+    dest: "{{ infra_dir }}/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  notify: Restart infra
+
+- name: Deploy Postgres init SQL (creates per-app users and databases)
+  ansible.builtin.template:
+    src: init.sql.j2
+    dest: "{{ infra_dir }}/init.sql"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+
+- name: Pull infra images
+  community.docker.docker_compose_v2_pull:
+    project_src: "{{ infra_dir }}"
+    project_name: infra
+
+- name: Start infra stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ infra_dir }}"
+    project_name: infra
+    env_files:
+      - "{{ infra_dir }}/.env"
+    state: present
+    pull: missing
+
+- name: Wait for shared Postgres to be healthy
+  community.docker.docker_container_info:
+    name: infra-postgres-1
+  register: pg_info
+  until: pg_info.container.State.Health.Status == "healthy"
+  retries: 20
+  delay: 5
+
+- name: Wait for shared Redis to be healthy
+  community.docker.docker_container_info:
+    name: infra-redis-1
+  register: redis_info
+  until: redis_info.container.State.Health.Status == "healthy"
+  retries: 10
+  delay: 3

@@ -26,6 +26,9 @@
     - role: docker
       tags: [docker]
 
+    - role: infra
+      tags: [infra, services]
+
     - role: komodo
       tags: [komodo, services]
 

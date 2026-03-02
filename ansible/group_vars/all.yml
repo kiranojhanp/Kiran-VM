@@ -17,12 +17,14 @@ komodo_subdomain: "komodo.{{ domain }}"
 # ── Komodo ──────────────────────────────────────────────
 komodo_port: 9120
 komodo_image: "ghcr.io/moghtech/komodo-core:latest"
+komodo_periphery_image: "ghcr.io/moghtech/komodo-periphery:latest"
 komodo_log_level: info
 komodo_init_admin_username: fewaadmin
 
-# ── MongoDB ─────────────────────────────────────────────
-mongo_image: "mongo:7.0"
-mongo_username: komodo
+# ── FerretDB (MongoDB adapter for Komodo) ───────────────
+# FerretDB requires its own patched postgres image — cannot share stock postgres:16.
+ferretdb_image: "ghcr.io/ferretdb/ferretdb:latest"
+ferretdb_pg_image: "ghcr.io/ferretdb/postgres-documentdb:latest"
 
 # ── Caddy ───────────────────────────────────────────────
 # caddy_image is intentionally omitted: the Caddy service uses a build: directive
@@ -32,6 +34,7 @@ mongo_username: komodo
 caddy_email: "admin@{{ domain }}"
 
 # ── Paths ───────────────────────────────────────────────
+infra_dir: /opt/infra
 komodo_dir: /opt/komodo
 caddy_dir: /opt/caddy
 sure_dir: /opt/sure

@@ -1,0 +1,8 @@
+---
+- name: Restart infra
+  community.docker.docker_compose_v2:
+    project_src: "{{ infra_dir }}"
+    project_name: infra
+    env_files:
+      - "{{ infra_dir }}/.env"
+    state: restarted
