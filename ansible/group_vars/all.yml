@@ -16,7 +16,7 @@ komodo_subdomain: "komodo.{{ domain }}"
 
 # ── Komodo ──────────────────────────────────────────────
 komodo_port: 9120
-komodo_image: "ghcr.io/moghtech/komodo:v1.17"
+komodo_image: "ghcr.io/moghtech/komodo-core:latest"
 komodo_log_level: info
 komodo_init_admin_username: fewaadmin
 

@@ -5,5 +5,4 @@
     project_name: komodo
     env_files:
       - "{{ komodo_dir }}/.env"
-    state: present
-    restarted: true
+    state: restarted

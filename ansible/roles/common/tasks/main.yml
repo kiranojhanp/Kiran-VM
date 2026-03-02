@@ -218,6 +218,7 @@
 
 - name: Reboot if kernel or critical packages were upgraded
   ansible.builtin.reboot:
-    reboot_timeout: 300
+    reboot_timeout: 600
+    connect_timeout: 60
     msg: "Rebooting after package upgrades (reboot-required flag set)"
   when: reboot_required.stat.exists
