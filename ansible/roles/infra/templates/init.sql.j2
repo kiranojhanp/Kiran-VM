@@ -6,10 +6,6 @@
 CREATE USER sure_user WITH PASSWORD '{{ shared_postgres_sure_password }}';
 CREATE DATABASE sure_production OWNER sure_user;
 
--- Postiz
-CREATE USER postiz_user WITH PASSWORD '{{ shared_postgres_postiz_password }}';
-CREATE DATABASE postiz_db OWNER postiz_user;
-
--- Temporal (needs CREATEDB to create temporal_visibility database automatically)
-CREATE USER temporal_user WITH PASSWORD '{{ shared_postgres_temporal_password }}' CREATEDB;
-CREATE DATABASE temporal OWNER temporal_user;
+-- Gitea
+CREATE USER gitea_user WITH PASSWORD '{{ shared_postgres_gitea_password }}';
+CREATE DATABASE gitea OWNER gitea_user;

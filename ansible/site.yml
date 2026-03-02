@@ -6,7 +6,6 @@
 #
 # Required extra-vars (pass via @secrets.yml or -e key=value):
 #   deploy_password        — deploy user OS password
-#   mongo_password         — MongoDB root password
 #   komodo_password        — Komodo admin UI password
 #   cloudflare_api_token   — Cloudflare Edit zone DNS token
 #
@@ -35,8 +34,8 @@
     - role: sure
       tags: [sure, services]
 
-    - role: postiz
-      tags: [postiz, services]
+    - role: gitea
+      tags: [gitea, services]
 
     - role: caddy
       tags: [caddy, services]

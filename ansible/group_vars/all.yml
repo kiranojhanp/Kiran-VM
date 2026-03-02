@@ -38,12 +38,14 @@ infra_dir: /opt/infra
 komodo_dir: /opt/komodo
 caddy_dir: /opt/caddy
 sure_dir: /opt/sure
-postiz_dir: /opt/postiz
+gitea_dir: /opt/gitea
 
 # ── Sure ────────────────────────────────────────────────
 sure_subdomain: "sure.{{ domain }}"
 sure_port: 3000
 
-# ── Postiz ──────────────────────────────────────────────
-postiz_subdomain: "postiz.{{ domain }}"
-postiz_port: 4007
+# ── Gitea ───────────────────────────────────────────────
+gitea_subdomain: "git.{{ domain }}"
+gitea_http_port: 3001
+gitea_ssh_port: 2223
+gitea_image: "docker.gitea.com/gitea:latest-rootless"

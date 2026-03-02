@@ -1,0 +1,8 @@
+---
+- name: Restart gitea
+  community.docker.docker_compose_v2:
+    project_src: "{{ gitea_dir }}"
+    project_name: gitea
+    env_files:
+      - .env
+    state: restarted

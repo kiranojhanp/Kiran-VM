@@ -46,8 +46,8 @@
   reverse_proxy 127.0.0.1:{{ sure_port }}
 }
 
-# Postiz — social media scheduling
-{{ postiz_subdomain }} {
+# Gitea — self-hosted git
+{{ gitea_subdomain }} {
   tls {
     dns cloudflare {env.CLOUDFLARE_API_TOKEN}
   }
@@ -62,10 +62,10 @@
   }
 
   log {
-    output file /var/log/caddy/postiz-access.log
+    output file /var/log/caddy/gitea-access.log
   }
 
-  reverse_proxy 127.0.0.1:{{ postiz_port }}
+  reverse_proxy 127.0.0.1:{{ gitea_http_port }}
 }
 
 # Root domain — coming soon page
