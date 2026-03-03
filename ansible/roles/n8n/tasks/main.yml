@@ -1,0 +1,17 @@
+---
+# ── n8n role tasks ────────────────────────────────────────────────────────────
+# Compose lifecycle is managed by Komodo (git-backed stack).
+# Ansible only pre-creates the data directory with correct ownership so n8n
+# (which runs as uid 1000) can write to it on first start.
+
+- name: Create n8n data directory (owned by uid 1000)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0750"
+  become: true
+  loop:
+    - "{{ n8n_dir }}"
+    - "{{ n8n_dir }}/data"
