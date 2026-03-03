@@ -1,0 +1,48 @@
+#!/bin/bash
+# dex — fuzzy container exec utility
+# Managed by Ansible — do not edit by hand
+#
+# Usage: dex PARTIAL_NAME [SHELL_CMD:-sh]
+# Examples:
+#   dex sure        → exec into sure container with sh
+#   dex sure bash   → exec with bash
+#   dex test        → if multiple matches, lists all; uses exact match if found
+#
+# Source: https://blog.foxxmd.dev/posts/komodo-tips-tricks/
+
+if [[ -z "$1" ]]; then
+  printf "Usage: CONTAINER_FUZZY_NAME [SHELL_CMD:-sh]\n"
+else
+
+  names=$(docker ps --filter name=^/.*$1.*$ --format '{{ '{{' }}.Names{{ '}}' }}')
+  lines=$(echo -n "$names" | grep -c '^')
+  name=""
+
+  if [ "$lines" -eq "0" ]; then
+    printf "No container found\n"
+
+  elif [ "$lines" -gt "1" ]; then
+    while IFS= read -r line
+    do
+      printf "Found: %s\n" "$line"
+      if [ "$line" = "$1" ]; then
+        name="$1"
+      fi
+    done < <(printf '%s\n' "$names")
+
+    if [[ -z "$name" ]]; then
+      printf "More than one container found, be more specific\n"
+    else
+      printf "More than one container found but input matched one perfectly.\n"
+    fi
+
+  else
+    name="$names"
+    printf "Found: %s\n" "$name"
+  fi
+
+  if [[ -n "$name" ]]; then
+    docker container exec -it $name ${2:-sh}
+  fi
+
+fi

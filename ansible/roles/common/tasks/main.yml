@@ -67,6 +67,30 @@
     state: present
     key: "{{ deploy_ssh_public_key }}"
 
+# ── Phase 2b: deploy user utilities ──────────────────────────────────────
+- name: Create ~/.local/bin for deploy user
+  ansible.builtin.file:
+    path: "/home/{{ deploy_user }}/.local/bin"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Deploy dex container exec utility
+  ansible.builtin.template:
+    src: dex.sh.j2
+    dest: "/home/{{ deploy_user }}/.local/bin/dex"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Ensure ~/.local/bin is on PATH in .bashrc
+  ansible.builtin.lineinfile:
+    path: "/home/{{ deploy_user }}/.bashrc"
+    line: 'export PATH="$HOME/.local/bin:$PATH"'
+    state: present
+    create: false
+
 # ── Phase 3: SSH hardening ────────────────────────────────────────────────
 - name: Configure sshd
   ansible.builtin.template:

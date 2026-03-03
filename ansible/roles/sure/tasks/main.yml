@@ -1,5 +1,7 @@
 ---
 # ── Sure role tasks ──────────────────────────────────────────────────────────
+# Compose lifecycle is now managed by Komodo (git-backed stack).
+# Ansible only provisions the directory and cleans up old volumes.
 
 - name: Create Sure directory
   ansible.builtin.file:
@@ -9,38 +11,15 @@
     group: "{{ deploy_user }}"
     mode: "0750"
 
-- name: Deploy Sure .env
-  ansible.builtin.template:
-    src: sure.env.j2
-    dest: "{{ sure_dir }}/.env"
-    owner: "{{ deploy_user }}"
-    group: "{{ deploy_user }}"
-    mode: "0600"
-  notify: Restart sure
-
-- name: Deploy Sure docker-compose.yml
-  ansible.builtin.template:
-    src: docker-compose.yml.j2
-    dest: "{{ sure_dir }}/docker-compose.yml"
-    owner: "{{ deploy_user }}"
-    group: "{{ deploy_user }}"
-    mode: "0640"
-  notify: Restart sure
-
-- name: Pull Sure images
-  community.docker.docker_compose_v2_pull:
-    project_src: "{{ sure_dir }}"
-    project_name: sure
-
-- name: Start Sure stack
+# ── Handoff: stop Ansible-managed stack so Komodo can take over ────────────
+- name: Stop Ansible-managed Sure stack (hand off to Komodo)
   community.docker.docker_compose_v2:
     project_src: "{{ sure_dir }}"
     project_name: sure
-    env_files:
-      - "{{ sure_dir }}/.env"
-    state: present
-    pull: missing
+    state: absent
     remove_orphans: true
+  ignore_errors: true
+  tags: [sure, services, komodo-handoff]
 
 - name: Remove old Sure postgres and redis volumes
   community.docker.docker_volume:

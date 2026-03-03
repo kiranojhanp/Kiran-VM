@@ -1,3 +1,21 @@
+# Sure — self-hosted relationship tracker
+# Managed by Komodo (git-backed) — edit this file and push to redeploy.
+#
+# Stack Environment vars expected (set in Komodo Stack Config):
+#   Non-secret:
+#     POSTGRES_USER=sure_user
+#     POSTGRES_DB=sure_production
+#     DB_HOST=postgres
+#     DB_PORT=5432
+#     SELF_HOSTED=true
+#     RAILS_FORCE_SSL=false
+#     RAILS_ASSUME_SSL=true
+#     REDIS_URL=redis://redis:6379/2
+#   Secret (Komodo Variables → [[VAR_NAME]]):
+#     POSTGRES_PASSWORD=[[SURE_DB_PASSWORD]]
+#     SECRET_KEY_BASE=[[SURE_SECRET_KEY_BASE]]
+#     OPENAI_ACCESS_TOKEN=[[OPENAI_ACCESS_TOKEN]]
+
 x-rails-env: &rails_env
   SECRET_KEY_BASE: ${SECRET_KEY_BASE}
   SELF_HOSTED: "true"
@@ -17,7 +35,7 @@ services:
     volumes:
       - app-storage:/rails/storage
     ports:
-      - "127.0.0.1:{{ sure_port }}:3000"
+      - "127.0.0.1:3000:3000"
     restart: unless-stopped
     environment:
       <<: *rails_env

@@ -1,8 +1,0 @@
----
-- name: Restart databasus
-  community.docker.docker_compose_v2:
-    project_src: "{{ databasus_dir }}"
-    project_name: databasus
-    env_files:
-      - .env
-    state: restarted

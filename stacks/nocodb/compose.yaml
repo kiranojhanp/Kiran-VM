@@ -1,0 +1,31 @@
+# NocoDB — no-code database platform
+# Managed by Komodo (git-backed) — edit this file and push to redeploy.
+#
+# Stack Environment vars expected (set in Komodo Stack Config):
+#   Non-secret:
+#     NC_PUBLIC_URL=https://nocodb.fewa.app
+#     NC_DISABLE_TELE=true
+#   Secret (Komodo Variables → [[VAR_NAME]]):
+#     NC_DB=pg://postgres:5432?u=nocodb_user&p=[[NOCODB_DB_PASSWORD]]&d=nocodb
+#     NC_AUTH_JWT_SECRET=[[NOCODB_JWT_SECRET]]
+
+networks:
+  infra_net:
+    external: true
+
+services:
+  nocodb:
+    image: nocodb/nocodb:latest
+    restart: unless-stopped
+    environment:
+      NC_DB: ${NC_DB}
+      NC_AUTH_JWT_SECRET: ${NC_AUTH_JWT_SECRET}
+      NC_PUBLIC_URL: ${NC_PUBLIC_URL}
+      NC_DISABLE_TELE: "true"
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - /opt/nocodb/data:/usr/app/data
+    networks:
+      - infra_net
+    mem_limit: 1g

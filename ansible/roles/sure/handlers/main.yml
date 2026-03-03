@@ -1,8 +1,0 @@
----
-- name: Restart sure
-  community.docker.docker_compose_v2:
-    project_src: "{{ sure_dir }}"
-    project_name: sure
-    env_files:
-      - "{{ sure_dir }}/.env"
-    state: restarted

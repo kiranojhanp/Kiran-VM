@@ -1,0 +1,40 @@
+# Databasus — database backup manager (Postgres → Cloudflare R2)
+# Managed by Komodo (git-backed) — edit this file and push to redeploy.
+#
+# Stack Environment vars expected (set in Komodo Stack Config):
+#   Non-secret:
+#     R2_ACCOUNT_ID=144d079696599a9af7525be0c68a459f
+#     R2_BUCKET_NAME=kiran-vm-database-backup
+#     R2_ENDPOINT=https://144d079696599a9af7525be0c68a459f.eu.r2.cloudflarestorage.com
+#   Secret (Komodo Variables → [[VAR_NAME]]):
+#     SECRET_KEY=[[DATABASUS_SECRET_KEY]]
+#     R2_ACCESS_KEY_ID=[[R2_ACCESS_KEY_ID]]
+#     R2_SECRET_ACCESS_KEY=[[R2_SECRET_ACCESS_KEY]]
+#
+# Note: joins both infra_net (for Postgres access) and komodo_komodo-net
+# (so Komodo core can reach Databasus API for status checks).
+
+networks:
+  infra_net:
+    external: true
+  komodo_komodo-net:
+    external: true
+
+services:
+  databasus:
+    image: databasus/databasus:latest
+    restart: unless-stopped
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_BUCKET_NAME: ${R2_BUCKET_NAME}
+      R2_ENDPOINT: ${R2_ENDPOINT}
+    ports:
+      - "127.0.0.1:4005:4005"
+    volumes:
+      - /opt/databasus/data:/databasus-data
+    networks:
+      - infra_net
+      - komodo_komodo-net

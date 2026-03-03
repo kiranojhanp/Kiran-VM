@@ -68,11 +68,16 @@ services:
   periphery:
     image: "{{ komodo_periphery_image }}"
     restart: unless-stopped
+    labels:
+      # Prevent Komodo from managing/stopping its own agent container.
+      komodo.skip: "true"
     env_file: .env
     environment:
       PERIPHERY_ROOT_DIRECTORY: "{{ komodo_dir }}/periphery"
       PERIPHERY_INCLUDE_DISK_MOUNTS: "/,/mnt,/opt"
       PERIPHERY_SSL_ENABLED: "false"
+      # Base path prefix for bind mounts in Komodo-managed stacks (e.g. $DOCKER_DATA/nocodb/data).
+      DOCKER_DATA: "/opt"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/proc
