@@ -63,3 +63,8 @@ databasus_subdomain: "backup.{{ domain }}"
 databasus_port: 4005
 databasus_image: "databasus/databasus:latest"
 databasus_dir: /opt/databasus
+
+# ── n8n ─────────────────────────────────────────────────
+n8n_subdomain: "n8n.{{ domain }}"
+n8n_port: 5678
+n8n_dir: /opt/n8n
