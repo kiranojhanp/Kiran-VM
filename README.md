@@ -24,7 +24,8 @@ kiran-vm/
 │   ├── group_vars/all.yml    ← non-secret variables
 │   ├── secrets.yml           ← secrets (gitignored)
 │   ├── secrets.yml.example   ← template
-│   ├── inventory/hosts.ini   ← server inventory
+│   ├── inventory/hosts.ini   ← server inventory (gitignored)
+│   ├── inventory/hosts.ini.example ← template
 │   └── roles/
 │       ├── common/           ← OS hardening
 │       ├── docker/           ← Docker CE
@@ -73,12 +74,13 @@ ansible-playbook site.yml --extra-vars "@secrets.yml" \
 6. Add `KOMODO_WEBHOOK_<NAME>` secret to GitHub
 7. Add a filter entry to `.github/workflows/deploy-stacks.yml`
 
-## Secrets
+## Secrets & inventory
 
-Copy the template and fill in values:
+Copy the templates and fill in values:
 
 ```bash
 cp ansible/secrets.yml.example ansible/secrets.yml
+cp ansible/inventory/hosts.ini.example ansible/inventory/hosts.ini
 ```
 
-Secrets are gitignored and never committed. App secrets (DB passwords, API keys) live in Komodo → Settings → Variables, referenced in Stack environments as `[[SECRET_NAME]]`.
+Both files are gitignored and never committed. `hosts.ini` contains your server IP and SSH key path — update it for each new server. App secrets (DB passwords, API keys) live in Komodo → Settings → Variables, referenced in Stack environments as `[[SECRET_NAME]]`.

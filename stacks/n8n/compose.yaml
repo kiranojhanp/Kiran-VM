@@ -11,13 +11,13 @@ services:
       DB_POSTGRESDB_DATABASE: n8n
       DB_POSTGRESDB_USER: n8n_user
       DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD}
-      N8N_HOST: n8n.fewa.app
+      N8N_HOST: ${N8N_HOST}
       N8N_PORT: 5678
       N8N_PROTOCOL: https
-      WEBHOOK_URL: https://n8n.fewa.app
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL}
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
-      GENERIC_TIMEZONE: Asia/Kathmandu
-      TZ: Asia/Kathmandu
+      GENERIC_TIMEZONE: ${TZ}
+      TZ: ${TZ}
     volumes:
       - /opt/n8n/data:/home/node/.n8n
     networks:

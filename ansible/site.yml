@@ -13,8 +13,8 @@
 #   komodo_passkey         — random string (defaults to placeholder)
 #   komodo_webhook_secret  — random string (defaults to placeholder)
 
-- name: Provision fewa.app server
-  hosts: fewaapp
+- name: Provision server
+  hosts: server
   become: true
   gather_facts: true
 

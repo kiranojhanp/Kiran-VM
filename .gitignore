@@ -4,3 +4,6 @@
 # Secrets — never commit
 ansible/secrets.yml
 .secrets.env
+
+# Inventory — machine-specific, never commit (use hosts.ini.example as template)
+ansible/inventory/hosts.ini
