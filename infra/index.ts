@@ -10,7 +10,6 @@ const sshPublicKey = cfg.require("sshPublicKey");
 // OCI provider config — pulled from `pulumi config set --secret`
 const ociCfg = new pulumi.Config("oci");
 const tenancyOcid = ociCfg.requireSecret("tenancyOcid");
-const region = ociCfg.require("region");
 
 // compartmentId defaults to tenancyOcid (root compartment)
 const compartmentId: pulumi.Input<string> =
@@ -18,6 +17,28 @@ const compartmentId: pulumi.Input<string> =
 
 // Ubuntu 22.04 Minimal ARM64 — set per region in Pulumi.<stack>.yaml
 const imageOcid = cfg.require("imageOcid");
+
+// ── Cloud-init (iptables) ─────────────────────────────────────────────────────
+// OCI Ubuntu images ship with iptables rules that block ports not in the default
+// ACCEPT chain. Ansible handles hardening, but cloud-init opens the ports that
+// Caddy and SSH need so the first Ansible run can connect.
+const cloudInit = `#!/bin/bash
+set -e
+
+# Allow Ansible SSH (standard + hardened port), HTTP, HTTPS
+iptables  -I INPUT 1 -p tcp --dport 22   -j ACCEPT
+iptables  -I INPUT 2 -p tcp --dport 2222 -j ACCEPT
+iptables  -I INPUT 3 -p tcp --dport 80   -j ACCEPT
+iptables  -I INPUT 4 -p tcp --dport 443  -j ACCEPT
+ip6tables -I INPUT 1 -p tcp --dport 22   -j ACCEPT
+ip6tables -I INPUT 2 -p tcp --dport 2222 -j ACCEPT
+ip6tables -I INPUT 3 -p tcp --dport 80   -j ACCEPT
+ip6tables -I INPUT 4 -p tcp --dport 443  -j ACCEPT
+
+# Persist rules across reboots
+apt-get install -y iptables-persistent
+netfilter-persistent save
+`;
 
 // ── VCN ───────────────────────────────────────────────────────────────────────
 const vcn = new oci.core.Vcn(`${projectName}-vcn`, {
@@ -127,9 +148,14 @@ const subnet = new oci.core.Subnet(`${projectName}-subnet`, {
 // VM.Standard.A1.Flex — Oracle Always Free: 4 OCPU, 24 GB RAM total per account
 const instance = new oci.core.Instance(`${projectName}-vm`, {
   compartmentId,
-  availabilityDomain: pulumi.output(
-    oci.identity.getAvailabilityDomains({ compartmentId })
-  ).apply((ads) => ads.availabilityDomains[0].name),
+  // Resolve availability domain at runtime from the OCI API
+  availabilityDomain: pulumi
+    .output(compartmentId)
+    .apply((cid) =>
+      oci.identity
+        .getAvailabilityDomains({ compartmentId: cid })
+        .then((r) => r.availabilityDomains[0].name)
+    ),
 
   displayName: `${projectName}-vm`,
   shape: "VM.Standard.A1.Flex",
@@ -140,9 +166,9 @@ const instance = new oci.core.Instance(`${projectName}-vm`, {
 
   sourceDetails: {
     sourceType: "image",
-    imageId: imageOcid,
+    sourceId: imageOcid,
     // 200 GB boot volume — uses all of the Always Free block storage allocation
-    bootVolumeSizeInGbs: 200,
+    bootVolumeSizeInGbs: "200",
   },
 
   createVnicDetails: {
@@ -153,36 +179,16 @@ const instance = new oci.core.Instance(`${projectName}-vm`, {
 
   metadata: {
     ssh_authorized_keys: sshPublicKey,
-    // cloud-init: iptables rules so OCI firewall allows ports 80/443/2222
-    // (OCI has a host-level iptables firewall on top of the Security List)
+    // cloud-init: iptables rules so OCI host firewall allows ports 80/443/2222
+    // (OCI Ubuntu images have iptables rules on top of the Security List)
     user_data: Buffer.from(cloudInit).toString("base64"),
   },
 });
 
-// ── Cloud-init (iptables) ─────────────────────────────────────────────────────
-// OCI Ubuntu images ship with iptables rules that block ports not in the default
-// ACCEPT chain. Ansible handles hardening, but cloud-init opens the ports that
-// Caddy and SSH need so the first Ansible run can connect.
-const cloudInit = `#!/bin/bash
-set -e
-
-# Allow Ansible SSH (standard + hardened port), HTTP, HTTPS
-iptables  -I INPUT 1 -p tcp --dport 22   -j ACCEPT
-iptables  -I INPUT 2 -p tcp --dport 2222 -j ACCEPT
-iptables  -I INPUT 3 -p tcp --dport 80   -j ACCEPT
-iptables  -I INPUT 4 -p tcp --dport 443  -j ACCEPT
-ip6tables -I INPUT 1 -p tcp --dport 22   -j ACCEPT
-ip6tables -I INPUT 2 -p tcp --dport 2222 -j ACCEPT
-ip6tables -I INPUT 3 -p tcp --dport 80   -j ACCEPT
-ip6tables -I INPUT 4 -p tcp --dport 443  -j ACCEPT
-
-# Persist rules across reboots
-apt-get install -y iptables-persistent
-netfilter-persistent save
-`;
-
 // ── Outputs ───────────────────────────────────────────────────────────────────
 export const publicIp = instance.publicIp;
+export const privateIp = instance.privateIp;
+export const instanceId = instance.id;
 export const sshCommand = pulumi.interpolate`ssh -p 2222 deploy@${instance.publicIp}`;
 export const vcnId = vcn.id;
 export const subnetId = subnet.id;

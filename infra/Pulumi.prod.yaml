@@ -6,17 +6,7 @@ config:
   # pulumi config set --secret oci:privateKey   "$(cat ~/.oci/oci_api_key.pem)"
   # pulumi config set           oci:region      ap-melbourne-1
   oci:region: ap-melbourne-1
-
-  # ── Required: SSH access ─────────────────────────────────────────────────────
-  # pulumi config set sshPublicKey "$(cat ~/.ssh/id_ed25519.pub)"
-  sshPublicKey: ""
-
-  # ── Optional overrides ───────────────────────────────────────────────────────
-  # compartmentId defaults to tenancyOcid if not set.
-  # imageOcid defaults to Ubuntu 22.04 Minimal ARM (Melbourne).
-  # projectName is used as a prefix for all OCI resource names.
-  projectName: kiran-vm
-
-  # Ubuntu 22.04 Minimal ARM64 — Melbourne (ap-melbourne-1)
-  # Find yours: https://docs.oracle.com/en-us/iaas/images/
-  imageOcid: ocid1.image.oc1.ap-melbourne-1.aaaaaaaajdpuyfkddhhlmhyvv3yylwxkw7oo7ftze4a3yiijh7g3jzxasfkq
+  kiran-vm-infra:imageOcid: ocid1.image.oc1.ap-melbourne-1.aaaaaaaajdpuyfkddhhlmhyvv3yylwxkw7oo7ftze4a3yiijh7g3jzxasfkq
+  kiran-vm-infra:projectName: fewaapp
+  kiran-vm-infra:sshPublicKey: ""
+encryptionsalt: v1:pRB1wql9zhw=:v1:zACIcjlbp6oHdTkB:DIj1SkVgPbNbRLoW6U7Uxbd/yVfNAw==

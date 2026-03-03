@@ -2,7 +2,7 @@
   "name": "kiran-vm-infra",
   "version": "1.0.0",
   "description": "Pulumi program — Oracle Cloud infrastructure for VM.Standard.A1.Flex (Always Free)",
-  "main": "index.js",
+  "main": "bin/index.js",
   "scripts": {
     "build": "tsc"
   },
