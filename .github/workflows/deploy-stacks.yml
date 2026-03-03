@@ -7,57 +7,38 @@ on:
       - "stacks/**"
 
 jobs:
-  deploy:
+  detect:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
         with:
-          fetch-depth: 0
+          filters: |
+            sure:
+              - "stacks/sure/**"
+            nocodb:
+              - "stacks/nocodb/**"
+            databasus:
+              - "stacks/databasus/**"
+            gitea:
+              - "stacks/gitea/**"
+            n8n:
+              - "stacks/n8n/**"
 
-      - name: Detect changed stacks
-        id: changes
-        run: |
-          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- stacks/)
-          echo "Changed files: $changed"
-          for stack in sure nocodb databasus gitea n8n; do
-            if echo "$changed" | grep -q "^stacks/$stack/"; then
-              echo "${stack}=true" >> $GITHUB_OUTPUT
-            else
-              echo "${stack}=false" >> $GITHUB_OUTPUT
-            fi
-          done
-
-      - name: Deploy sure
-        if: steps.changes.outputs.sure == 'true'
+  deploy:
+    needs: detect
+    if: needs.detect.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stack: ${{ fromJson(needs.detect.outputs.matrix) }}
+    steps:
+      - name: Deploy ${{ matrix.stack }}
         uses: distributhor/workflow-webhook@v3
         with:
-          webhook_url: ${{ secrets.KOMODO_WEBHOOK_SURE }}
-          webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
-
-      - name: Deploy nocodb
-        if: steps.changes.outputs.nocodb == 'true'
-        uses: distributhor/workflow-webhook@v3
-        with:
-          webhook_url: ${{ secrets.KOMODO_WEBHOOK_NOCODB }}
-          webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
-
-      - name: Deploy databasus
-        if: steps.changes.outputs.databasus == 'true'
-        uses: distributhor/workflow-webhook@v3
-        with:
-          webhook_url: ${{ secrets.KOMODO_WEBHOOK_DATABASUS }}
-          webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
-
-      - name: Deploy gitea
-        if: steps.changes.outputs.gitea == 'true'
-        uses: distributhor/workflow-webhook@v3
-        with:
-          webhook_url: ${{ secrets.KOMODO_WEBHOOK_GITEA }}
-          webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
-
-      - name: Deploy n8n
-        if: steps.changes.outputs.n8n == 'true'
-        uses: distributhor/workflow-webhook@v3
-        with:
-          webhook_url: ${{ secrets.KOMODO_WEBHOOK_N8N }}
+          webhook_url: ${{ secrets[format('KOMODO_WEBHOOK_{0}', upper(matrix.stack))] }}
           webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
