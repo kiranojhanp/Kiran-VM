@@ -16,8 +16,8 @@ services:
       N8N_PROTOCOL: https
       WEBHOOK_URL: ${N8N_WEBHOOK_URL}
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
-      GENERIC_TIMEZONE: ${TZ}
-      TZ: ${TZ}
+      GENERIC_TIMEZONE: ${N8N_TZ}
+      TZ: ${N8N_TZ}
     volumes:
       - /opt/n8n/data:/home/node/.n8n
     networks:
