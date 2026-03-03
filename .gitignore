@@ -1,3 +1,6 @@
+# Git worktrees
+.worktrees/
+
 # Ansible secrets — never commit
 ansible/secrets.yml
 
