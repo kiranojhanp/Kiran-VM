@@ -28,36 +28,56 @@ jobs:
 
       - name: Deploy sure
         if: steps.changes.outputs.sure == 'true'
+        env:
+          WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
+          WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_SURE }}
         run: |
+          body='{}'
+          sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
           curl -s -X POST \
             -H "X-GitHub-Event: push" \
             -H "Content-Type: application/json" \
-            -d '{}' \
-            "${{ secrets.KOMODO_WEBHOOK_SURE }}"
+            -H "X-Hub-Signature-256: $sig" \
+            -d "$body" "$WEBHOOK_URL"
 
       - name: Deploy nocodb
         if: steps.changes.outputs.nocodb == 'true'
+        env:
+          WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
+          WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_NOCODB }}
         run: |
+          body='{}'
+          sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
           curl -s -X POST \
             -H "X-GitHub-Event: push" \
             -H "Content-Type: application/json" \
-            -d '{}' \
-            "${{ secrets.KOMODO_WEBHOOK_NOCODB }}"
+            -H "X-Hub-Signature-256: $sig" \
+            -d "$body" "$WEBHOOK_URL"
 
       - name: Deploy databasus
         if: steps.changes.outputs.databasus == 'true'
+        env:
+          WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
+          WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_DATABASUS }}
         run: |
+          body='{}'
+          sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
           curl -s -X POST \
             -H "X-GitHub-Event: push" \
             -H "Content-Type: application/json" \
-            -d '{}' \
-            "${{ secrets.KOMODO_WEBHOOK_DATABASUS }}"
+            -H "X-Hub-Signature-256: $sig" \
+            -d "$body" "$WEBHOOK_URL"
 
       - name: Deploy gitea
         if: steps.changes.outputs.gitea == 'true'
+        env:
+          WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
+          WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_GITEA }}
         run: |
+          body='{}'
+          sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
           curl -s -X POST \
             -H "X-GitHub-Event: push" \
             -H "Content-Type: application/json" \
-            -d '{}' \
-            "${{ secrets.KOMODO_WEBHOOK_GITEA }}"
+            -H "X-Hub-Signature-256: $sig" \
+            -d "$body" "$WEBHOOK_URL"
