@@ -53,5 +53,5 @@ jobs:
       - name: Trigger Komodo procedure
         uses: distributhor/workflow-webhook@v3
         with:
-          webhook_url: ${{ secrets[format('KOMODO_WEBHOOK_{0}', upper(matrix.stack))] }}
+          webhook_url: ${{ secrets[format('KOMODO_WEBHOOK_{0}', matrix.stack)] }}
           webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
