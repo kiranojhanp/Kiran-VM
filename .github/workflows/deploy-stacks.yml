@@ -29,70 +29,35 @@ jobs:
 
       - name: Deploy sure
         if: steps.changes.outputs.sure == 'true'
-        env:
-          WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
-          WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_SURE }}
-        run: |
-          body='{"ref":"refs/heads/main","repository":{"full_name":"${{ github.repository }}"}}'
-          sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
-          curl -sf -X POST \
-            -H "X-GitHub-Event: push" \
-            -H "Content-Type: application/json" \
-            -H "X-Hub-Signature-256: $sig" \
-            -d "$body" "$WEBHOOK_URL" && echo "OK" || echo "FAILED (HTTP error)"
+        uses: distributhor/workflow-webhook@v3
+        with:
+          webhook_url: ${{ secrets.KOMODO_WEBHOOK_SURE }}
+          webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
 
       - name: Deploy nocodb
         if: steps.changes.outputs.nocodb == 'true'
-        env:
-          WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
-          WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_NOCODB }}
-        run: |
-          body='{"ref":"refs/heads/main","repository":{"full_name":"${{ github.repository }}"}}'
-          sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
-          curl -sf -X POST \
-            -H "X-GitHub-Event: push" \
-            -H "Content-Type: application/json" \
-            -H "X-Hub-Signature-256: $sig" \
-            -d "$body" "$WEBHOOK_URL" && echo "OK" || echo "FAILED (HTTP error)"
+        uses: distributhor/workflow-webhook@v3
+        with:
+          webhook_url: ${{ secrets.KOMODO_WEBHOOK_NOCODB }}
+          webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
 
       - name: Deploy databasus
         if: steps.changes.outputs.databasus == 'true'
-        env:
-          WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
-          WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_DATABASUS }}
-        run: |
-          body='{"ref":"refs/heads/main","repository":{"full_name":"${{ github.repository }}"}}'
-          sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
-          curl -sf -X POST \
-            -H "X-GitHub-Event: push" \
-            -H "Content-Type: application/json" \
-            -H "X-Hub-Signature-256: $sig" \
-            -d "$body" "$WEBHOOK_URL" && echo "OK" || echo "FAILED (HTTP error)"
+        uses: distributhor/workflow-webhook@v3
+        with:
+          webhook_url: ${{ secrets.KOMODO_WEBHOOK_DATABASUS }}
+          webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
 
       - name: Deploy gitea
         if: steps.changes.outputs.gitea == 'true'
-        env:
-          WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
-          WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_GITEA }}
-        run: |
-          body='{"ref":"refs/heads/main","repository":{"full_name":"${{ github.repository }}"}}'
-          sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
-          curl -sf -X POST \
-            -H "X-GitHub-Event: push" \
-            -H "Content-Type: application/json" \
-            -H "X-Hub-Signature-256: $sig" \
-            -d "$body" "$WEBHOOK_URL" && echo "OK" || echo "FAILED (HTTP error)"
+        uses: distributhor/workflow-webhook@v3
+        with:
+          webhook_url: ${{ secrets.KOMODO_WEBHOOK_GITEA }}
+          webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
 
       - name: Deploy n8n
         if: steps.changes.outputs.n8n == 'true'
-        env:
-          WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
-          WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_N8N }}
-        run: |
-          body='{"ref":"refs/heads/main","repository":{"full_name":"${{ github.repository }}"}}'
-          sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
-          curl -sf -X POST \
-            -H "X-GitHub-Event: push" \
-            -H "Content-Type: application/json" \
-            -H "X-Hub-Signature-256: $sig" \
-            -d "$body" "$WEBHOOK_URL" && echo "OK" || echo "FAILED (HTTP error)"
+        uses: distributhor/workflow-webhook@v3
+        with:
+          webhook_url: ${{ secrets.KOMODO_WEBHOOK_N8N }}
+          webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
