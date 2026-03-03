@@ -17,7 +17,8 @@ jobs:
       - name: Detect changed stacks
         id: changes
         run: |
-          changed=$(git diff --name-only HEAD~1 HEAD -- stacks/)
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- stacks/)
+          echo "Changed files: $changed"
           for stack in sure nocodb databasus gitea; do
             if echo "$changed" | grep -q "^stacks/$stack/"; then
               echo "${stack}=true" >> $GITHUB_OUTPUT
@@ -34,11 +35,11 @@ jobs:
         run: |
           body='{}'
           sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
-          curl -s -X POST \
+          curl -sf -X POST \
             -H "X-GitHub-Event: push" \
             -H "Content-Type: application/json" \
             -H "X-Hub-Signature-256: $sig" \
-            -d "$body" "$WEBHOOK_URL"
+            -d "$body" "$WEBHOOK_URL" && echo "OK" || echo "FAILED (HTTP error)"
 
       - name: Deploy nocodb
         if: steps.changes.outputs.nocodb == 'true'
@@ -48,11 +49,11 @@ jobs:
         run: |
           body='{}'
           sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
-          curl -s -X POST \
+          curl -sf -X POST \
             -H "X-GitHub-Event: push" \
             -H "Content-Type: application/json" \
             -H "X-Hub-Signature-256: $sig" \
-            -d "$body" "$WEBHOOK_URL"
+            -d "$body" "$WEBHOOK_URL" && echo "OK" || echo "FAILED (HTTP error)"
 
       - name: Deploy databasus
         if: steps.changes.outputs.databasus == 'true'
@@ -62,11 +63,11 @@ jobs:
         run: |
           body='{}'
           sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
-          curl -s -X POST \
+          curl -sf -X POST \
             -H "X-GitHub-Event: push" \
             -H "Content-Type: application/json" \
             -H "X-Hub-Signature-256: $sig" \
-            -d "$body" "$WEBHOOK_URL"
+            -d "$body" "$WEBHOOK_URL" && echo "OK" || echo "FAILED (HTTP error)"
 
       - name: Deploy gitea
         if: steps.changes.outputs.gitea == 'true'
@@ -76,8 +77,8 @@ jobs:
         run: |
           body='{}'
           sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
-          curl -s -X POST \
+          curl -sf -X POST \
             -H "X-GitHub-Event: push" \
             -H "Content-Type: application/json" \
             -H "X-Hub-Signature-256: $sig" \
-            -d "$body" "$WEBHOOK_URL"
+            -d "$body" "$WEBHOOK_URL" && echo "OK" || echo "FAILED (HTTP error)"
