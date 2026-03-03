@@ -16,9 +16,9 @@ Pulumi → Ansible → Komodo → stacks/
 
 ```mermaid
 flowchart LR
-    A["Pulumi\nOCI VM"] --> B["Ansible\nOS + services"]
-    B --> C["Komodo\napp deployments"]
-    C --> D["stacks/\nDocker Compose"]
+    A["Pulumi<br>OCI VM"] --> B["Ansible<br>OS + services"]
+    B --> C["Komodo<br>app deployments"]
+    C --> D["stacks/<br>Docker Compose"]
 ```
 
 Traffic hits Caddy on 443, which proxies to internal app containers. All apps share a Postgres instance and Redis. Komodo manages deployments — push to `main` and GitHub Actions fires the right Komodo webhook.
