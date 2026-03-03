@@ -33,7 +33,7 @@ jobs:
           WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
           WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_SURE }}
         run: |
-          body='{}'
+          body='{"ref":"refs/heads/main","repository":{"full_name":"${{ github.repository }}"}}'
           sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
           curl -sf -X POST \
             -H "X-GitHub-Event: push" \
@@ -47,7 +47,7 @@ jobs:
           WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
           WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_NOCODB }}
         run: |
-          body='{}'
+          body='{"ref":"refs/heads/main","repository":{"full_name":"${{ github.repository }}"}}'
           sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
           curl -sf -X POST \
             -H "X-GitHub-Event: push" \
@@ -61,7 +61,7 @@ jobs:
           WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
           WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_DATABASUS }}
         run: |
-          body='{}'
+          body='{"ref":"refs/heads/main","repository":{"full_name":"${{ github.repository }}"}}'
           sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
           curl -sf -X POST \
             -H "X-GitHub-Event: push" \
@@ -75,7 +75,7 @@ jobs:
           WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
           WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_GITEA }}
         run: |
-          body='{}'
+          body='{"ref":"refs/heads/main","repository":{"full_name":"${{ github.repository }}"}}'
           sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
           curl -sf -X POST \
             -H "X-GitHub-Event: push" \
