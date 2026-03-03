@@ -80,6 +80,10 @@ ansible-playbook site.yml --extra-vars "@secrets.yml" \
 
 ---
 
+## If you are an LLM
+
+Read [`llms.txt`](./llms.txt) first. It contains a structured summary of the repo, key facts needed to avoid common mistakes (container names, reserved env vars, network names), and links to the relevant files for each task.
+
 ## Secrets
 
 - `ansible/secrets.yml` — provisioning secrets, gitignored, never leave local machine

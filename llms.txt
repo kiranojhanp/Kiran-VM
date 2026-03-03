@@ -1,0 +1,34 @@
+# kiran-vm
+
+> Self-hosted server infrastructure on Oracle Cloud Always Free ARM. Provisions a VM with Pulumi, hardens and installs services with Ansible, then manages Docker app deployments through Komodo. A `git push` to `stacks/<name>/` automatically redeploys the matching app via GitHub Actions and Komodo webhooks.
+
+The stack: OCI ARM VM → Ubuntu 22.04 → Docker → shared Postgres 16 + Redis → Komodo (deploy UI) → Caddy (reverse proxy with Cloudflare DNS-01 TLS) → app containers.
+
+Key facts for automation:
+- SSH is on port **2222**, user `deploy`
+- Postgres container is named `infra-postgres-1`, accessible inside `infra_net` Docker network
+- App containers must join `infra_net` to reach Postgres and Redis
+- Komodo secrets use `[[SECRET_NAME]]` syntax in compose files, not env files
+- `TZ` is a reserved variable in Komodo — use app-specific alternatives (e.g. `N8N_TZ` for n8n)
+- Pulumi uses a local file backend (`~/.pulumi/stacks/`), not Pulumi Cloud
+- Pulumi passphrase is stored in `~/.pulumi-passphrase`, pointed to by `PULUMI_CONFIG_PASSPHRASE_FILE`
+
+## Provisioning
+
+- [infra/README.md](./infra/README.md): Pulumi setup — OCI config, passphrase file, deploy and teardown commands, full config reference
+- [ansible/README.md](./ansible/README.md): Ansible setup — role list with tags, secrets reference, how to re-run individual roles
+
+## Deploying apps
+
+- [stacks/README.md](./stacks/README.md): Komodo stack setup, secret injection, n8n gotchas, adding new stacks, troubleshooting
+
+## Optional
+
+- [stacks/sure/compose.yaml](./stacks/sure/compose.yaml): Sure Docker Compose
+- [stacks/gitea/compose.yaml](./stacks/gitea/compose.yaml): Gitea Docker Compose
+- [stacks/nocodb/compose.yaml](./stacks/nocodb/compose.yaml): NocoDB Docker Compose
+- [stacks/databasus/compose.yaml](./stacks/databasus/compose.yaml): Databasus Docker Compose
+- [stacks/n8n/compose.yaml](./stacks/n8n/compose.yaml): n8n Docker Compose
+- [ansible/group_vars/all.yml](./ansible/group_vars/all.yml): All non-secret variables (domain, timezone, ports)
+- [ansible/secrets.yml.example](./ansible/secrets.yml.example): Full list of required secrets with descriptions
+- [.github/workflows/deploy-stacks.yml](./.github/workflows/deploy-stacks.yml): GitHub Actions workflow for path-based stack deploys
