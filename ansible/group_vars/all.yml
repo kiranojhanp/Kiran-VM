@@ -20,8 +20,8 @@ komodo_image: "ghcr.io/moghtech/komodo-core:latest"
 komodo_periphery_image: "ghcr.io/moghtech/komodo-periphery:latest"
 komodo_log_level: info
 komodo_init_admin_username: fewaadmin
-# How often Komodo polls stacks for new image versions (seconds). 3600 = 1 hour.
-komodo_resource_poll_interval: 3600
+# How often Komodo polls stacks for new image versions. Must be a Komodo duration string.
+komodo_resource_poll_interval: "1-hr"
 
 # ── FerretDB (MongoDB adapter for Komodo) ───────────────
 # FerretDB requires its own patched postgres image — cannot share stock postgres:16.
