@@ -1,0 +1,10 @@
+name: kiran-vm-infra
+description: Oracle Cloud Infrastructure provisioning for an Always Free ARM VM
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: ""
