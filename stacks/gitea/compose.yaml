@@ -71,4 +71,4 @@ services:
       - /etc/localtime:/etc/localtime:ro
     networks:
       - infra_net
-    mem_limit: 512m
+    mem_limit: 768m
