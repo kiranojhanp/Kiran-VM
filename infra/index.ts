@@ -18,28 +18,6 @@ const compartmentId: pulumi.Input<string> =
 // Ubuntu 22.04 Minimal ARM64 — set per region in Pulumi.<stack>.yaml
 const imageOcid = cfg.require("imageOcid");
 
-// ── Cloud-init (iptables) ─────────────────────────────────────────────────────
-// OCI Ubuntu images ship with iptables rules that block ports not in the default
-// ACCEPT chain. Ansible handles hardening, but cloud-init opens the ports that
-// Caddy and SSH need so the first Ansible run can connect.
-const cloudInit = `#!/bin/bash
-set -e
-
-# Allow Ansible SSH (standard + hardened port), HTTP, HTTPS
-iptables  -I INPUT 1 -p tcp --dport 22   -j ACCEPT
-iptables  -I INPUT 2 -p tcp --dport 2222 -j ACCEPT
-iptables  -I INPUT 3 -p tcp --dport 80   -j ACCEPT
-iptables  -I INPUT 4 -p tcp --dport 443  -j ACCEPT
-ip6tables -I INPUT 1 -p tcp --dport 22   -j ACCEPT
-ip6tables -I INPUT 2 -p tcp --dport 2222 -j ACCEPT
-ip6tables -I INPUT 3 -p tcp --dport 80   -j ACCEPT
-ip6tables -I INPUT 4 -p tcp --dport 443  -j ACCEPT
-
-# Persist rules across reboots
-apt-get install -y iptables-persistent
-netfilter-persistent save
-`;
-
 // ── VCN ───────────────────────────────────────────────────────────────────────
 const vcn = new oci.core.Vcn(`${projectName}-vcn`, {
   compartmentId,
@@ -175,13 +153,11 @@ const instance = new oci.core.Instance(`${projectName}-vm`, {
     subnetId: subnet.id,
     assignPublicIp: "true",
     displayName: `${projectName}-vnic`,
+    hostnameLabel: projectName,
   },
 
   metadata: {
     ssh_authorized_keys: sshPublicKey,
-    // cloud-init: iptables rules so OCI host firewall allows ports 80/443/2222
-    // (OCI Ubuntu images have iptables rules on top of the Security List)
-    user_data: Buffer.from(cloudInit).toString("base64"),
   },
 });
 
