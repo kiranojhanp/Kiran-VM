@@ -1,193 +1,43 @@
 # stacks/
 
-Docker Compose files for all applications, managed by [Komodo](https://komo.do). Each subdirectory is an independent stack deployed and updated via Komodo.
+Docker Compose files for each app, managed by [Komodo](https://komo.do). Push to `main` → GitHub Actions → Komodo webhook → stack redeploys.
 
-Ansible handles OS-level provisioning (directories, users, shared services). Komodo handles the container level: pulling images, injecting secrets, and deploying stacks.
+All stacks bind to `127.0.0.1:<port>` (Caddy proxies them) and join `infra_net` to reach shared Postgres and Redis.
 
-## How deployments work
+## Deploying
 
-```mermaid
-flowchart LR
-    Dev["git push to main"]
-    GHA["GitHub Actions\ndeploy-stacks.yml"]
-    Detect["Detect changed\nstacks/ paths"]
-    Webhook["Fire Komodo\nProcedure webhook"]
-    Komodo["Komodo\nPulls repo\nDeploys stack"]
-    Container["Running\ncontainer"]
+**Automatically** — push a change to `stacks/<name>/`. GitHub Actions fires the Komodo procedure for that stack only.
 
-    Dev --> GHA --> Detect --> Webhook --> Komodo --> Container
-```
+**Manually** — Komodo UI → Stacks → select stack → Deploy.
 
-GitHub Actions detects which `stacks/<name>/` directories changed and fires only the matching Komodo procedure webhook(s). Unrelated stacks are not touched.
+## Secrets
 
-## Stacks
+Runtime secrets live in Komodo (Settings → Variables), referenced in `compose.yaml` as `[[SECRET_NAME]]`. They're never in this repo.
 
-| Stack | Domain | Internal port | Image |
-|-------|--------|--------------|-------|
-| `sure` | `sure.fewa.app` | `3000` | Rails app |
-| `gitea` | `git.fewa.app` | `3001` (web), `2223` (SSH) | Gitea |
-| `nocodb` | `nocodb.fewa.app` | `8080` | NocoDB |
-| `databasus` | `backup.fewa.app` | `4005` | Databasus |
-| `n8n` | `n8n.fewa.app` | `5678` | n8n |
+To add one: Komodo → Settings → Variables → New Variable, then reference it in the compose file and redeploy.
 
-All stacks bind to `127.0.0.1:<port>` — never exposed directly to the internet. Caddy reverse-proxies them.
+Stack-specific env vars (not global secrets) go in the Stack's Environment tab in Komodo UI.
 
-All stacks join the `infra_net` Docker network to reach shared Postgres and Redis.
+## n8n gotchas
 
-## Secrets and environment variables
+**Timezone** — use `N8N_TZ`, not `TZ`. Komodo treats `TZ` as reserved and silently drops it.
 
-Runtime secrets come from **Komodo Variables** (Settings → Variables in Komodo UI), not from files on disk. They're injected into `compose.yaml` using the `[[SECRET_NAME]]` syntax.
-
-Variables set in Komodo are never stored in this git repo. They live only in Komodo's database (backed by FerretDB → Postgres).
-
-### How to add a secret
-
-1. Komodo UI → Settings → Variables → New Variable
-2. Set name and value (mark as secret if sensitive)
-3. Reference in `compose.yaml` as `[[VARIABLE_NAME]]`
-4. Redeploy the stack
-
-### Stack-specific environment variables
-
-Some variables are set per-stack in **Komodo Stack Environment** (not global Variables). These appear in the stack's Environment tab in the Komodo UI.
-
-## n8n stack
-
-n8n has a few quirks worth knowing.
-
-### Environment variables
-
-Set these in **Komodo Stack Environment** (not Komodo Variables) for the n8n stack:
-
-| Variable | Example value | Notes |
-|----------|--------------|-------|
-| `N8N_HOST` | `n8n.fewa.app` | Hostname n8n uses in links |
-| `N8N_WEBHOOK_URL` | `https://n8n.fewa.app` | Full URL for webhooks |
-| `N8N_TZ` | `Asia/Kathmandu` | Timezone — see note below |
-
-> Use `N8N_TZ`, not `TZ`. Komodo treats `TZ` as a reserved environment variable and silently drops it, so n8n runs in UTC regardless of what you set. `N8N_TZ` gets through.
-
-### n8n encryption key
-
-`N8N_ENCRYPTION_KEY` must be set in **Komodo Variables** (global, marked as secret):
-
-```
-Name:  N8N_ENCRYPTION_KEY
-Value: <random 32+ character string>
-```
-
-Then referenced in the n8n compose.yaml as `[[N8N_ENCRYPTION_KEY]]`.
-
-**This key is critical.** n8n uses it to encrypt all stored credentials. If the key is lost, every credential in every workflow becomes permanently unrecoverable — you'd have to re-enter them all by hand.
-
-Store it in a password manager in addition to Komodo Variables.
-
-## Setting up a new stack in Komodo
-
-### 1. Create the Stack
-
-Komodo UI → Stacks → New Stack
-
-| Field | Value |
-|-------|-------|
-| Name | `sure` (match directory name) |
-| Git provider | GitHub |
-| Repository | `yourusername/kiran-vm` |
-| Branch | `main` |
-| Compose file path | `stacks/sure/compose.yaml` |
-
-### 2. Add variables to Stack Environment
-
-Set any stack-specific variables (like n8n's `N8N_HOST`) in the Stack's Environment tab.
-
-### 3. Add global secrets to Komodo Variables
-
-Settings → Variables → New Variable for any secrets referenced with `[[SECRET_NAME]]`.
-
-### 4. Create a Procedure
-
-Komodo UI → Procedures → New Procedure
-
-Add two stages:
-
-**Stage 1: Pull repo**
-- Action: `Pull Repo`
-- Target: the stack's linked repo
-
-**Stage 2: Deploy stack**
-- Action: `Deploy Stack`
-- Target: the stack name
-
-Save and copy the webhook URL.
-
-### 5. Add webhook to GitHub
-
-GitHub repo → Settings → Secrets and variables → Actions:
-
-| Secret name | Value |
-|------------|-------|
-| `KOMODO_WEBHOOK_SURE` | Komodo procedure webhook URL |
-| `KOMODO_WEBHOOK_N8N` | Komodo procedure webhook URL for n8n |
-| etc. | |
-
-### 6. Update GitHub Actions workflow
-
-In `.github/workflows/deploy-stacks.yml`, add a detection rule for the new stack path and fire the new webhook.
-
-## Docker network
-
-All stacks connect to `infra_net`, created by the `infra` Ansible role. It's declared as external in each `compose.yaml`:
-
-```yaml
-networks:
-  infra_net:
-    external: true
-```
-
-This lets app containers reach Postgres at `shared-postgres:5432` and Redis at `shared-redis:6379` by container name.
+**Encryption key** — `N8N_ENCRYPTION_KEY` must be set in Komodo Variables. If this key is ever lost, all stored n8n credentials are permanently unrecoverable. Keep a copy in a password manager.
 
 ## Adding a new stack
 
-1. Create `stacks/<name>/compose.yaml`:
-   - Bind to `127.0.0.1:<port>` (choose an unused port)
-   - Join `infra_net` if it needs Postgres/Redis
-   - Reference secrets as `[[SECRET_NAME]]`
-
-2. Add Caddy vhost in `ansible/roles/caddy/templates/Caddyfile.j2`:
-   ```
-   <name>.fewa.app {
-     reverse_proxy 127.0.0.1:<port>
-   }
-   ```
-
-3. Re-run Ansible caddy role: `--tags caddy`
-
-4. In Komodo: create Stack + Procedure, copy webhook URL
-
-5. Add `KOMODO_WEBHOOK_<NAME>` secret to GitHub
-
-6. Update `.github/workflows/deploy-stacks.yml` to include the new stack path
+1. `stacks/<name>/compose.yaml` — bind to `127.0.0.1:<port>`, join `infra_net`, use `[[SECRET]]` for secrets
+2. Add a vhost to `ansible/roles/caddy/templates/Caddyfile.j2`, run `--tags caddy`
+3. Komodo: create Stack + Procedure, copy webhook URL
+4. GitHub: add `KOMODO_WEBHOOK_<NAME>` secret
+5. `.github/workflows/deploy-stacks.yml`: add path filter for the new stack
 
 ## Troubleshooting
 
-**Stack shows as failed in Komodo**
-Check container logs in Komodo UI (Stacks → stack name → Logs), or on the server:
-```bash
-docker logs <container-name>
-```
+**502 Bad Gateway** — container isn't running. Check `docker logs <container>` or Komodo → Stacks → Logs.
 
-**`[[SECRET_NAME]]` shows literally in the container**
-The variable must exist in Komodo Variables with the exact name referenced. Check Settings → Variables for typos.
+**`[[SECRET]]` shows literally** — variable name doesn't exist in Komodo Variables. Check for typos.
 
-**n8n workflows run at wrong time (UTC instead of local)**
-Make sure `N8N_TZ` (not `TZ`) is set in the n8n Stack Environment. Komodo silently drops `TZ`.
+**Can't reach Postgres** — verify the container is on `infra_net`: `docker network inspect infra_net`. Check `compose.yaml` declares it as external. Use the actual container name (`docker ps | grep postgres`) not an assumed hostname.
 
-**Container can't reach Postgres**
-Verify the container is on `infra_net`:
-```bash
-docker network inspect infra_net
-```
-Also check that the `networks` block in `compose.yaml` declares `infra_net` as external.
-
-**Webhook not firing**
-Check GitHub Actions logs. Verify the `KOMODO_WEBHOOK_*` secret is set and the path filter in `deploy-stacks.yml` matches the changed file.
+**Webhook not firing** — check GitHub Actions logs and verify the path filter in `deploy-stacks.yml` matches the changed file.
