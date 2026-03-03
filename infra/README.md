@@ -2,7 +2,7 @@
 
 Pulumi TypeScript program that provisions an Oracle Cloud **Always Free** ARM VM — VCN, subnet, security list, internet gateway, and a `VM.Standard.A1.Flex` compute instance (4 OCPU, 24 GB RAM, 200 GB boot volume).
 
-Portable by design: change a handful of config values to provision for a completely different project or OCI account.
+Change a handful of config values to reuse this for a different project or OCI account.
 
 ## Architecture
 
@@ -34,18 +34,15 @@ flowchart TD
 
 ## State backend
 
-This project uses a **local file backend** — Pulumi state is stored on your machine, not in Pulumi Cloud.
+This project uses a **local file backend** — Pulumi state lives on your machine, not in Pulumi Cloud.
 
 State location: `~/.pulumi/stacks/kiran-vm-infra/prod.json`
 
-This means:
-- No Pulumi Cloud account required
-- State is not synced automatically — back up `~/.pulumi/` if needed
-- You must be on the same machine (or copy state) to run `pulumi up`/`pulumi destroy`
+No Pulumi Cloud account is required, but state isn't synced anywhere automatically. Back up `~/.pulumi/` if you care about it. You also need to be on the same machine (or copy the state file) to run `pulumi up` or `pulumi destroy`.
 
 ## Passphrase setup
 
-Secrets in `Pulumi.prod.yaml` are encrypted with a passphrase. Rather than typing it every time, store it in a file and point Pulumi at it.
+Secrets in `Pulumi.prod.yaml` are encrypted with a passphrase. Store it in a file so you don't have to type it on every command.
 
 ```bash
 # Create the passphrase file (one-time)
@@ -57,9 +54,9 @@ echo 'export PULUMI_CONFIG_PASSPHRASE_FILE=$HOME/.pulumi-passphrase' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-With `PULUMI_CONFIG_PASSPHRASE_FILE` set, `pulumi up` / `pulumi preview` / `pulumi stack output` work without any passphrase prompts.
+With `PULUMI_CONFIG_PASSPHRASE_FILE` set, `pulumi up`, `pulumi preview`, and `pulumi stack output` work without any prompts.
 
-> **Never commit the passphrase file.** It's not in the repo — keep it only on your local machine.
+> **Don't commit the passphrase file.** It's not in the repo — keep it only on your local machine.
 
 ## First-time setup
 
@@ -97,7 +94,7 @@ pulumi config set imageOcid ocid1.image.oc1.ap-melbourne-1.aaaaaaaawr3xahtf7zbw6
 pulumi up
 ```
 
-Pulumi will print the public IP and SSH command on success:
+Pulumi prints the public IP and SSH command on success:
 
 ```
 Outputs:
@@ -105,7 +102,7 @@ Outputs:
   sshCommand : "ssh -p 2222 deploy@207.211.156.85"
 ```
 
-Copy `publicIp` into `ansible/inventory/hosts.ini` and run Ansible to complete provisioning.
+Copy `publicIp` into `ansible/inventory/hosts.ini` and run Ansible to finish provisioning.
 
 ## Existing prod stack
 
@@ -128,11 +125,9 @@ pulumi stack output
 
 ## Using for a different project
 
-To provision a fresh VM for another product:
-
 1. `pulumi stack init <newproject>`
-2. Set all config values above (different tenancy, region, or just a new stack)
-3. Change `projectName` if you want different OCI resource name prefixes:
+2. Set all config values above (different tenancy, region, or just a new stack name)
+3. Change `projectName` for different OCI resource name prefixes:
    ```bash
    pulumi config set projectName my-other-project
    ```

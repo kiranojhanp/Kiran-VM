@@ -1,6 +1,6 @@
 # ansible/
 
-Ansible playbook that fully provisions the server after Pulumi has created the VM. Installs and configures everything: Docker, shared Postgres + Redis, Komodo, Caddy, and scaffolding for each application.
+Ansible playbook that provisions the server after Pulumi has created the VM. Installs and configures Docker, shared Postgres + Redis, Komodo, Caddy, and scaffolding for each application.
 
 ## What it does
 
@@ -89,14 +89,14 @@ ansible-playbook site.yml \
 
 ### group_vars/all.yml (non-secret)
 
-These can be committed. Edit to change domain, timezone, ports, or other non-sensitive settings.
+Safe to commit. Edit to change domain, timezone, ports, or other non-sensitive settings.
 
 | Variable | Value | Description |
 |----------|-------|-------------|
 | `domain` | `fewa.app` | Base domain for all subdomains |
 | `timezone` | `Asia/Kathmandu` | Server and app timezone |
 | `deploy_user` | `deploy` | Non-root user for SSH and app ownership |
-| `ssh_port` | `2222` | SSH port (hardened away from 22) |
+| `ssh_port` | `2222` | SSH port (moved away from 22) |
 | `caddy_port_http` | `80` | Caddy HTTP port |
 | `caddy_port_https` | `443` | Caddy HTTPS port |
 | `shared_postgres_host` | `127.0.0.1` | Postgres bind address |
@@ -113,7 +113,7 @@ These can be committed. Edit to change domain, timezone, ports, or other non-sen
 
 ### secrets.yml (gitignored)
 
-Copy from `secrets.yml.example` and fill in all values. Never commit this file.
+Copy from `secrets.yml.example` and fill in all values. Don't commit this file.
 
 | Variable | Description |
 |----------|-------------|
@@ -149,10 +149,7 @@ Copy from `inventory/hosts.ini.example` and replace the IP with the VM's public 
 
 ## Caddy and TLS
 
-Caddy is built from source using [xcaddy](https://github.com/caddyserver/xcaddy) with the Cloudflare DNS plugin. This enables **DNS-01 ACME challenges**, which:
-- Does not require port 80 to be reachable
-- Works for wildcard certificates
-- Uses the `cloudflare_api_token` secret
+Caddy is built from source using [xcaddy](https://github.com/caddyserver/xcaddy) with the Cloudflare DNS plugin. This enables **DNS-01 ACME challenges**, which don't require port 80 to be reachable and work for wildcard certificates. The `cloudflare_api_token` secret is used for DNS validation.
 
 The Caddyfile is rendered from `roles/caddy/templates/Caddyfile.j2`. All domains and ports come from `group_vars/all.yml`. Security headers and gzip compression are applied globally.
 
@@ -162,7 +159,7 @@ To update routing (e.g. add a new app), edit `Caddyfile.j2` and re-run with `--t
 
 All apps share a single Postgres 16 container. Each app gets its own database and user, created by `roles/infra/templates/init.sql.j2` on first run.
 
-If you need to create a new app's database manually:
+To create a new app's database manually:
 
 ```bash
 ssh -p 2222 deploy@207.211.156.85
@@ -173,9 +170,7 @@ CREATE DATABASE myapp OWNER myapp;
 
 ## Komodo and FerretDB
 
-Komodo needs MongoDB for its database. Rather than running MongoDB (not available on ARM without some workarounds), this setup uses **FerretDB** — a MongoDB-compatible API adapter that stores data in Postgres using the `postgres-documentdb` extension.
-
-FerretDB is invisible to Komodo; Komodo sees a standard MongoDB connection string. No extra configuration needed.
+Komodo requires MongoDB. Rather than running MongoDB (which has ARM complications), this setup uses **FerretDB** — a MongoDB-compatible API adapter backed by the `postgres-documentdb` extension. Komodo sees a standard MongoDB connection string and has no idea FerretDB is involved.
 
 ## Adding a new app
 
@@ -184,21 +179,19 @@ FerretDB is invisible to Komodo; Komodo sees a standard MongoDB connection strin
 3. Add any non-secret variables to `group_vars/all.yml`
 4. Add a vhost block to `roles/caddy/templates/Caddyfile.j2`
 5. If using Postgres: add `CREATE USER` / `CREATE DATABASE` to `roles/infra/templates/init.sql.j2`
-6. Add the role to `site.yml` (in the right order — before `caddy`)
+6. Add the role to `site.yml` (before `caddy` in the order)
 7. Run: `ansible-playbook site.yml --extra-vars "@secrets.yml" --extra-vars "ansible_become_password={{ deploy_password }}" --tags "infra,caddy,<name>"`
 
 ## Troubleshooting
 
 **"Permission denied" on first run**
-On first run, Ansible connects as the OCI default user (`ubuntu`) before the `deploy` user exists. Pass `-u ubuntu` for the `common` role, then use `deploy` after.
-
-Actually, the playbook handles this automatically — if `deploy` user doesn't exist yet, the `common` role creates it. Run the full playbook as-is.
+The playbook handles this automatically — the `common` role creates the `deploy` user if it doesn't exist yet. Run the full playbook as-is.
 
 **SSH connection refused on port 2222**
-The server's SSH is on port 2222 (moved by the `common` role). If you're connecting before Ansible runs, use port 22. After `common` runs, use port 2222.
+SSH is on port 2222 after the `common` role runs. Before that, use port 22. After, use 2222.
 
-**Caddy fails to get certificate**
-Check the `cloudflare_api_token` has `Zone:DNS:Edit` permission. Check the Caddy service logs: `sudo journalctl -u caddy -f`
+**Caddy fails to get a certificate**
+Check that `cloudflare_api_token` has `Zone:DNS:Edit` permission. Check Caddy service logs: `sudo journalctl -u caddy -f`
 
 **Komodo UI unreachable**
-Check that Komodo is running: `docker ps | grep komodo`. Check Caddy is proxying: `sudo caddy validate --config /etc/caddy/Caddyfile`
+Check Komodo is running: `docker ps | grep komodo`. Check Caddy is proxying correctly: `sudo caddy validate --config /etc/caddy/Caddyfile`

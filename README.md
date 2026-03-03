@@ -1,14 +1,14 @@
 # kiran-vm
 
-Production server infrastructure for `fewa.app` — a fully self-hosted stack running on an Oracle Cloud Always Free ARM VM.
+Production server infrastructure for `fewa.app` — a self-hosted stack running on an Oracle Cloud Always Free ARM VM.
 
-This repo covers the entire lifecycle from cloud resource provisioning to running applications:
+This repo covers the full lifecycle from cloud resource provisioning to running applications:
 
 ```
 Pulumi (OCI VM) → Ansible (server hardening + services) → Komodo (app deployments) → Stacks (Docker Compose apps)
 ```
 
-See the sub-directory READMEs for deep dives:
+Sub-directory READMEs go deeper on each layer:
 - [`infra/`](./infra/README.md) — Pulumi OCI provisioning
 - [`ansible/`](./ansible/README.md) — Ansible server provisioning
 - [`stacks/`](./stacks/README.md) — Komodo-managed Docker Compose stacks
@@ -61,7 +61,7 @@ flowchart TD
 
 ### Domain routing
 
-All traffic enters on ports 80/443. Caddy handles TLS (Let's Encrypt via Cloudflare DNS-01) and proxies to internal services:
+All traffic enters on ports 80/443. Caddy handles TLS via Cloudflare DNS-01 and proxies to internal services:
 
 | Domain | Internal address | Service |
 |--------|-----------------|---------|
@@ -119,9 +119,9 @@ kiran-vm/
 
 ---
 
-## End-to-end deployment: new server from scratch
+## New server from scratch
 
-This is the complete sequence for going from zero to a fully running server. Follow these steps in order.
+The complete sequence for going from zero to a running server. Follow these steps in order.
 
 ```mermaid
 flowchart LR
@@ -165,15 +165,13 @@ ansible-playbook site.yml \
   --extra-vars "ansible_become_password={{ deploy_password }}"
 ```
 
-This installs and configures: Docker, shared Postgres + Redis, Komodo, Caddy, and all app scaffolding.
+This installs Docker, shared Postgres + Redis, Komodo, Caddy, and all app scaffolding.
 
 ### Step 3 — Configure Komodo
 
-Komodo is now running at `https://komodo.fewa.app`. Log in with the credentials set in `secrets.yml` (`komodo_password`).
+Komodo runs at `https://komodo.fewa.app`. Log in with the `komodo_password` from `secrets.yml`.
 
-**Add global secrets** (Settings → Variables):
-
-These are referenced in Stack environments as `[[SECRET_NAME]]`.
+**Add global secrets** (Settings → Variables). These are referenced in Stack environments as `[[SECRET_NAME]]`:
 
 | Variable name | What it is |
 |--------------|-----------|
@@ -194,19 +192,19 @@ These are referenced in Stack environments as `[[SECRET_NAME]]`.
 
 1. Komodo → Stacks → New Stack
 2. Name: `sure` (or `gitea`, `nocodb`, etc.)
-3. Set Git repo: this repo, path `stacks/<name>/compose.yaml`
-4. Set Stack Environment for any variables not in Komodo Variables (see [`stacks/README.md`](./stacks/README.md))
-5. Deploy the stack manually once to verify it works
+3. Git repo: this repo, path `stacks/<name>/compose.yaml`
+4. Stack Environment: any variables not in Komodo Variables (see [`stacks/README.md`](./stacks/README.md))
+5. Deploy once manually to verify it works
 
 **Create a Procedure** for each stack:
 
 1. Komodo → Procedures → New Procedure
-2. Add two stages: `Pull Repo` (pulls this git repo) + `Deploy Stack` (deploys the stack)
-3. Copy the webhook URL — you'll need it in Step 4
+2. Add two stages: `Pull Repo` + `Deploy Stack`
+3. Copy the webhook URL — needed in Step 4
 
 ### Step 4 — Add webhook secrets to GitHub
 
-In this repo's GitHub settings → Secrets:
+GitHub repo → Settings → Secrets → Actions:
 
 | Secret name | Value |
 |------------|-------|
@@ -218,7 +216,7 @@ In this repo's GitHub settings → Secrets:
 
 ### Step 5 — Push to deploy
 
-From this point on, any push to `main` that touches `stacks/<name>/` will automatically:
+Any push to `main` that touches `stacks/<name>/` will:
 1. Trigger GitHub Actions (`.github/workflows/deploy-stacks.yml`)
 2. Detect which stack(s) changed
 3. Fire the matching Komodo procedure webhook
@@ -230,9 +228,9 @@ From this point on, any push to `main` that touches `stacks/<name>/` will automa
 
 ### Redeploy a specific app
 
-Push a change to `stacks/<name>/compose.yaml` — GitHub Actions handles the rest.
+Push a change to `stacks/<name>/compose.yaml`. GitHub Actions handles the rest.
 
-Or manually in Komodo UI: Stacks → select stack → Deploy.
+Or manually: Komodo UI → Stacks → select stack → Deploy.
 
 ### Run a specific Ansible role
 
@@ -257,36 +255,34 @@ ssh -p 2222 deploy@207.211.156.85
 1. Create `stacks/<name>/compose.yaml` — use the `infra_net` external network, bind port to `127.0.0.1:<port>`
 2. Add a Caddy vhost in `ansible/roles/caddy/templates/Caddyfile.j2`
 3. If it needs Postgres: add a user + DB to `ansible/roles/infra/templates/init.sql.j2`
-4. Add an Ansible role in `ansible/roles/<name>/` with at minimum a tasks/main.yml
+4. Add an Ansible role in `ansible/roles/<name>/` with at minimum a `tasks/main.yml`
 5. Add the role to `ansible/site.yml`
 6. Run Ansible: `--tags infra,caddy,<name>`
 7. In Komodo: create Stack + Procedure, copy webhook URL
 8. Add `KOMODO_WEBHOOK_<NAME>` secret to GitHub
-9. Add filter entry to `.github/workflows/deploy-stacks.yml`
+9. Add a filter entry to `.github/workflows/deploy-stacks.yml`
 
 ---
 
-## Secrets management
+## Secrets
 
-Two categories of secrets:
+Two categories:
 
-**Ansible secrets** (`ansible/secrets.yml`, gitignored):
-Used during provisioning only. Never leave the local machine. Copy from `secrets.yml.example` and fill in.
+**Ansible secrets** (`ansible/secrets.yml`, gitignored) — used during provisioning only, never leave the local machine. Copy from `secrets.yml.example` and fill in.
 
-**Runtime secrets** (Komodo → Settings → Variables):
-Used by running containers. Referenced in `compose.yaml` as `[[SECRET_NAME]]`. Never committed to git.
+**Runtime secrets** (Komodo → Settings → Variables) — used by running containers, referenced in `compose.yaml` as `[[SECRET_NAME]]`, never committed to git.
 
-**n8n encryption key** — special case. If this key is lost, all n8n credential data becomes unrecoverable. Store it somewhere safe (password manager) in addition to Komodo Variables.
+**n8n encryption key** — special case. If this key is lost, all n8n credential data is permanently unrecoverable. Store it in a password manager in addition to Komodo Variables.
 
 ---
 
-## Portability
+## Reusing for a different project
 
-This repo is parameterised for reuse. To provision for a different project:
+To provision for a different project:
 
-1. In `infra/`: `pulumi stack init <newname>`, set config for new OCI tenancy/region
+1. In `infra/`: `pulumi stack init <newname>`, set config for the new OCI tenancy/region
 2. In `ansible/group_vars/all.yml`: change `domain` and `timezone`
 3. Create fresh `ansible/secrets.yml` and `ansible/inventory/hosts.ini`
 4. Run Pulumi + Ansible + Komodo setup as above
 
-The only thing tied to `fewa.app` is the Caddyfile template and `group_vars/all.yml`. Everything else is generic.
+The only files tied to `fewa.app` are the Caddyfile template and `group_vars/all.yml`. Everything else is generic.

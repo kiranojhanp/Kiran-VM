@@ -2,7 +2,7 @@
 
 Docker Compose files for all applications, managed by [Komodo](https://komo.do). Each subdirectory is an independent stack deployed and updated via Komodo.
 
-Ansible handles OS-level provisioning (directories, users, shared services). Komodo handles everything at the container level: pulling images, injecting secrets, and deploying stacks.
+Ansible handles OS-level provisioning (directories, users, shared services). Komodo handles the container level: pulling images, injecting secrets, and deploying stacks.
 
 ## How deployments work
 
@@ -36,9 +36,9 @@ All stacks join the `infra_net` Docker network to reach shared Postgres and Redi
 
 ## Secrets and environment variables
 
-Runtime secrets come from **Komodo Variables** (Settings → Variables in Komodo UI), not from files or environment. They are injected into `compose.yaml` using the `[[SECRET_NAME]]` syntax.
+Runtime secrets come from **Komodo Variables** (Settings → Variables in Komodo UI), not from files on disk. They're injected into `compose.yaml` using the `[[SECRET_NAME]]` syntax.
 
-> Variables set in Komodo are never stored in this git repo. They live only in Komodo's database (backed by FerretDB → Postgres).
+Variables set in Komodo are never stored in this git repo. They live only in Komodo's database (backed by FerretDB → Postgres).
 
 ### How to add a secret
 
@@ -49,27 +49,23 @@ Runtime secrets come from **Komodo Variables** (Settings → Variables in Komodo
 
 ### Stack-specific environment variables
 
-Some variables are set per-stack in **Komodo Stack Environment** (not global Variables). These appear directly in the stack's Environment tab in the Komodo UI.
+Some variables are set per-stack in **Komodo Stack Environment** (not global Variables). These appear in the stack's Environment tab in the Komodo UI.
 
 ## n8n stack
 
-n8n has a few special considerations.
-
-### Compose file: `stacks/n8n/compose.yaml`
-
-Uses the `infra_net` network to reach Postgres. Postgres credentials come from Komodo Variables.
+n8n has a few quirks worth knowing.
 
 ### Environment variables
 
-These must be set in **Komodo Stack Environment** (not Komodo Variables) for the n8n stack:
+Set these in **Komodo Stack Environment** (not Komodo Variables) for the n8n stack:
 
 | Variable | Example value | Notes |
 |----------|--------------|-------|
 | `N8N_HOST` | `n8n.fewa.app` | Hostname n8n uses in links |
 | `N8N_WEBHOOK_URL` | `https://n8n.fewa.app` | Full URL for webhooks |
-| `N8N_TZ` | `Asia/Kathmandu` | Timezone (renamed from `TZ` — Komodo blocks `TZ` as a reserved name) |
+| `N8N_TZ` | `Asia/Kathmandu` | Timezone — see note below |
 
-> **Important**: Use `N8N_TZ`, not `TZ`. Komodo treats `TZ` as a reserved environment variable and silently ignores it, causing n8n to run in UTC regardless of the value.
+> Use `N8N_TZ`, not `TZ`. Komodo treats `TZ` as a reserved environment variable and silently drops it, so n8n runs in UTC regardless of what you set. `N8N_TZ` gets through.
 
 ### n8n encryption key
 
@@ -82,11 +78,9 @@ Value: <random 32+ character string>
 
 Then referenced in the n8n compose.yaml as `[[N8N_ENCRYPTION_KEY]]`.
 
-**This key is critical.** n8n uses it to encrypt all stored credentials (API keys, passwords, etc.). If the key is lost:
-- All stored n8n credentials become permanently unrecoverable
-- You would need to re-enter every credential in every workflow
+**This key is critical.** n8n uses it to encrypt all stored credentials. If the key is lost, every credential in every workflow becomes permanently unrecoverable — you'd have to re-enter them all by hand.
 
-**Store it in a password manager** in addition to Komodo Variables.
+Store it in a password manager in addition to Komodo Variables.
 
 ## Setting up a new stack in Komodo
 
@@ -142,7 +136,7 @@ In `.github/workflows/deploy-stacks.yml`, add a detection rule for the new stack
 
 ## Docker network
 
-All stacks connect to `infra_net`, which is created by the `infra` Ansible role (shared Postgres + Redis container). It is defined as external in each `compose.yaml`:
+All stacks connect to `infra_net`, created by the `infra` Ansible role. It's declared as external in each `compose.yaml`:
 
 ```yaml
 networks:
@@ -182,18 +176,18 @@ Check container logs in Komodo UI (Stacks → stack name → Logs), or on the se
 docker logs <container-name>
 ```
 
-**`[[SECRET_NAME]]` not substituted / shows literally**
-The variable name must exist in Komodo Variables exactly as referenced. Check Settings → Variables for typos.
+**`[[SECRET_NAME]]` shows literally in the container**
+The variable must exist in Komodo Variables with the exact name referenced. Check Settings → Variables for typos.
 
-**n8n workflows run at wrong time (UTC instead of local timezone)**
-Ensure `N8N_TZ` (not `TZ`) is set in the n8n Stack Environment. Komodo silently ignores `TZ`.
+**n8n workflows run at wrong time (UTC instead of local)**
+Make sure `N8N_TZ` (not `TZ`) is set in the n8n Stack Environment. Komodo silently drops `TZ`.
 
 **Container can't reach Postgres**
 Verify the container is on `infra_net`:
 ```bash
 docker network inspect infra_net
 ```
-Verify the `networks` block in `compose.yaml` declares `infra_net` as external.
+Also check that the `networks` block in `compose.yaml` declares `infra_net` as external.
 
 **Webhook not firing**
 Check GitHub Actions logs. Verify the `KOMODO_WEBHOOK_*` secret is set and the path filter in `deploy-stacks.yml` matches the changed file.
