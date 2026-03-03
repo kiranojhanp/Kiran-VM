@@ -19,7 +19,7 @@ jobs:
         run: |
           changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- stacks/)
           echo "Changed files: $changed"
-          for stack in sure nocodb databasus gitea; do
+          for stack in sure nocodb databasus gitea n8n; do
             if echo "$changed" | grep -q "^stacks/$stack/"; then
               echo "${stack}=true" >> $GITHUB_OUTPUT
             else
@@ -74,6 +74,20 @@ jobs:
         env:
           WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
           WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_GITEA }}
+        run: |
+          body='{"ref":"refs/heads/main","repository":{"full_name":"${{ github.repository }}"}}'
+          sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
+          curl -sf -X POST \
+            -H "X-GitHub-Event: push" \
+            -H "Content-Type: application/json" \
+            -H "X-Hub-Signature-256: $sig" \
+            -d "$body" "$WEBHOOK_URL" && echo "OK" || echo "FAILED (HTTP error)"
+
+      - name: Deploy n8n
+        if: steps.changes.outputs.n8n == 'true'
+        env:
+          WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
+          WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_N8N }}
         run: |
           body='{"ref":"refs/heads/main","repository":{"full_name":"${{ github.repository }}"}}'
           sig="sha256=$(echo -n "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
