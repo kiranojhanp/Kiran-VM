@@ -1,35 +1,48 @@
 name: Deploy stacks on change
 
+# Triggered on pushes to main that touch any stack.
+# - "detect" job figures out which stacks changed using paths-filter.
+# - "deploy" job fans out one parallel job per changed stack via matrix.
+#
+# Adding a new stack:
+#   1. Add a filter entry below (stack-name → stacks/<name>/**)
+#   2. Add a GitHub secret: KOMODO_WEBHOOK_<NAME_UPPERCASED>
+
 on:
   push:
     branches: [main]
     paths:
       - "stacks/**"
 
+# ── Jobs ──────────────────────────────────────────────────────────────────────
+
 jobs:
+
+  # Detect which stacks have changed files and output them as a JSON array
+  # that the deploy matrix will consume.
   detect:
+    name: Detect changed stacks
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dorny/paths-filter@v3
+      - name: Find changed stacks
+        uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
-            sure:
-              - "stacks/sure/**"
-            nocodb:
-              - "stacks/nocodb/**"
-            databasus:
-              - "stacks/databasus/**"
-            gitea:
-              - "stacks/gitea/**"
-            n8n:
-              - "stacks/n8n/**"
+            sure:       ["stacks/sure/**"]
+            nocodb:     ["stacks/nocodb/**"]
+            databasus:  ["stacks/databasus/**"]
+            gitea:      ["stacks/gitea/**"]
+            n8n:        ["stacks/n8n/**"]
 
+  # Deploy each changed stack in parallel via Komodo procedure webhooks.
+  # Webhook URL is looked up from secrets as KOMODO_WEBHOOK_<STACK_UPPERCASED>.
   deploy:
+    name: Deploy ${{ matrix.stack }}
     needs: detect
     if: needs.detect.outputs.matrix != '[]'
     runs-on: ubuntu-latest
@@ -37,7 +50,7 @@ jobs:
       matrix:
         stack: ${{ fromJson(needs.detect.outputs.matrix) }}
     steps:
-      - name: Deploy ${{ matrix.stack }}
+      - name: Trigger Komodo procedure
         uses: distributhor/workflow-webhook@v3
         with:
           webhook_url: ${{ secrets[format('KOMODO_WEBHOOK_{0}', upper(matrix.stack))] }}
