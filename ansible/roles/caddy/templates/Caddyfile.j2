@@ -134,6 +134,28 @@
   reverse_proxy 127.0.0.1:{{ n8n_port }}
 }
 
+# Open WebUI — AI chat interface
+{{ openwebui_subdomain }} {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+
+  encode gzip
+
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  }
+
+  log {
+    output file /var/log/caddy/openwebui-access.log
+  }
+
+  reverse_proxy 127.0.0.1:{{ openwebui_port }}
+}
+
 # Root domain — coming soon page
 {{ domain }} {
   tls {

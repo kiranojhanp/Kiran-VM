@@ -1,0 +1,24 @@
+services:
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3002:8080"
+    volumes:
+      - /opt/openwebui/data:/app/backend/data
+    environment:
+      # Database
+      DATABASE_URL: "postgresql://openwebui:[[SHARED_POSTGRES_OPENWEBUI_PASSWORD]]@infra-postgres-1:5432/openwebui"
+      # Security
+      WEBUI_SECRET_KEY: "[[OPENWEBUI_SECRET_KEY]]"
+      # Disable Ollama (external APIs only)
+      ENABLE_OLLAMA_API: "false"
+      # Public URL
+      WEBUI_URL: "https://${OPENWEBUI_SUBDOMAIN}"
+    networks:
+      - infra_net
+    mem_limit: 1g
+
+networks:
+  infra_net:
+    external: true

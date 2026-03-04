@@ -113,6 +113,7 @@ cat ~/.ssh/id_ed25519.pub # for deploy_ssh_public_key
 | `shared_postgres_gitea_password` | `openssl rand -hex 32` |
 | `shared_postgres_nocodb_password` | `openssl rand -hex 32` |
 | `shared_postgres_n8n_password` | `openssl rand -hex 32` |
+| `shared_postgres_openwebui_password` | `openssl rand -hex 32` |
 | `gitea_secret_key` | `openssl rand -hex 32` |
 | `sure_secret_key_base` | `openssl rand -hex 64` |
 | `openai_access_token` | from OpenAI dashboard |
@@ -181,6 +182,7 @@ To re-run a single role after changes: `--tags caddy` (or any role name)
 | `https://nocodb.yourdomain.com` | NocoDB |
 | `https://backup.yourdomain.com` | Databasus |
 | `https://n8n.yourdomain.com` | n8n |
+| `https://chat.yourdomain.com` | Open WebUI |
 
 ---
 
@@ -208,10 +210,12 @@ Settings → Variables → New Variable. These are injected into compose files a
 | `R2_ACCESS_KEY_ID` | value of `r2_access_key_id` |
 | `R2_SECRET_ACCESS_KEY` | value of `r2_secret_access_key` |
 | `N8N_ENCRYPTION_KEY` | generate: `openssl rand -hex 32` — **store in password manager, never lose this** |
+| `SHARED_POSTGRES_OPENWEBUI_PASSWORD` | value of `shared_postgres_openwebui_password` |
+| `OPENWEBUI_SECRET_KEY` | generate: `openssl rand -hex 32` |
 
 ### 6b — Create a Stack for each app
 
-Repeat for: `sure`, `gitea`, `nocodb`, `databasus`, `n8n`
+Repeat for: `sure`, `gitea`, `nocodb`, `databasus`, `n8n`, `openwebui`
 
 1. Komodo → Stacks → New Stack
 2. Name: `sure` (match the directory name exactly)
@@ -228,6 +232,12 @@ Repeat for: `sure`, `gitea`, `nocodb`, `databasus`, `n8n`
 | `N8N_TZ` | your timezone (e.g. `Asia/Kathmandu`) |
 
 > Do NOT use `TZ` — Komodo silently drops it. Use `N8N_TZ` (maps to `GENERIC_TIMEZONE` inside n8n).
+
+**For the openwebui stack**, add this in the Stack's Environment tab:
+
+| Variable | Value |
+|----------|-------|
+| `OPENWEBUI_SUBDOMAIN` | `chat.fewa.app` |
 
 ### 6c — Create a Procedure for each app
 
@@ -250,6 +260,7 @@ In this GitHub repo → Settings → Secrets → Actions, add one secret per app
 | `KOMODO_WEBHOOK_NOCODB` | webhook URL from the nocodb procedure |
 | `KOMODO_WEBHOOK_DATABASUS` | webhook URL from the databasus procedure |
 | `KOMODO_WEBHOOK_N8N` | webhook URL from the n8n procedure |
+| `KOMODO_WEBHOOK_OPENWEBUI` | webhook URL from the openwebui procedure |
 | `KOMODO_WEBHOOK_SECRET` | value of `komodo_webhook_secret` from `secrets.yml` |
 
 ---

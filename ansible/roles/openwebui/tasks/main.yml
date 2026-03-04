@@ -1,0 +1,14 @@
+---
+# Compose lifecycle managed by Komodo.
+# Ansible pre-creates data dir with correct ownership.
+- name: Create Open WebUI data directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0750"
+  become: true
+  loop:
+    - "{{ openwebui_dir }}"
+    - "{{ openwebui_dir }}/data"
