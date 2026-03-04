@@ -8,7 +8,7 @@ services:
       - /opt/openwebui/data:/app/backend/data
     environment:
       # Database
-      DATABASE_URL: "postgresql://openwebui:[[SHARED_POSTGRES_OPENWEBUI_PASSWORD]]@infra-postgres-1:5432/openwebui"
+      DATABASE_URL: "postgresql://openwebui:[[SHARED_POSTGRES_OPENWEBUI_PASSWORD]]@postgres:5432/openwebui"
       # Security
       WEBUI_SECRET_KEY: "[[OPENWEBUI_SECRET_KEY]]"
       # Disable Ollama (external APIs only)
