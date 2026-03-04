@@ -1,3 +1,13 @@
+# Open WebUI — AI chat interface
+# Managed by Komodo (git-backed) — edit this file and push to redeploy.
+#
+# Stack Environment vars expected (set in Komodo Stack Config):
+#   Non-secret:
+#     OPENWEBUI_SUBDOMAIN=chat.fewa.app
+#   Secret (Komodo Variables → [[VAR_NAME]]):
+#     DATABASE_PASSWORD=[[SHARED_POSTGRES_OPENWEBUI_PASSWORD]]
+#     WEBUI_SECRET_KEY=[[OPENWEBUI_SECRET_KEY]]
+
 services:
   openwebui:
     image: ghcr.io/open-webui/open-webui:main
@@ -7,15 +17,9 @@ services:
     volumes:
       - /opt/openwebui/data:/app/backend/data
     environment:
-      # Database
-      DATABASE_URL: "postgresql://openwebui:[[SHARED_POSTGRES_OPENWEBUI_PASSWORD]]@infra-postgres-1:5432/openwebui"
-      # Skip peewee migration — its URL parser breaks on hyphenated hostnames
-      ENABLE_DB_MIGRATIONS: "false"
-      # Security
-      WEBUI_SECRET_KEY: "[[OPENWEBUI_SECRET_KEY]]"
-      # Disable Ollama (external APIs only)
+      DATABASE_URL: "postgresql://openwebui:${DATABASE_PASSWORD}@infra-postgres-1:5432/openwebui"
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
       ENABLE_OLLAMA_API: "false"
-      # Public URL
       WEBUI_URL: "https://${OPENWEBUI_SUBDOMAIN}"
     networks:
       - infra_net
