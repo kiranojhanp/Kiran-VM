@@ -1,9 +1,10 @@
-# Open WebUI — AI chat interface
+# Open WebUI — AI chat interface + Open Terminal
 # Managed by Komodo (git-backed) — edit this file and push to redeploy.
 # Secrets are written to the stack .env by Ansible (ansible/roles/openwebui).
 #
 # Required .env vars (written by Ansible from secrets.yml):
 #   DATABASE_URL, WEBUI_SECRET_KEY, WEBUI_URL, ENABLE_OLLAMA_API
+#   OPEN_TERMINAL_API_KEY
 
 services:
   openwebui:
@@ -22,6 +23,22 @@ services:
     networks:
       - infra_net
     mem_limit: 1g
+    depends_on:
+      - open-terminal
+
+  open-terminal:
+    image: ghcr.io/open-webui/open-terminal:main
+    restart: unless-stopped
+    volumes:
+      - open-terminal-home:/home/user
+    environment:
+      OPEN_TERMINAL_API_KEY: ${OPEN_TERMINAL_API_KEY}
+    networks:
+      - infra_net
+    mem_limit: 512m
+
+volumes:
+  open-terminal-home:
 
 networks:
   infra_net:
