@@ -1,7 +1,7 @@
 ---
 # Compose lifecycle managed by Komodo.
-# Ansible pre-creates data dir and writes the .env file with secrets.
-- name: Create Open WebUI directories
+# Ansible pre-creates data dir with correct ownership.
+- name: Create Open WebUI data directory
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -12,12 +12,3 @@
   loop:
     - "{{ openwebui_dir }}"
     - "{{ openwebui_dir }}/data"
-
-- name: Write Open WebUI .env file
-  ansible.builtin.template:
-    src: openwebui.env.j2
-    dest: "{{ openwebui_dir }}/.env"
-    owner: root
-    group: root
-    mode: "0600"
-  become: true
