@@ -1,8 +1,0 @@
----
-- name: Restart postiz
-  community.docker.docker_compose_v2:
-    project_src: "{{ postiz_dir }}"
-    project_name: postiz
-    env_files:
-      - "{{ postiz_dir }}/.env"
-    state: restarted

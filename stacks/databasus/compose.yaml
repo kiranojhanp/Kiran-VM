@@ -2,10 +2,10 @@
 # Managed by Komodo (git-backed) — edit this file and push to redeploy.
 #
 # Stack Environment vars expected (set in Komodo Stack Config):
-#   Non-secret:
-#     R2_ACCOUNT_ID=144d079696599a9af7525be0c68a459f
-#     R2_BUCKET_NAME=kiran-vm-database-backup
-#     R2_ENDPOINT=https://144d079696599a9af7525be0c68a459f.eu.r2.cloudflarestorage.com
+#   Non-secret (set in Komodo Stack Environment — do NOT hardcode here):
+#     R2_ACCOUNT_ID
+#     R2_BUCKET_NAME
+#     R2_ENDPOINT
 #   Secret (Komodo Variables → [[VAR_NAME]]):
 #     SECRET_KEY=[[DATABASUS_SECRET_KEY]]
 #     R2_ACCESS_KEY_ID=[[R2_ACCESS_KEY_ID]]

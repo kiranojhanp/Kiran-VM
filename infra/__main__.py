@@ -82,16 +82,6 @@ security_list = oci.core.SecurityList(
     ],
     # Ingress rules
     ingress_security_rules=[
-        # SSH standard port — only needed during initial bootstrap
-        oci.core.SecurityListIngressSecurityRuleArgs(
-            protocol=PROTO_TCP,
-            source="0.0.0.0/0",
-            tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
-                min=22,
-                max=22,
-            ),
-            description="SSH (standard)",
-        ),
         # SSH hardened port — Ansible uses this after provisioning
         oci.core.SecurityListIngressSecurityRuleArgs(
             protocol=PROTO_TCP,

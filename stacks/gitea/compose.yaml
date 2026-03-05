@@ -16,8 +16,8 @@
 #     GITEA__server__SSH_LISTEN_PORT=2222
 #     GITEA__server__DISABLE_SSH=false
 #     GITEA__server__ENABLE_PPROF=false
-#     GITEA__service__DISABLE_REGISTRATION=false
-#     GITEA__service__REQUIRE_SIGNIN_VIEW=false
+#     GITEA__service__DISABLE_REGISTRATION=true
+#     GITEA__service__REQUIRE_SIGNIN_VIEW=true
 #     GITEA__ui__DEFAULT_THEME=gitea-dark
 #     GITEA__ui__THEMES=gitea-light,gitea-dark,gitea-auto
 #     GITEA__log__LEVEL=info
@@ -35,7 +35,7 @@ networks:
 
 services:
   gitea:
-    image: docker.gitea.com/gitea:latest-rootless
+    image: docker.gitea.com/gitea:1.22.6-rootless
     restart: unless-stopped
     # Rootless image runs as uid 1000 — data dirs must be owned by 1000:1000.
     user: "1000:1000"

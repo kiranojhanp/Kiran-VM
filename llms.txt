@@ -27,7 +27,7 @@ These are the only inputs required from the user. Everything else is automated.
 
 ## Step 1 — Provision the VM (Pulumi)
 
-**Prerequisites:** Pulumi CLI, Node.js 18+, OCI API key at `~/.oci/oci_api_key.pem`
+**Prerequisites:** Pulumi CLI, Python 3.11+, `uv` package manager, OCI API key at `~/.oci/oci_api_key.pem`
 
 ```bash
 # One-time: store passphrase in a file so Pulumi never prompts
@@ -37,7 +37,7 @@ export PULUMI_CONFIG_PASSPHRASE_FILE=$HOME/.pulumi-passphrase
 # Add the export to ~/.zshrc or ~/.bashrc to persist
 
 cd infra
-npm install
+uv sync                  # creates .venv and installs dependencies
 pulumi login --local
 pulumi stack init prod
 
@@ -102,6 +102,7 @@ cat ~/.ssh/id_ed25519.pub # for deploy_ssh_public_key
 |----------|----------------|
 | `deploy_ssh_public_key` | `cat ~/.ssh/id_ed25519.pub` |
 | `deploy_password` | `openssl rand -base64 32` |
+| `komodo_init_admin_username` | choose a username |
 | `ferretdb_postgres_password` | `openssl rand -hex 32` |
 | `komodo_jwt_secret` | `openssl rand -hex 32` |
 | `komodo_password` | choose a password |
@@ -112,6 +113,7 @@ cat ~/.ssh/id_ed25519.pub # for deploy_ssh_public_key
 | `shared_postgres_sure_password` | `openssl rand -hex 32` |
 | `shared_postgres_gitea_password` | `openssl rand -hex 32` |
 | `shared_postgres_n8n_password` | `openssl rand -hex 32` |
+| `redis_password` | `openssl rand -hex 32` |
 | `gitea_secret_key` | `openssl rand -hex 32` |
 | `sure_secret_key_base` | `openssl rand -hex 64` |
 | `openai_access_token` | from OpenAI dashboard |
@@ -184,8 +186,8 @@ To re-run a single role after changes: `--tags caddy` (or any role name)
 ## Step 6 — Configure Komodo
 
 Open `https://komodo.yourdomain.com`. Log in with:
-- Username: `fewaadmin` (set in `group_vars/all.yml` as `komodo_init_admin_username`)
-- Password: `komodo_password` from `secrets.yml`
+- Username: value of `komodo_init_admin_username` from `secrets.yml`
+- Password: value of `komodo_password` from `secrets.yml`
 
 ### 6a — Add global Variables
 
@@ -257,9 +259,9 @@ From this point on, any push to `main` that modifies `stacks/<name>/` automatica
 ## Architecture facts for automation
 
 **Docker networking:**
-- All app containers must join the `infra_net` external network to reach Postgres and Redis
-- The Postgres container is named `infra-postgres-1` — use this as the DB host, not `localhost` or `postgres`
-- Redis container is named `infra-redis-1`
+- All app containers must join the shared external network (defined in `ansible/roles/infra/templates/docker-compose.yml.j2`) to reach Postgres and Redis
+- Use the Postgres container name as the DB host (check the infra compose template for the exact name), not `localhost` or `postgres`
+- Use the Redis container name similarly (check the infra compose template)
 
 **Postgres users and databases:**
 - Each app has its own user and database, both named after the app
@@ -327,14 +329,14 @@ ansible-playbook ansible/site.yml \
 **Reset a app's database user** (e.g. after losing a password):
 ```bash
 ssh -p 2222 deploy@YOUR_SERVER_IP \
-  "docker exec infra-postgres-1 psql -U postgres -c \"ALTER USER n8n_user WITH PASSWORD 'newpassword';\""
+  "docker exec <postgres-container-name> psql -U postgres -c \"ALTER USER n8n_user WITH PASSWORD 'newpassword';\""
 ```
 
 ---
 
 ## Troubleshooting
 
-**`getaddrinfo EAI_AGAIN shared-postgres`** — wrong hostname. Use `infra-postgres-1`, not `shared-postgres` or `postgres`.
+**`getaddrinfo EAI_AGAIN shared-postgres`** — wrong hostname. Use the container name from the infra compose template as the Postgres host, not `shared-postgres` or `postgres`.
 
 **502 Bad Gateway** — container isn't running or crashed. Check `docker logs <container>` or Komodo → Stacks → Logs.
 
