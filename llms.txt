@@ -111,13 +111,10 @@ cat ~/.ssh/id_ed25519.pub # for deploy_ssh_public_key
 | `shared_postgres_password` | `openssl rand -hex 32` |
 | `shared_postgres_sure_password` | `openssl rand -hex 32` |
 | `shared_postgres_gitea_password` | `openssl rand -hex 32` |
-| `shared_postgres_nocodb_password` | `openssl rand -hex 32` |
 | `shared_postgres_n8n_password` | `openssl rand -hex 32` |
-| `shared_postgres_openwebui_password` | `openssl rand -hex 32` |
 | `gitea_secret_key` | `openssl rand -hex 32` |
 | `sure_secret_key_base` | `openssl rand -hex 64` |
 | `openai_access_token` | from OpenAI dashboard |
-| `nocodb_jwt_secret` | `openssl rand -hex 32` |
 | `databasus_secret_key` | `openssl rand -hex 32` |
 | `r2_access_key_id` | from Cloudflare R2 dashboard |
 | `r2_secret_access_key` | from Cloudflare R2 dashboard |
@@ -167,7 +164,7 @@ This runs all roles in order:
 2. `docker` — Docker CE ARM64 from official apt repo
 3. `infra` — shared Postgres 16 + Redis containers, creates per-app databases and users
 4. `komodo` — Komodo deploy UI + FerretDB (MongoDB adapter backed by Postgres)
-5. `sure`, `gitea`, `nocodb`, `databasus`, `n8n` — config directories and ownership
+5. `sure`, `gitea`, `databasus`, `n8n` — config directories and ownership
 6. `caddy` — builds custom Caddy with Cloudflare DNS plugin via xcaddy, writes Caddyfile, starts systemd service
 
 To re-run a single role after changes: `--tags caddy` (or any role name)
@@ -179,10 +176,8 @@ To re-run a single role after changes: `--tags caddy` (or any role name)
 | `https://komodo.yourdomain.com` | Komodo deploy UI |
 | `https://sure.yourdomain.com` | Sure |
 | `https://git.yourdomain.com` | Gitea |
-| `https://nocodb.yourdomain.com` | NocoDB |
 | `https://backup.yourdomain.com` | Databasus |
 | `https://n8n.yourdomain.com` | n8n |
-| `https://chat.yourdomain.com` | Open WebUI |
 
 ---
 
@@ -200,22 +195,18 @@ Settings → Variables → New Variable. These are injected into compose files a
 |--------------|-------|
 | `SHARED_POSTGRES_SURE_PASSWORD` | value of `shared_postgres_sure_password` |
 | `SHARED_POSTGRES_GITEA_PASSWORD` | value of `shared_postgres_gitea_password` |
-| `SHARED_POSTGRES_NOCODB_PASSWORD` | value of `shared_postgres_nocodb_password` |
 | `SHARED_POSTGRES_N8N_PASSWORD` | value of `shared_postgres_n8n_password` |
 | `GITEA_SECRET_KEY` | value of `gitea_secret_key` |
 | `SURE_SECRET_KEY_BASE` | value of `sure_secret_key_base` |
 | `OPENAI_ACCESS_TOKEN` | value of `openai_access_token` |
-| `NOCODB_JWT_SECRET` | value of `nocodb_jwt_secret` |
 | `DATABASUS_SECRET_KEY` | value of `databasus_secret_key` |
 | `R2_ACCESS_KEY_ID` | value of `r2_access_key_id` |
 | `R2_SECRET_ACCESS_KEY` | value of `r2_secret_access_key` |
 | `N8N_ENCRYPTION_KEY` | generate: `openssl rand -hex 32` — **store in password manager, never lose this** |
-| `SHARED_POSTGRES_OPENWEBUI_PASSWORD` | value of `shared_postgres_openwebui_password` |
-| `OPENWEBUI_SECRET_KEY` | generate: `openssl rand -hex 32` |
 
 ### 6b — Create a Stack for each app
 
-Repeat for: `sure`, `gitea`, `nocodb`, `databasus`, `n8n`, `openwebui`
+Repeat for: `sure`, `gitea`, `databasus`, `n8n`
 
 1. Komodo → Stacks → New Stack
 2. Name: `sure` (match the directory name exactly)
@@ -232,12 +223,6 @@ Repeat for: `sure`, `gitea`, `nocodb`, `databasus`, `n8n`, `openwebui`
 | `N8N_TZ` | your timezone (e.g. `Asia/Kathmandu`) |
 
 > Do NOT use `TZ` — Komodo silently drops it. Use `N8N_TZ` (maps to `GENERIC_TIMEZONE` inside n8n).
-
-**For the openwebui stack**, add this in the Stack's Environment tab:
-
-| Variable | Value |
-|----------|-------|
-| `OPENWEBUI_SUBDOMAIN` | `chat.fewa.app` |
 
 ### 6c — Create a Procedure for each app
 
@@ -257,10 +242,8 @@ In this GitHub repo → Settings → Secrets → Actions, add one secret per app
 |------------|-------|
 | `KOMODO_WEBHOOK_SURE` | webhook URL from the sure procedure |
 | `KOMODO_WEBHOOK_GITEA` | webhook URL from the gitea procedure |
-| `KOMODO_WEBHOOK_NOCODB` | webhook URL from the nocodb procedure |
 | `KOMODO_WEBHOOK_DATABASUS` | webhook URL from the databasus procedure |
 | `KOMODO_WEBHOOK_N8N` | webhook URL from the n8n procedure |
-| `KOMODO_WEBHOOK_OPENWEBUI` | webhook URL from the openwebui procedure |
 | `KOMODO_WEBHOOK_SECRET` | value of `komodo_webhook_secret` from `secrets.yml` |
 
 ---
@@ -345,12 +328,6 @@ ansible-playbook ansible/site.yml \
 ```bash
 ssh -p 2222 deploy@YOUR_SERVER_IP \
   "docker exec infra-postgres-1 psql -U postgres -c \"ALTER USER n8n_user WITH PASSWORD 'newpassword';\""
-```
-
-**Clear NocoDB users to allow fresh signup:**
-```bash
-ssh -p 2222 deploy@YOUR_SERVER_IP \
-  "docker exec infra-postgres-1 psql -U postgres -d nocodb -c 'DELETE FROM nc_users_v2;'"
 ```
 
 ---

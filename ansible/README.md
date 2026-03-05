@@ -41,7 +41,6 @@ ansible-playbook site.yml \
 | `komodo` | `komodo`, `services` | Komodo + FerretDB (MongoDB adapter over Postgres) |
 | `sure` | `sure`, `services` | Config dirs |
 | `gitea` | `gitea`, `services` | Config dirs, rootless on port 3001/2223 |
-| `nocodb` | `nocodb`, `services` | Config dirs |
 | `databasus` | `databasus`, `services` | Config dirs |
 | `n8n` | `n8n`, `services` | `/opt/n8n` dir |
 | `caddy` | `caddy`, `services` | xcaddy build with Cloudflare DNS plugin, Caddyfile, systemd |

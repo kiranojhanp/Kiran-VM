@@ -52,12 +52,6 @@ gitea_http_port: 3001
 gitea_ssh_port: 2223
 gitea_image: "docker.gitea.com/gitea:latest-rootless"
 
-# ── NocoDB ──────────────────────────────────────────────
-nocodb_subdomain: "nocodb.{{ domain }}"
-nocodb_port: 8080
-nocodb_image: "nocodb/nocodb:latest"
-nocodb_dir: /opt/nocodb
-
 # ── Databasus ───────────────────────────────────────────
 databasus_subdomain: "backup.{{ domain }}"
 databasus_port: 4005
@@ -69,8 +63,3 @@ n8n_subdomain: "n8n.{{ domain }}"
 n8n_port: 5678
 n8n_dir: /opt/n8n
 
-# ── Open WebUI ──────────────────────────────────────────
-openwebui_subdomain: "chat.{{ domain }}"
-openwebui_port: 3002
-openwebui_dir: /opt/openwebui
-openwebui_image: "ghcr.io/open-webui/open-webui:main"

@@ -37,17 +37,11 @@
     - role: gitea
       tags: [gitea, services]
 
-    - role: nocodb
-      tags: [nocodb, services]
-
     - role: databasus
       tags: [databasus, services]
 
     - role: n8n
       tags: [n8n, services]
-
-    - role: openwebui
-      tags: [openwebui, services]
 
     - role: caddy
       tags: [caddy, services]
