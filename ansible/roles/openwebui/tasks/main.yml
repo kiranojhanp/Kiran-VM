@@ -14,19 +14,10 @@
     - "{{ openwebui_dir }}"
     - "{{ openwebui_dir }}/data"
 
-- name: Ensure Komodo stack directory exists
-  ansible.builtin.file:
-    path: /opt/komodo/periphery/repos/kiran-vm/stacks/openwebui
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
-  become: true
-
-- name: Write openwebui .env to Komodo stack working directory
+- name: Write openwebui .env to stable path (survives Komodo git pull)
   ansible.builtin.template:
     src: openwebui.env.j2
-    dest: /opt/komodo/periphery/repos/kiran-vm/stacks/openwebui/.env
+    dest: "{{ openwebui_dir }}/.env"
     owner: root
     group: root
     mode: "0600"
