@@ -1,6 +1,24 @@
 import pulumi
 import pulumi_oci as oci
 
+# ── Constants ─────────────────────────────────────────────────────────────────
+VCN_CIDR = "10.0.0.0/16"
+SUBNET_CIDR = "10.0.0.0/24"
+SUBNET_DNS_LABEL = "public"
+
+# VM.Standard.A1.Flex — Oracle Always Free allocation: 4 OCPU, 24 GB RAM, 200 GB storage
+INSTANCE_SHAPE = "VM.Standard.A1.Flex"
+INSTANCE_OCPUS = 4
+INSTANCE_MEM_GB = 24
+BOOT_VOLUME_GB = "200"
+
+# OCI protocol numbers
+PROTO_TCP = "6"
+PROTO_ICMP = "1"
+
+# Hardened SSH port (post-Ansible)
+SSH_PORT = 2222
+
 # ── Config ────────────────────────────────────────────────────────────────────
 cfg = pulumi.Config()
 
@@ -19,7 +37,7 @@ compartment_id = cfg.get("compartmentId") or tenancy_ocid
 vcn = oci.core.Vcn(
     f"{project_name}-vcn",
     compartment_id=compartment_id,
-    cidr_block="10.0.0.0/16",
+    cidr_block=VCN_CIDR,
     display_name=f"{project_name}-vcn",
     dns_label=project_name.replace("-", ""),
 )
@@ -64,57 +82,62 @@ security_list = oci.core.SecurityList(
     ],
     # Ingress rules
     ingress_security_rules=[
-        # SSH (standard — only during initial bootstrap, can be removed after)
+        # SSH standard port — only needed during initial bootstrap
         oci.core.SecurityListIngressSecurityRuleArgs(
-            protocol="6",  # TCP
+            protocol=PROTO_TCP,
             source="0.0.0.0/0",
             tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
-                max=22, min=22
+                min=22,
+                max=22,
             ),
             description="SSH (standard)",
         ),
-        # SSH (custom port — Ansible uses this after hardening)
+        # SSH hardened port — Ansible uses this after provisioning
         oci.core.SecurityListIngressSecurityRuleArgs(
-            protocol="6",
+            protocol=PROTO_TCP,
             source="0.0.0.0/0",
             tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
-                max=2222, min=2222
+                min=SSH_PORT,
+                max=SSH_PORT,
             ),
             description="SSH (hardened port)",
         ),
         # HTTP
         oci.core.SecurityListIngressSecurityRuleArgs(
-            protocol="6",
+            protocol=PROTO_TCP,
             source="0.0.0.0/0",
             tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
-                max=80, min=80
+                min=80,
+                max=80,
             ),
             description="HTTP",
         ),
         # HTTPS
         oci.core.SecurityListIngressSecurityRuleArgs(
-            protocol="6",
+            protocol=PROTO_TCP,
             source="0.0.0.0/0",
             tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
-                max=443, min=443
+                min=443,
+                max=443,
             ),
             description="HTTPS",
         ),
-        # ICMP type 3 (destination unreachable) — required for path MTU discovery
+        # ICMP type 3 code 4 — path MTU discovery (required for TCP to work correctly)
         oci.core.SecurityListIngressSecurityRuleArgs(
-            protocol="1",  # ICMP
+            protocol=PROTO_ICMP,
             source="0.0.0.0/0",
             icmp_options=oci.core.SecurityListIngressSecurityRuleIcmpOptionsArgs(
-                type=3, code=4
+                type=3,
+                code=4,
             ),
             description="ICMP path MTU discovery",
         ),
-        # ICMP type 8 (echo / ping)
+        # ICMP type 8 — ping
         oci.core.SecurityListIngressSecurityRuleArgs(
-            protocol="1",
+            protocol=PROTO_ICMP,
             source="0.0.0.0/0",
             icmp_options=oci.core.SecurityListIngressSecurityRuleIcmpOptionsArgs(
-                type=8
+                type=8,
             ),
             description="ICMP ping",
         ),
@@ -126,9 +149,9 @@ subnet = oci.core.Subnet(
     f"{project_name}-subnet",
     compartment_id=compartment_id,
     vcn_id=vcn.id,
-    cidr_block="10.0.0.0/24",
+    cidr_block=SUBNET_CIDR,
     display_name=f"{project_name}-subnet",
-    dns_label="public",
+    dns_label=SUBNET_DNS_LABEL,
     route_table_id=route_table.id,
     security_list_ids=[security_list.id],
     prohibit_public_ip_on_vnic=False,
@@ -136,8 +159,7 @@ subnet = oci.core.Subnet(
 
 
 # ── Compute Instance ──────────────────────────────────────────────────────────
-# VM.Standard.A1.Flex — Oracle Always Free: 4 OCPU, 24 GB RAM total per account
-def get_availability_domain(cid):
+def get_availability_domain(cid: str) -> str:
     result = oci.identity.get_availability_domains(compartment_id=cid)
     return result.availability_domains[0].name
 
@@ -151,16 +173,15 @@ instance = oci.core.Instance(
     compartment_id=compartment_id,
     availability_domain=availability_domain,
     display_name=f"{project_name}-vm",
-    shape="VM.Standard.A1.Flex",
+    shape=INSTANCE_SHAPE,
     shape_config=oci.core.InstanceShapeConfigArgs(
-        ocpus=4,
-        memory_in_gbs=24,
+        ocpus=INSTANCE_OCPUS,
+        memory_in_gbs=INSTANCE_MEM_GB,
     ),
     source_details=oci.core.InstanceSourceDetailsArgs(
         source_type="image",
         source_id=image_ocid,
-        # 200 GB boot volume — uses all of the Always Free block storage allocation
-        boot_volume_size_in_gbs="200",
+        boot_volume_size_in_gbs=BOOT_VOLUME_GB,
     ),
     create_vnic_details=oci.core.InstanceCreateVnicDetailsArgs(
         subnet_id=subnet.id,
@@ -178,7 +199,7 @@ pulumi.export("publicIp", instance.public_ip)
 pulumi.export("privateIp", instance.private_ip)
 pulumi.export("instanceId", instance.id)
 pulumi.export(
-    "sshCommand", pulumi.Output.concat("ssh -p 2222 deploy@", instance.public_ip)
+    "sshCommand", pulumi.Output.concat(f"ssh -p {SSH_PORT} deploy@", instance.public_ip)
 )
 pulumi.export("vcnId", vcn.id)
 pulumi.export("subnetId", subnet.id)

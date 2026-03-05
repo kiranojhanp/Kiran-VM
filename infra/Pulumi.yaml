@@ -3,7 +3,7 @@ description: Oracle Cloud Infrastructure provisioning for an Always Free ARM VM
 runtime:
   name: python
   options:
-    virtualenv: venv
+    virtualenv: .venv
 config:
   pulumi:tags:
     value:

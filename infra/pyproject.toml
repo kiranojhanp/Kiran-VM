@@ -1,0 +1,9 @@
+[project]
+name = "infra"
+version = "0.1.0"
+description = "Oracle Cloud Infrastructure provisioning for an Always Free ARM VM"
+requires-python = ">=3.9"
+dependencies = [
+    "pulumi>=3.0.0,<4.0.0",
+    "pulumi-oci>=2.0.0,<3.0.0",
+]

@@ -10,7 +10,7 @@ Pulumi (Python) program that provisions the Oracle Cloud Always Free ARM VM.
 ## Prerequisites
 
 - [Pulumi CLI](https://www.pulumi.com/docs/get-started/install/)
-- Python 3.9+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - OCI account with Always Free resources available
 
 ## Setup
@@ -18,17 +18,15 @@ Pulumi (Python) program that provisions the Oracle Cloud Always Free ARM VM.
 ```bash
 cd infra
 
-# Create and activate virtualenv, install dependencies
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# Install dependencies (uv creates and manages the venv automatically)
+uv sync
 
 # Use local state (no Pulumi Cloud account needed)
 pulumi login --local
 export PULUMI_CONFIG_PASSPHRASE_FILE=~/.pulumi-passphrase
 
-# Select (or create) the prod stack
-pulumi stack select prod
+# Select the prod stack (creates it if it doesn't exist yet)
+pulumi stack select prod --create
 ```
 
 ## Config
@@ -47,10 +45,17 @@ pulumi config set kiran-vm-infra:projectName  fewaapp
 pulumi config set kiran-vm-infra:sshPublicKey "$(cat ~/.ssh/id_ed25519.pub)"
 ```
 
-## Deploy
+## Usage
 
 ```bash
+# Preview changes
+pulumi preview
+
+# Deploy
 pulumi up
+
+# Tear down all resources
+pulumi down
 ```
 
 ## Outputs
