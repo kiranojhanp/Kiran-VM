@@ -1,6 +1,7 @@
 ---
 # Compose lifecycle managed by Komodo.
-# Ansible pre-creates data dir and writes secrets to .env file.
+# Ansible pre-creates data dir and writes secrets to the Komodo stack .env file,
+# which Docker Compose automatically picks up for ${VAR} substitution.
 - name: Create Open WebUI data directory
   ansible.builtin.file:
     path: "{{ item }}"
@@ -13,10 +14,19 @@
     - "{{ openwebui_dir }}"
     - "{{ openwebui_dir }}/data"
 
-- name: Write Open WebUI .env file
+- name: Ensure Komodo stack directory exists
+  ansible.builtin.file:
+    path: /opt/komodo/periphery/repos/kiran-vm/stacks/openwebui
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Write openwebui .env to Komodo stack working directory
   ansible.builtin.template:
     src: openwebui.env.j2
-    dest: "{{ openwebui_dir }}/.env"
+    dest: /opt/komodo/periphery/repos/kiran-vm/stacks/openwebui/.env
     owner: root
     group: root
     mode: "0600"
