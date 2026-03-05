@@ -1,12 +1,9 @@
 # Open WebUI — AI chat interface
 # Managed by Komodo (git-backed) — edit this file and push to redeploy.
-# Secrets are in the stack .env file written by Ansible (from secrets.yml).
+# Secrets are written to the stack .env by Ansible (ansible/roles/openwebui).
 #
-# Stack .env vars (written by Ansible):
-#   DATABASE_URL=postgresql://openwebui:<pw>@infra-postgres-1:5432/openwebui
-#   WEBUI_SECRET_KEY=<secret>
-#   WEBUI_URL=https://chat.fewa.app
-#   ENABLE_OLLAMA_API=false
+# Required .env vars (written by Ansible from secrets.yml):
+#   DATABASE_URL, WEBUI_SECRET_KEY, WEBUI_URL, ENABLE_OLLAMA_API
 
 services:
   openwebui:
@@ -20,7 +17,8 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
       WEBUI_URL: ${WEBUI_URL}
-      ENABLE_OLLAMA_API: "false"
+      ENABLE_OLLAMA_API: ${ENABLE_OLLAMA_API}
+      CORS_ALLOW_ORIGIN: ${WEBUI_URL}
     networks:
       - infra_net
     mem_limit: 1g
