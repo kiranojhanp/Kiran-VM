@@ -2,11 +2,9 @@
 # Managed by Komodo (git-backed) — edit this file and push to redeploy.
 #
 # Stack Environment vars expected (set in Komodo Stack Config):
-#   Non-secret:
-#     OPENWEBUI_SUBDOMAIN=chat.fewa.app
-#   Secret (Komodo Variables → [[VAR_NAME]]):
-#     DATABASE_PASSWORD=[[SHARED_POSTGRES_OPENWEBUI_PASSWORD]]
-#     WEBUI_SECRET_KEY=[[OPENWEBUI_SECRET_KEY]]
+#   DATABASE_URL=postgresql://openwebui:<password>@infra-postgres-1:5432/openwebui
+#   WEBUI_SECRET_KEY=<secret>
+#   OPENWEBUI_SUBDOMAIN=chat.fewa.app
 
 services:
   openwebui:
@@ -17,7 +15,7 @@ services:
     volumes:
       - /opt/openwebui/data:/app/backend/data
     environment:
-      DATABASE_URL: "postgresql://openwebui:${DATABASE_PASSWORD}@infra-postgres-1:5432/openwebui"
+      DATABASE_URL: ${DATABASE_URL}
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
       ENABLE_OLLAMA_API: "false"
       WEBUI_URL: "https://${OPENWEBUI_SUBDOMAIN}"
