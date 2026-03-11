@@ -1,351 +1,170 @@
 # kiran-vm
 
-> Infrastructure repo for a self-hosted server on Oracle Cloud Always Free ARM. An LLM agent can use this file to autonomously provision the VM, configure the server, and deploy all apps. The only thing a human needs to supply is secrets.
+Infrastructure and provisioning for a self-hosted server on Oracle Cloud Always Free.
 
-Pipeline: `Pulumi (VM) → Ansible (server) → Komodo (deployments) → stacks/ (apps)`
+## Stack
+
+| Layer       | Tool    | Purpose                                          |
+| ----------- | ------- | ------------------------------------------------ |
+| Infra       | Pulumi  | Provisions the VM, VCN, subnet, security rules   |
+| Provisioning | Ansible | OS hardening, Docker, shared services, app dirs |
+| Deployments | Komodo  | Manages Docker Compose stacks for each app       |
+
+## Architecture
+
+One ARM64 VM (`VM.Standard.A1.Flex`, 4 OCPU / 24 GB) running:
+
+- **Shared infra** — Postgres 17 + Redis (one instance, per-app databases)
+- **Komodo** — Docker management UI backed by FerretDB (its own Postgres)
+- **Caddy** — Reverse proxy with automatic TLS via Cloudflare DNS-01
+
+Apps (`sure`, `gitea`, `databasus`, `n8n`) are scaffolded by Ansible and then managed by Komodo.
+
+## Repository layout
+
+```
+infra/        Pulumi program (Python) — VM provisioning
+ansible/      Ansible roles — server provisioning
+stacks/       Docker Compose files for each app (consumed by Komodo)
+```
 
 ---
 
-## What the human needs to provide
+## Full deployment walkthrough
 
-These are the only inputs required from the user. Everything else is automated.
-
-**OCI credentials** (for Pulumi):
-- Tenancy OCID, User OCID, API key fingerprint, API private key PEM
-- Found at: https://cloud.oracle.com → Profile → Tenancy, and Profile → User Settings → API Keys
-
-**SSH key pair** — if not already present: `ssh-keygen -t ed25519`
-
-**Cloudflare API token** — Zone:DNS:Edit permission on the target domain
-- Create at: https://dash.cloudflare.com/profile/api-tokens
-
-**Domain** — must be on Cloudflare DNS
-
-**All secrets** — generate with `openssl rand -hex 32` unless noted otherwise (see full list below)
-
----
-
-## Step 1 — Provision the VM (Pulumi)
-
-**Prerequisites:** Pulumi CLI, Python 3.11+, `uv` package manager, OCI API key at `~/.oci/oci_api_key.pem`
+### Step 1 — Provision the VM
 
 ```bash
-# One-time: store passphrase in a file so Pulumi never prompts
-echo 'YOUR_PASSPHRASE' > ~/.pulumi-passphrase
-chmod 600 ~/.pulumi-passphrase
-export PULUMI_CONFIG_PASSPHRASE_FILE=$HOME/.pulumi-passphrase
-# Add the export to ~/.zshrc or ~/.bashrc to persist
-
 cd infra
-uv sync                  # creates .venv and installs dependencies
-pulumi login --local
-pulumi stack init prod
-
-# Set OCI config
-pulumi config set oci:region YOUR_REGION                              # e.g. ap-melbourne-1
-pulumi config set --secret oci:tenancyOcid YOUR_TENANCY_OCID
-pulumi config set --secret oci:userOcid YOUR_USER_OCID
-pulumi config set --secret oci:fingerprint YOUR_KEY_FINGERPRINT
-pulumi config set --secret oci:privateKey "$(cat ~/.oci/oci_api_key.pem)"
-pulumi config set sshPublicKey "$(cat ~/.ssh/id_ed25519.pub)"
-
-# Ubuntu 22.04 Minimal ARM image OCID — look up for your region:
-# https://docs.oracle.com/en-us/iaas/images/
-# Melbourne example (confirm it's still current before using):
-pulumi config set imageOcid ocid1.image.oc1.ap-melbourne-1.aaaaaaaawr3xahtf7zbw6uov2yawyerlfkm246qbtrku7cvcel7enu66y5tq
-
-# Optional: change resource name prefix (default: kiran-vm)
-pulumi config set projectName YOUR_PROJECT_NAME
-
 pulumi up
 ```
 
-After `pulumi up`, note the `publicIp` output — needed for Ansible.
+See `infra/README.md` for config setup (OCI credentials, SSH key, region).
 
-**Pulumi state** is stored locally at `~/.pulumi/stacks/kiran-vm-infra/prod.json`. Back it up.
-
----
-
-## Step 2 — Configure variables
-
-Edit `ansible/group_vars/all.yml` for the two values that differ per deployment:
-
-```yaml
-domain: yourdomain.com      # must be on Cloudflare DNS
-timezone: Asia/Kathmandu    # any valid TZ identifier
-```
-
-Everything else in `group_vars/all.yml` can stay as-is.
-
----
-
-## Step 3 — Create secrets.yml
-
-Create `ansible/secrets.yml` (gitignored, never commit):
-
-```bash
-cp ansible/secrets.yml.example ansible/secrets.yml
-```
-
-Fill in every field. Generation commands:
-
-```bash
-openssl rand -hex 32    # for most secrets (64-char hex)
-openssl rand -hex 64    # for sure_secret_key_base only
-openssl rand -base64 32 # for passwords (if you prefer alphanumeric)
-cat ~/.ssh/id_ed25519.pub # for deploy_ssh_public_key
-```
-
-**Full secrets list:**
-
-| Variable | How to generate |
-|----------|----------------|
-| `deploy_ssh_public_key` | `cat ~/.ssh/id_ed25519.pub` |
-| `deploy_password` | `openssl rand -base64 32` |
-| `komodo_init_admin_username` | choose a username |
-| `ferretdb_postgres_password` | `openssl rand -hex 32` |
-| `komodo_jwt_secret` | `openssl rand -hex 32` |
-| `komodo_password` | choose a password |
-| `komodo_passkey` | `openssl rand -hex 32` |
-| `komodo_webhook_secret` | `openssl rand -hex 32` |
-| `cloudflare_api_token` | from Cloudflare dashboard |
-| `shared_postgres_password` | `openssl rand -hex 32` |
-| `shared_postgres_sure_password` | `openssl rand -hex 32` |
-| `shared_postgres_gitea_password` | `openssl rand -hex 32` |
-| `shared_postgres_n8n_password` | `openssl rand -hex 32` |
-| `redis_password` | `openssl rand -hex 32` |
-| `gitea_secret_key` | `openssl rand -hex 32` |
-| `sure_secret_key_base` | `openssl rand -hex 64` |
-| `openai_access_token` | from OpenAI dashboard |
-| `databasus_secret_key` | `openssl rand -hex 32` |
-| `r2_access_key_id` | from Cloudflare R2 dashboard |
-| `r2_secret_access_key` | from Cloudflare R2 dashboard |
-
----
-
-## Step 4 — Create inventory
-
-```bash
-cp ansible/inventory/hosts.ini.example ansible/inventory/hosts.ini
-```
-
-Edit `ansible/inventory/hosts.ini` — replace `YOUR_SERVER_IP` with the `publicIp` from `pulumi up`:
-
-```ini
-[server]
-YOUR_SERVER_IP ansible_user=deploy ansible_ssh_private_key_file=~/.ssh/id_ed25519 ansible_ssh_port=2222
-```
-
-**First run only:** on a brand-new VM, SSH is on port 22 and the `deploy` user doesn't exist yet. Use this inventory for the first run:
-
-```ini
-[server]
-YOUR_SERVER_IP ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519 ansible_ssh_port=22
-```
-
-After the `common` role runs, SSH moves to port 2222 and the `deploy` user is created. Switch back to the standard inventory for all subsequent runs.
-
----
-
-## Step 5 — Run Ansible
-
-**Prerequisites:** `pip install ansible`
+### Step 2 — Generate inventory
 
 ```bash
 cd ansible
-
-# Full provisioning (new server)
-ansible-playbook site.yml \
-  --extra-vars "@secrets.yml" \
-  --extra-vars "ansible_become_password={{ deploy_password }}"
+./inventory/generate.sh
 ```
 
-This runs all roles in order:
+Reads the public IP from the live Pulumi stack and writes `inventory/hosts.ini`.
 
-1. `common` — creates `deploy` user, moves SSH to port 2222, iptables, fail2ban, 2 GB swap, auditd
-2. `docker` — Docker CE ARM64 from official apt repo
-3. `infra` — shared Postgres 16 + Redis containers, creates per-app databases and users
-4. `komodo` — Komodo deploy UI + FerretDB (MongoDB adapter backed by Postgres)
-5. `sure`, `gitea`, `databasus`, `n8n` — config directories and ownership
-6. `caddy` — builds custom Caddy with Cloudflare DNS plugin via xcaddy, writes Caddyfile, starts systemd service
+### Step 3 — Bootstrap (first run only)
 
-To re-run a single role after changes: `--tags caddy` (or any role name)
+A fresh VM starts on the initial SSH port from `infra/constants.py` (default `22`). Bootstrap moves sshd to the hardened port from the same file (default `2222`) in a safe two-phase flow:
 
-**After Ansible completes**, all services are running and Caddy is proxying:
+```bash
+./bootstrap.sh
+```
 
-| URL | Service |
-|-----|---------|
-| `https://komodo.yourdomain.com` | Komodo deploy UI |
-| `https://sure.yourdomain.com` | Sure |
-| `https://git.yourdomain.com` | Gitea |
-| `https://backup.yourdomain.com` | Databasus |
-| `https://n8n.yourdomain.com` | n8n |
+### Step 4 — Full provisioning
 
----
+```bash
+ansible-playbook site.yml
+```
 
-## Step 6 — Configure Komodo
+See `ansible/README.md` for day-to-day usage, vault setup, and troubleshooting.
 
-Open `https://komodo.yourdomain.com`. Log in with:
-- Username: value of `komodo_init_admin_username` from `secrets.yml`
-- Password: value of `komodo_password` from `secrets.yml`
+### Step 5 — Configure DNS
 
-### 6a — Add global Variables
+Point your domain's DNS to the VM's public IP (`pulumi stack output publicIp --cwd infra`).
 
-Settings → Variables → New Variable. These are injected into compose files as `[[SECRET_NAME]]`.
+All subdomains are handled by Caddy with Cloudflare DNS-01 — no wildcard DNS record needed, just A records for each subdomain.
 
-| Variable name | Value |
-|--------------|-------|
-| `SHARED_POSTGRES_SURE_PASSWORD` | value of `shared_postgres_sure_password` |
-| `SHARED_POSTGRES_GITEA_PASSWORD` | value of `shared_postgres_gitea_password` |
-| `SHARED_POSTGRES_N8N_PASSWORD` | value of `shared_postgres_n8n_password` |
-| `GITEA_SECRET_KEY` | value of `gitea_secret_key` |
-| `SURE_SECRET_KEY_BASE` | value of `sure_secret_key_base` |
-| `OPENAI_ACCESS_TOKEN` | value of `openai_access_token` |
-| `DATABASUS_SECRET_KEY` | value of `databasus_secret_key` |
-| `R2_ACCESS_KEY_ID` | value of `r2_access_key_id` |
-| `R2_SECRET_ACCESS_KEY` | value of `r2_secret_access_key` |
-| `N8N_ENCRYPTION_KEY` | generate: `openssl rand -hex 32` — **store in password manager, never lose this** |
+### Step 6 — Set up Komodo
 
-### 6b — Create a Stack for each app
+1. Open `https://komodo.<your-domain>` and log in with `komodo_init_admin_username` / `komodo_password` from `ansible/secrets.yml`
+2. Add a **Server** pointing to `localhost` using the periphery passkey
+3. Add **Variables** (shared secrets the stacks reference by name):
 
-Repeat for: `sure`, `gitea`, `databasus`, `n8n`
+| Variable                     | Value source                      |
+| ---------------------------- | --------------------------------- |
+| `SHARED_POSTGRES_SURE_PASSWORD`  | `ansible/secrets.yml`             |
+| `SHARED_POSTGRES_GITEA_PASSWORD` | `ansible/secrets.yml`             |
+| `SHARED_POSTGRES_N8N_PASSWORD`   | `ansible/secrets.yml`             |
+| `GITEA_SECRET_KEY`               | `ansible/secrets.yml`             |
+| `SURE_SECRET_KEY_BASE`           | `ansible/secrets.yml`             |
+| `OPENAI_ACCESS_TOKEN`            | `ansible/secrets.yml`             |
+| `DATABASUS_SECRET_KEY`           | `ansible/secrets.yml`             |
+| `R2_ACCESS_KEY_ID`               | `ansible/secrets.yml`             |
+| `R2_SECRET_ACCESS_KEY`           | `ansible/secrets.yml`             |
+| `N8N_ENCRYPTION_KEY`             | Generate: `openssl rand -hex 32` — **store in password manager, never lose** |
 
-1. Komodo → Stacks → New Stack
-2. Name: `sure` (match the directory name exactly)
-3. Git repo: this repo, branch `main`
-4. Compose file path: `stacks/sure/compose.yaml`
-5. Deploy once manually to verify
+4. Create a **Stack** for each app, pointing to the compose file in `stacks/`
+5. Create a **Procedure** per app with `DeployStack` action for webhook-triggered deploys
+6. Add webhooks from GitHub → Komodo for CI/CD
 
-**For the n8n stack only**, add these in the Stack's Environment tab:
+### Step 7 — Verify
 
-| Variable | Value |
-|----------|-------|
-| `N8N_HOST` | `n8n.yourdomain.com` |
-| `N8N_WEBHOOK_URL` | `https://n8n.yourdomain.com` |
-| `N8N_TZ` | your timezone (e.g. `Asia/Kathmandu`) |
+```bash
+# SSH into the server (always uses current configured port)
+pulumi stack output sshCommand --cwd infra
 
-> Do NOT use `TZ` — Komodo silently drops it. Use `N8N_TZ` (maps to `GENERIC_TIMEZONE` inside n8n).
+# Check running containers
+docker ps
 
-### 6c — Create a Procedure for each app
+# Check shared infra
+docker compose -f /opt/infra/docker-compose.yml ps
 
-Repeat for each stack:
-
-1. Komodo → Procedures → New Procedure
-2. Name: `deploy-sure` (or similar)
-3. Add Stage 1: Pull Repo → target the repo
-4. Add Stage 2: Deploy Stack → target `sure`
-5. Save and **copy the webhook URL**
-
-### 6d — Add GitHub secrets
-
-In this GitHub repo → Settings → Secrets → Actions, add one secret per app:
-
-| Secret name | Value |
-|------------|-------|
-| `KOMODO_WEBHOOK_SURE` | webhook URL from the sure procedure |
-| `KOMODO_WEBHOOK_GITEA` | webhook URL from the gitea procedure |
-| `KOMODO_WEBHOOK_DATABASUS` | webhook URL from the databasus procedure |
-| `KOMODO_WEBHOOK_N8N` | webhook URL from the n8n procedure |
-| `KOMODO_WEBHOOK_SECRET` | value of `komodo_webhook_secret` from `secrets.yml` |
+# Check Caddy
+docker compose -f /opt/caddy/docker-compose.yml ps
+```
 
 ---
 
-## Step 7 — Push to deploy
+## Secrets
 
-From this point on, any push to `main` that modifies `stacks/<name>/` automatically redeploys that stack via Komodo. No manual steps needed.
+All secrets live in `ansible/secrets.yml` (vault-encrypted). See `ansible/secrets.yml.example` for the full list and generation commands.
+
+The vault password lives at `~/.vault_pass` on each machine that runs Ansible — never committed to the repo. Store it in your password manager.
 
 ---
 
-## Architecture facts for automation
+## Networking
 
-**Docker networking:**
-- All app containers must join the shared external network (defined in `ansible/roles/infra/templates/docker-compose.yml.j2`) to reach Postgres and Redis
-- Use the Postgres container name as the DB host (check the infra compose template for the exact name), not `localhost` or `postgres`
-- Use the Redis container name similarly (check the infra compose template)
+Apps communicate over the `infra_net` Docker bridge network. They connect to Postgres and Redis using container names, not `localhost`.
 
-**Postgres users and databases:**
-- Each app has its own user and database, both named after the app
-- Exception: n8n uses `n8n_user` as the username (not `n8n`)
-- Created automatically by Ansible (`roles/infra/templates/init.sql.j2`)
+Komodo binds to `127.0.0.1` only and is accessible exclusively via Caddy reverse proxy.
 
-**Komodo secrets syntax:**
-- `[[SECRET_NAME]]` in compose files → substituted from Komodo Variables
-- `${VAR_NAME}` in compose files → substituted from Stack Environment
-- Stack Environment is set per-stack in the Komodo UI
-
-**Caddy:**
-- Listens on 443, handles TLS automatically via Cloudflare DNS-01
-- Config at `/opt/caddy/Caddyfile` on the server
-- All subdomains are defined in `ansible/roles/caddy/templates/Caddyfile.j2`
-- To update routing: edit the template, run `--tags caddy`
-
-**SSH:**
-- Port 2222 (not 22) after Ansible runs
-- User: `deploy`
-- Key: `~/.ssh/id_ed25519`
+Iptables explicitly **drops** direct access to `komodo_port` (9120) from outside.
 
 ---
 
 ## Adding a new app
 
-1. `stacks/<name>/compose.yaml` — bind to `127.0.0.1:<port>`, join `infra_net`, use `[[SECRET]]` for secrets
-2. `ansible/roles/<name>/tasks/main.yml` — create `/opt/<name>` with `deploy` user ownership
-3. `ansible/group_vars/all.yml` — add `<name>_port` and `<name>_subdomain` variables
-4. `ansible/roles/caddy/templates/Caddyfile.j2` — add reverse_proxy block for the new subdomain
-5. `ansible/roles/infra/templates/init.sql.j2` — add `CREATE USER` / `CREATE DATABASE` if it needs Postgres
-6. `ansible/site.yml` — add the role (before caddy in the list)
-7. Run Ansible: `--tags "infra,caddy,<name>"`
-8. Komodo: create Stack + Procedure, copy webhook URL
-9. GitHub: add `KOMODO_WEBHOOK_<NAME>` secret (uppercase)
-10. `.github/workflows/deploy-stacks.yml`: add `<name>: ["stacks/<name>/**"]` to the paths-filter
-
----
-
-## Common operational tasks
-
-**SSH to server:**
-```bash
-ssh -p 2222 deploy@YOUR_SERVER_IP
-```
-
-**Check running containers:**
-```bash
-ssh -p 2222 deploy@YOUR_SERVER_IP "docker ps"
-```
-
-**View container logs:**
-```bash
-ssh -p 2222 deploy@YOUR_SERVER_IP "docker logs <container-name> --tail 50"
-```
-
-**Re-run a single Ansible role:**
-```bash
-ansible-playbook ansible/site.yml \
-  --extra-vars "@ansible/secrets.yml" \
-  --extra-vars "ansible_become_password={{ deploy_password }}" \
-  --tags <role-name>
-```
-
-**Reset a app's database user** (e.g. after losing a password):
-```bash
-ssh -p 2222 deploy@YOUR_SERVER_IP \
-  "docker exec <postgres-container-name> psql -U postgres -c \"ALTER USER n8n_user WITH PASSWORD 'newpassword';\""
-```
+1. Add a Docker Compose file to `stacks/<appname>/`
+2. Create `ansible/roles/<appname>/tasks/main.yml` — scaffold `/opt/<appname>` with correct ownership
+3. Add the role to `ansible/site.yml` (before `caddy`)
+4. Add a virtual host to `ansible/roles/caddy/templates/Caddyfile.j2`
+5. Add non-secret config to `ansible/group_vars/all.yml` (port, image, dir, subdomain)
+6. Add secrets: `ansible-vault edit ansible/secrets.yml`
+7. Add a database to `ansible/roles/infra/templates/init.sql.j2` if needed
+8. Run: `ansible-playbook site.yml`
+9. Create a Stack + Procedure in Komodo
+10. Add a GitHub webhook and repository secret
 
 ---
 
 ## Troubleshooting
 
-**`getaddrinfo EAI_AGAIN shared-postgres`** — wrong hostname. Use the container name from the infra compose template as the Postgres host, not `shared-postgres` or `postgres`.
+**A1 capacity unavailable**
+Oracle Free Tier A1 instances are often capacity-constrained. Try a different availability domain:
+```bash
+pulumi config set kiran-vm-infra:adIndex 1  # then pulumi up
+```
 
-**502 Bad Gateway** — container isn't running or crashed. Check `docker logs <container>` or Komodo → Stacks → Logs.
+**Connection refused on the hardened SSH port after bootstrap**
+Check that `./bootstrap.sh` completed both phases (it prints "Bootstrap complete" on success). If it timed out, re-run bootstrap once. If the server is still unreachable, redeploy with `pulumi down && pulumi up` and run bootstrap again.
 
-**`[[SECRET]]` shows literally in app** — variable doesn't exist in Komodo Variables. Check spelling.
+**Container can't reach Postgres**
+Apps must join `infra_net` and use the container name `infra-postgres-1` as the host. Using `localhost` or `127.0.0.1` will fail.
 
-**n8n running in UTC despite timezone set** — `TZ` is reserved in Komodo and silently dropped. Use `N8N_TZ` in Stack Environment instead.
+**n8n workflows show UTC timestamps**
+Use `N8N_TZ` env var, not `TZ` — Komodo drops `TZ` during stack deployment.
 
-**Caddy can't get TLS certificate** — `cloudflare_api_token` needs `Zone:DNS:Edit` permission. Check logs: `sudo journalctl -u caddy -f` on the server.
+**`[[SECRET_NAME]]` appears literally in app**
+The Komodo Variable is missing or misspelled. Check Komodo → Variables.
 
-**SSH connection refused** — if this is a new VM before Ansible runs, use port 22 and user `ubuntu`. After Ansible, port 2222 user `deploy`.
-
-**Pulumi asks for passphrase** — `PULUMI_CONFIG_PASSPHRASE_FILE` is not set. Run: `export PULUMI_CONFIG_PASSPHRASE_FILE=$HOME/.pulumi-passphrase`
+**Caddy not issuing certificates**
+The Cloudflare API token needs `Zone → DNS → Edit` scope for the target zone only.

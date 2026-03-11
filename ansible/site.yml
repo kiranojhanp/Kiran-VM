@@ -1,22 +1,21 @@
 ---
 # fewa.app production server — full provisioning playbook
 #
-# Standalone usage:
-#   ansible-playbook site.yml --extra-vars "@secrets.yml"
+# Usage:
+#   ansible-playbook site.yml
 #
-# Required extra-vars (pass via @secrets.yml or -e key=value):
-#   deploy_password        — deploy user OS password
-#   komodo_password        — Komodo admin UI password
-#   cloudflare_api_token   — Cloudflare Edit zone DNS token
-#
-# Optional extra-vars:
-#   komodo_passkey         — random string (defaults to placeholder)
-#   komodo_webhook_secret  — random string (defaults to placeholder)
+# Secrets are loaded automatically from secrets.yml (vault-encrypted).
+# Vault password is read from ~/.vault_pass via ansible.cfg.
 
 - name: Provision server
-  hosts: server
+  hosts: all
   become: true
   gather_facts: true
+  vars:
+    # Pull shared SSH port from infra/constants.py so Pulumi + Ansible stay in sync.
+    ssh_port: "{{ lookup('pipe', 'python3 ' ~ playbook_dir ~ '/scripts/infra_constant.py SSH_PORT_HARDENED') | int }}"
+  vars_files:
+    - secrets.yml
 
   roles:
     - role: common

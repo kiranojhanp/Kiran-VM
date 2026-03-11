@@ -1,11 +1,10 @@
 ---
 # Non-secret variables shared across all roles.
-# Secrets (passwords, tokens, server IP) live in secrets.yml (gitignored).
-# Run with: ansible-playbook site.yml --extra-vars "@secrets.yml"
+# Secrets are loaded from secrets.yml via vars_files in site.yml.
 
 # ── Server ──────────────────────────────────────────────
 deploy_user: deploy
-ssh_port: 2222
+# ssh_port is sourced from infra/constants.py in site.yml to avoid drift.
 timezone: Asia/Kathmandu
 # Set to false after confirming port 2222 works to close port 22.
 ssh_allow_port_22: false
@@ -16,8 +15,8 @@ komodo_subdomain: "komodo.{{ domain }}"
 
 # ── Komodo ──────────────────────────────────────────────
 komodo_port: 9120
-komodo_image: "ghcr.io/moghtech/komodo-core:v1.19.5"
-komodo_periphery_image: "ghcr.io/moghtech/komodo-periphery:v1.19.5"
+komodo_image: "ghcr.io/moghtech/komodo-core:1.19.5"
+komodo_periphery_image: "ghcr.io/moghtech/komodo-periphery:1.19.5"
 komodo_log_level: info
 # komodo_init_admin_username is set in secrets.yml (moved for security)
 # How often Komodo polls stacks for new image versions. Must be a Komodo duration string.
@@ -25,8 +24,10 @@ komodo_resource_poll_interval: "1-hr"
 
 # ── FerretDB (MongoDB adapter for Komodo) ───────────────
 # FerretDB requires its own patched postgres image — cannot share stock postgres:16.
-ferretdb_image: "ghcr.io/ferretdb/ferretdb:v2.7.0"
-ferretdb_pg_image: "ghcr.io/ferretdb/postgres-documentdb:latest"
+# The postgres-documentdb tag encodes both the PG major version and FerretDB version.
+# Keep both images in sync when upgrading. Releases: https://github.com/FerretDB/FerretDB/releases
+ferretdb_image: "ghcr.io/ferretdb/ferretdb:2.7.0"
+ferretdb_pg_image: "ghcr.io/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7.0"
 
 # ── Caddy ───────────────────────────────────────────────
 # caddy_image is intentionally omitted: the Caddy service uses a build: directive
@@ -35,7 +36,11 @@ ferretdb_pg_image: "ghcr.io/ferretdb/postgres-documentdb:latest"
 # the unofficial slothcroissant/caddy-cloudflaredns:latest image.
 caddy_email: "admin@{{ domain }}"
 
-# ── Paths ───────────────────────────────────────────────
+# ── Shared Infra ────────────────────────────────────────
+# Shared Postgres + Redis used by Sure, Gitea, n8n.
+# Note: Komodo/FerretDB uses its own separate postgres-documentdb image (see below).
+postgres_image: "postgres:17"
+redis_image: "redis:7.4.8"
 infra_dir: /opt/infra
 komodo_dir: /opt/komodo
 caddy_dir: /opt/caddy
@@ -55,11 +60,10 @@ gitea_image: "docker.gitea.com/gitea:1.22.6-rootless"
 # ── Databasus ───────────────────────────────────────────
 databasus_subdomain: "backup.{{ domain }}"
 databasus_port: 4005
-databasus_image: "databasus/databasus:latest"
+databasus_image: "databasus/databasus:3.18.0"
 databasus_dir: /opt/databasus
 
 # ── n8n ─────────────────────────────────────────────────
 n8n_subdomain: "n8n.{{ domain }}"
 n8n_port: 5678
 n8n_dir: /opt/n8n
-

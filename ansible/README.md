@@ -1,79 +1,161 @@
-# ansible/
+# ansible — server provisioning
 
-Provisions the server after Pulumi creates the VM. Runs in order: OS hardening → Docker → shared Postgres + Redis → Komodo → app scaffolding → Caddy.
+Ansible playbooks for the production server running on Oracle Cloud (ARM64 Ubuntu).
+
+Handles OS hardening, Docker, shared infrastructure (Postgres + Redis), and application scaffolding. Ongoing app deployments are managed by [Komodo](https://komo.do) after initial provisioning.
 
 ## Prerequisites
 
-- Ansible 2.13+ (`pip install ansible`)
-- VM running with public IP from `pulumi stack output`
-- SSH key at `~/.ssh/id_ed25519`
-
-## Setup
-
 ```bash
-cd ansible
-cp inventory/hosts.ini.example inventory/hosts.ini   # paste server IP
-cp secrets.yml.example secrets.yml                   # fill in all values
+pip install ansible
+ansible-galaxy collection install -r requirements.yml
 ```
 
-## Run
+Ensure `~/.vault_pass` exists — see [Vault](#vault).
+
+---
+
+## First-time setup (fresh VM)
+
+Run these steps **once** in order after `pulumi up` in `../infra`.
+
+### 1. Generate inventory
 
 ```bash
-# Full provisioning (new server)
-ansible-playbook site.yml \
-  --extra-vars "@secrets.yml" \
-  --extra-vars "ansible_become_password={{ deploy_password }}"
-
-# Re-run a specific role
-ansible-playbook site.yml \
-  --extra-vars "@secrets.yml" \
-  --extra-vars "ansible_become_password={{ deploy_password }}" \
-  --tags caddy
+./inventory/generate.sh
 ```
 
-## Roles
+Reads the public IP from the live Pulumi stack and writes `inventory/hosts.ini`. Re-run whenever the VM is replaced.
 
-| Role | Tags | Does |
-|------|------|------|
-| `common` | `common`, `hardening` | Deploy user, SSH on port 2222, iptables, fail2ban, swap, auditd |
-| `docker` | `docker` | Docker CE ARM64 |
-| `infra` | `infra`, `services` | Shared Postgres 16 + Redis, per-app databases |
-| `komodo` | `komodo`, `services` | Komodo + FerretDB (MongoDB adapter over Postgres) |
-| `sure` | `sure`, `services` | Config dirs |
-| `gitea` | `gitea`, `services` | Config dirs, rootless on port 3001/2223 |
-| `databasus` | `databasus`, `services` | Config dirs |
-| `n8n` | `n8n`, `services` | `/opt/n8n` dir |
-| `caddy` | `caddy`, `services` | xcaddy build with Cloudflare DNS plugin, Caddyfile, systemd |
+### 2. Bootstrap (initial SSH port → hardened SSH port)
 
-`--tags services` runs all service roles at once.
+A fresh VM starts on the initial SSH port from `../infra/constants.py` (default `22`). The `common` role moves sshd to the hardened port from the same file (default `2222`). The bootstrap script keeps the initial port open during the transition, confirms the hardened port is reachable, then closes the initial port.
+
+```bash
+./bootstrap.sh
+```
+
+### 3. Full provisioning
+
+```bash
+ansible-playbook site.yml
+```
+
+---
+
+## Day-to-day usage
+
+```bash
+# Full playbook
+ansible-playbook site.yml
+
+# Dry run — shows what would change without applying it
+ansible-playbook site.yml --check --diff
+
+# Single role
+ansible-playbook site.yml --tags docker
+ansible-playbook site.yml --tags caddy
+
+# All service roles at once
+ansible-playbook site.yml --tags services
+
+# Skip a role
+ansible-playbook site.yml --skip-tags caddy
+```
+
+Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `sure`, `gitea`, `databasus`, `n8n`, `caddy`, `services`
+
+`generate.sh` and `bootstrap.sh` read shared SSH ports from `../infra/constants.py`, so Pulumi + Ansible stay aligned without duplicate hardcoded port values.
+
+---
+
+## Vault
+
+Secrets are stored in `secrets.yml`, encrypted with [ansible-vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html). The vault password lives at `~/.vault_pass` (outside the repo, never committed). `ansible.cfg` reads it automatically.
+
+### Setup on a new machine
+
+Get the vault password from your password manager, then:
+
+```bash
+echo 'your-vault-password' > ~/.vault_pass
+chmod 600 ~/.vault_pass
+```
+
+### View / edit secrets
+
+```bash
+ansible-vault view secrets.yml
+ansible-vault edit secrets.yml
+```
+
+### Rotate the vault password
+
+```bash
+ansible-vault rekey secrets.yml
+# update ~/.vault_pass with the new value
+```
+
+See `secrets.yml.example` for the full list of required secrets and how to generate each one.
+
+---
 
 ## Key files
 
-- `group_vars/all.yml` — domain, timezone, ports, other non-secret config
-- `secrets.yml` — gitignored, copy from `secrets.yml.example`
-- `inventory/hosts.ini` — gitignored, copy from example
+| File                       | Purpose                                              |
+| -------------------------- | ---------------------------------------------------- |
+| `site.yml`                 | Main playbook — runs all roles in order              |
+| `bootstrap.sh`             | One-time first-run script (port 22 → 2222)           |
+| `inventory/generate.sh`    | Writes `hosts.ini` from live Pulumi stack output     |
+| `inventory/hosts.ini`      | Active inventory (gitignored, generated)             |
+| `group_vars/all.yml`       | Non-secret config (ports, image tags, paths, domain) |
+| `secrets.yml`              | Vault-encrypted secrets (passwords, API tokens)      |
+| `secrets.yml.example`      | Documents all required keys and how to generate them |
+| `requirements.yml`         | Ansible collection dependencies                      |
+| `ansible.cfg`              | Ansible defaults (inventory, SSH, vault)             |
 
-## Notes
+---
 
-**Caddy** is built via xcaddy with the Cloudflare DNS plugin for DNS-01 ACME — no port 80 needed. Update `roles/caddy/templates/Caddyfile.j2` to change routing, then `--tags caddy`.
+## Roles
 
-**Postgres** — all apps share one container. Databases and users are created by `roles/infra/templates/init.sql.j2` on first run.
+| Role        | Tags                    | What it does                                                            |
+| ----------- | ----------------------- | ----------------------------------------------------------------------- |
+| `common`    | `common`, `hardening`   | OS hardening: sshd, iptables, fail2ban, sysctl, swap, auditd, AppArmor |
+| `docker`    | `docker`                | Docker CE + Compose plugin; daemon config                               |
+| `infra`     | `infra`, `services`     | Shared Postgres 17 + Redis; `init.sql` creates per-app databases        |
+| `komodo`    | `komodo`, `services`    | Komodo + FerretDB stack; ongoing lifecycle managed by Komodo            |
+| `sure`      | `sure`, `services`      | Directory scaffold; lifecycle managed by Komodo                         |
+| `gitea`     | `gitea`, `services`     | Directory scaffold + custom templates; lifecycle managed by Komodo      |
+| `databasus` | `databasus`, `services` | Directory scaffold; lifecycle managed by Komodo                         |
+| `n8n`       | `n8n`, `services`       | Directory scaffold (uid 1000 for rootless); lifecycle managed by Komodo |
+| `caddy`     | `caddy`, `services`     | xcaddy reverse proxy with Cloudflare DNS plugin; always runs last       |
 
-**FerretDB** — Komodo needs MongoDB; FerretDB provides a compatible API backed by Postgres. No extra config needed.
+---
 
 ## Adding a new app
 
-1. `ansible/roles/<name>/tasks/main.yml` — create `/opt/<name>` with correct ownership
-2. `group_vars/all.yml` — add port variable
-3. `roles/caddy/templates/Caddyfile.j2` — add vhost
-4. `roles/infra/templates/init.sql.j2` — add DB + user if needed
-5. `site.yml` — add role (before caddy)
-6. Run: `--tags "infra,caddy,<name>"`
+1. Create `roles/<appname>/tasks/main.yml` — create `/opt/<appname>` with correct ownership
+2. Add a virtual host block to `roles/caddy/templates/Caddyfile.j2`
+3. Add the role to `site.yml` before the `caddy` role
+4. Add secrets: `ansible-vault edit secrets.yml`
+5. Add non-secret config to `group_vars/all.yml` (port, image, dir, subdomain)
+6. Add the database to `roles/infra/templates/init.sql.j2` if needed
+7. Run: `ansible-playbook site.yml`
+
+Then configure the app stack in Komodo.
+
+---
 
 ## Troubleshooting
 
-**SSH refused on port 2222** — `common` moves SSH from 22 to 2222. Use 22 before the first run, 2222 after.
+**Connection refused on the hardened SSH port**
+Bootstrap has not run yet, or it did not complete both phases. Run `./bootstrap.sh` again.
 
-**Caddy can't get a certificate** — check `cloudflare_api_token` has `Zone:DNS:Edit`. Logs: `sudo journalctl -u caddy -f`
+**Connection refused on the initial SSH port**
+Cloud-init may still be running after `pulumi up`. Wait 60–90 seconds and retry `./bootstrap.sh`.
 
-**Komodo unreachable** — `docker ps | grep komodo`, then `sudo caddy validate --config /etc/caddy/Caddyfile`
+**Caddy: certificate not issued**
+The Cloudflare API token needs `Zone → DNS → Edit` scope for the target zone. Check with `ansible-vault view secrets.yml`.
+
+**Komodo not reachable at its subdomain**
+Komodo binds to `127.0.0.1` and is only accessible via Caddy. Check that Caddy is running: `docker compose -f /opt/caddy/docker-compose.yml ps`.

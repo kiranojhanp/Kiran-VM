@@ -14,5 +14,5 @@
   changed_when: true
 
 - name: Restore iptables
-  ansible.builtin.command: netfilter-persistent reload
+  ansible.builtin.command: iptables-restore /etc/iptables/rules.v4
   changed_when: true
