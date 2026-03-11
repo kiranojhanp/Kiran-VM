@@ -1,6 +1,0 @@
----
-- name: Reload caddy
-  ansible.builtin.command:
-    cmd: docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
-    chdir: "{{ caddy_dir }}"
-  changed_when: true

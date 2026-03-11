@@ -18,7 +18,7 @@ One ARM64 VM (`VM.Standard.A1.Flex`, 4 OCPU / 24 GB) running:
 - **Komodo** — Docker management UI backed by FerretDB (its own Postgres)
 - **Caddy** — Reverse proxy with automatic TLS via Cloudflare DNS-01
 
-Apps (`sure`, `gitea`, `databasus`, `n8n`) are scaffolded by Ansible, then managed day-to-day in Komodo.
+Apps (`sure`, `gitea`, `databasus`, `n8n`, `caddy`) are scaffolded by Ansible and/or defined in `stacks/`, then managed day-to-day in Komodo.
 
 ## Repository layout
 
@@ -108,7 +108,7 @@ docker ps
 docker compose -f /opt/infra/docker-compose.yml ps
 
 # Check Caddy
-docker compose -f /opt/caddy/docker-compose.yml ps
+docker ps --filter name=caddy
 ```
 
 ---
@@ -135,8 +135,8 @@ Iptables explicitly **drops** direct access to `komodo_port` (9120) from outside
 
 1. Add a Docker Compose file to `stacks/<appname>/`
 2. Create `provision/roles/<appname>/tasks/main.yml` — scaffold `/opt/<appname>` with correct ownership
-3. Add the role to `provision/site.yml` (before `caddy`)
-4. Add a virtual host to `provision/roles/caddy/templates/Caddyfile.j2`
+3. Add the role to `provision/site.yml`
+4. Add a virtual host to `stacks/caddy/Caddyfile`
 5. Add non-secret config to `provision/group_vars/all.yml` (port, image, dir, subdomain)
 6. Add secrets: `ansible-vault edit provision/secrets.yml`
 7. Add a database to `provision/roles/infra/templates/init.sql.j2` if needed

@@ -62,16 +62,15 @@ ansible-playbook site.yml --check --diff
 
 # Single role
 ansible-playbook site.yml --tags docker
-ansible-playbook site.yml --tags caddy
 
 # All service roles at once
 ansible-playbook site.yml --tags services
 
 # Skip a role
-ansible-playbook site.yml --skip-tags caddy
+ansible-playbook site.yml --skip-tags n8n
 ```
 
-Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `sure`, `gitea`, `databasus`, `n8n`, `caddy`, `services`
+Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `sure`, `gitea`, `databasus`, `n8n`, `services`
 
 `generate.sh` and `bootstrap.sh` read shared SSH ports from generated `../infra/constants.py` (from `../Taskfile.yml` vars), so Pulumi and Ansible stay aligned without duplicate hardcoded values.
 
@@ -135,15 +134,14 @@ ansible-vault rekey secrets.yml
 | `gitea`     | `gitea`, `services`     | Directory scaffold + custom templates; lifecycle managed by Komodo      |
 | `databasus` | `databasus`, `services` | Directory scaffold; lifecycle managed by Komodo                         |
 | `n8n`       | `n8n`, `services`       | Directory scaffold (uid 1000 for rootless); lifecycle managed by Komodo |
-| `caddy`     | `caddy`, `services`     | xcaddy reverse proxy with Cloudflare DNS plugin; always runs last       |
 
 ---
 
 ## Adding a new app
 
 1. Create `roles/<appname>/tasks/main.yml` — create `/opt/<appname>` with correct ownership
-2. Add a virtual host block to `roles/caddy/templates/Caddyfile.j2`
-3. Add the role to `site.yml` before the `caddy` role
+2. Add or update a virtual host block in `../stacks/caddy/Caddyfile`
+3. Add the role to `site.yml`
 4. Add secrets: `ansible-vault edit secrets.yml`
 5. Add non-secret config to `group_vars/all.yml` (port, image, dir, subdomain)
 6. Add the database to `roles/infra/templates/init.sql.j2` if needed
@@ -165,4 +163,4 @@ Cloud-init may still be running right after `pulumi up`. Wait 60-90 seconds and 
 The Cloudflare API token needs `Zone → DNS → Edit` scope for the target zone. Check with `ansible-vault view secrets.yml`.
 
 **Komodo not reachable at its subdomain**
-Komodo binds to `127.0.0.1` and is only accessible via Caddy. Check that Caddy is running: `docker compose -f /opt/caddy/docker-compose.yml ps`.
+Komodo binds to `127.0.0.1` and is only accessible via Caddy. Check that Caddy is running in Komodo and confirm there is a matching `komodo.<domain>` vhost in `stacks/caddy/Caddyfile`.

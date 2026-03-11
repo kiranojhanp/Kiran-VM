@@ -41,6 +41,3 @@
 
     - role: n8n
       tags: [n8n, services]
-
-    - role: caddy
-      tags: [caddy, services]

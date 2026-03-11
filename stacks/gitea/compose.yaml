@@ -35,8 +35,9 @@ networks:
 
 services:
   gitea:
-    image: docker.gitea.com/gitea:1.22.6-rootless
+    image: docker.gitea.com/gitea:${GITEA_IMAGE_TAG:-1.22.6-rootless}
     restart: unless-stopped
+    init: true
     # Rootless image runs as uid 1000 — data dirs must be owned by 1000:1000.
     user: "1000:1000"
     environment:
@@ -69,6 +70,13 @@ services:
       - /opt/gitea/config:/etc/gitea
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+    security_opt:
+      - no-new-privileges:true
     networks:
       - infra_net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     mem_limit: 512m

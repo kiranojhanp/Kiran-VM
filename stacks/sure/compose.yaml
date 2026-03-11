@@ -31,7 +31,8 @@ x-rails-env: &rails_env
 
 services:
   web:
-    image: ghcr.io/we-promise/sure:stable
+    image: ghcr.io/we-promise/sure:${SURE_IMAGE_TAG:-stable}
+    init: true
     volumes:
       - app-storage:/rails/storage
     ports:
@@ -39,19 +40,36 @@ services:
     restart: unless-stopped
     environment:
       <<: *rails_env
+    security_opt:
+      - no-new-privileges:true
     networks:
       - infra_net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 1g
 
   worker:
-    image: ghcr.io/we-promise/sure:stable
+    image: ghcr.io/we-promise/sure:${SURE_IMAGE_TAG:-stable}
+    init: true
     command: bundle exec sidekiq
     volumes:
       - app-storage:/rails/storage
     restart: unless-stopped
     environment:
       <<: *rails_env
+    security_opt:
+      - no-new-privileges:true
     networks:
       - infra_net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 1g
 
 volumes:
   app-storage:

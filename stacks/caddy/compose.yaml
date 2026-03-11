@@ -1,0 +1,33 @@
+## Caddy — reverse proxy + TLS (Cloudflare DNS challenge)
+## Managed by Komodo (git-backed) — edit this folder and push to redeploy.
+##
+## Stack Environment vars expected (set in Komodo Stack Config):
+##   Secret (Komodo Variables -> [[VAR_NAME]]):
+##     CLOUDFLARE_API_TOKEN=[[CLOUDFLARE_API_TOKEN]]
+
+services:
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    network_mode: host
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 512m
+
+volumes:
+  caddy_data:
+  caddy_config:

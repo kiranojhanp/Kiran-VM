@@ -37,6 +37,7 @@ jobs:
             databasus:  ["stacks/databasus/**"]
             gitea:      ["stacks/gitea/**"]
             n8n:        ["stacks/n8n/**"]
+            caddy:      ["stacks/caddy/**"]
 
   # Deploy each changed stack in parallel via Komodo procedure webhooks.
   # Webhook URL is looked up from secrets as KOMODO_WEBHOOK_<STACK_UPPERCASED>.

@@ -22,8 +22,9 @@ networks:
 
 services:
   databasus:
-    image: databasus/databasus:latest
+    image: databasus/databasus:${DATABASUS_IMAGE_TAG:-latest}
     restart: unless-stopped
+    init: true
     environment:
       SECRET_KEY: ${SECRET_KEY}
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
@@ -35,6 +36,14 @@ services:
       - "127.0.0.1:4005:4005"
     volumes:
       - /opt/databasus/data:/databasus-data
+    security_opt:
+      - no-new-privileges:true
     networks:
       - infra_net
       - komodo_komodo-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 256m

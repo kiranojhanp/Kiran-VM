@@ -1,7 +1,20 @@
+## n8n — workflow automation
+## Managed by Komodo (git-backed) — edit this file and push to redeploy.
+##
+## Stack Environment vars expected (set in Komodo Stack Config):
+##   Non-secret:
+##     N8N_HOST
+##     N8N_WEBHOOK_URL
+##     N8N_TZ
+##   Secret (Komodo Variables → [[VAR_NAME]]):
+##     N8N_DB_PASSWORD=[[N8N_DB_PASSWORD]]
+##     N8N_ENCRYPTION_KEY=[[N8N_ENCRYPTION_KEY]]
+
 services:
   n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
+    image: docker.n8n.io/n8nio/n8n:${N8N_IMAGE_TAG:-latest}
     restart: unless-stopped
+    init: true
     ports:
       - "127.0.0.1:5678:5678"
     environment:
@@ -17,11 +30,18 @@ services:
       WEBHOOK_URL: ${N8N_WEBHOOK_URL}
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
       GENERIC_TIMEZONE: ${N8N_TZ}
-      TZ: ${N8N_TZ}
+      N8N_SECURE_COOKIE: "true"
     volumes:
       - /opt/n8n/data:/home/node/.n8n
+    security_opt:
+      - no-new-privileges:true
     networks:
       - infra_net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     mem_limit: 1g
 
 networks:

@@ -1,0 +1,91 @@
+{
+  email admin@fewa.app
+}
+
+(security_headers) {
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' wss:; frame-ancestors 'self'"
+  }
+}
+
+komodo.fewa.app {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+  encode gzip
+  import security_headers
+  log {
+    output file /var/log/caddy/komodo-access.log
+  }
+  reverse_proxy 127.0.0.1:9120
+}
+
+sure.fewa.app {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+  encode gzip
+  import security_headers
+  log {
+    output file /var/log/caddy/sure-access.log
+  }
+  reverse_proxy 127.0.0.1:3000
+}
+
+git.fewa.app {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+  encode gzip
+  import security_headers
+  log {
+    output file /var/log/caddy/gitea-access.log
+  }
+  reverse_proxy 127.0.0.1:3001
+}
+
+backup.fewa.app {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+  encode gzip
+  import security_headers
+  log {
+    output file /var/log/caddy/databasus-access.log
+  }
+  reverse_proxy 127.0.0.1:4005
+}
+
+n8n.fewa.app {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+  encode gzip
+  import security_headers
+  log {
+    output file /var/log/caddy/n8n-access.log
+  }
+  reverse_proxy 127.0.0.1:5678
+}
+
+fewa.app {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+  encode gzip
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    Content-Security-Policy "default-src 'self'"
+  }
+  log {
+    output file /var/log/caddy/root-access.log
+  }
+  respond "fewa.app - coming soon" 200
+}

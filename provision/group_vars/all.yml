@@ -29,13 +29,6 @@ komodo_resource_poll_interval: "1-hr"
 ferretdb_image: "ghcr.io/ferretdb/ferretdb:2.7.0"
 ferretdb_pg_image: "ghcr.io/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7.0"
 
-# ── Caddy ───────────────────────────────────────────────
-# caddy_image is intentionally omitted: the Caddy service uses a build: directive
-# in docker-compose.yml.j2 to build a custom image via xcaddy (adds Cloudflare DNS
-# module) from a Dockerfile deployed to {{ caddy_dir }}/Dockerfile. This replaces
-# the unofficial slothcroissant/caddy-cloudflaredns:latest image.
-caddy_email: "admin@{{ domain }}"
-
 # ── Shared Infra ────────────────────────────────────────
 # Shared Postgres + Redis used by Sure, Gitea, n8n.
 # Note: Komodo/FerretDB uses its own separate postgres-documentdb image (see below).
@@ -43,7 +36,6 @@ postgres_image: "postgres:17"
 redis_image: "redis:7.4.8"
 infra_dir: /opt/infra
 komodo_dir: /opt/komodo
-caddy_dir: /opt/caddy
 sure_dir: /opt/sure
 gitea_dir: /opt/gitea
 

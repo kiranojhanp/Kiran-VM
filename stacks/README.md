@@ -2,7 +2,9 @@
 
 Docker Compose files for each app, managed by [Komodo](https://komo.do). A push to `main` triggers GitHub Actions, which calls the matching Komodo webhook and redeploys that stack.
 
-All stacks bind to `127.0.0.1:<port>` (Caddy proxies them) and join `infra_net` to reach shared Postgres and Redis.
+App stacks bind to `127.0.0.1:<port>` (Caddy proxies them) and join `infra_net` to reach shared Postgres and Redis.
+
+`caddy` is also managed as a stack, but it is a special case: it runs with `network_mode: host` so it can proxy host-local app ports.
 
 ## Deploying
 
@@ -24,10 +26,16 @@ Stack-specific env vars (not global secrets) go in the Stack's Environment tab i
 
 **Encryption key** - `N8N_ENCRYPTION_KEY` must be set in Komodo Variables. If this key is ever lost, all stored n8n credentials are permanently unrecoverable. Keep a copy in a password manager.
 
+## caddy gotchas
+
+**Cloudflare token** - set `CLOUDFLARE_API_TOKEN` in Komodo Variables; Caddy uses it for DNS-01 cert issuance.
+
+**Routing updates** - edit `stacks/caddy/Caddyfile` directly. Changes trigger Caddy redeploy via the stack webhook.
+
 ## Adding a new stack
 
 1. `stacks/<name>/compose.yaml` — bind to `127.0.0.1:<port>`, join `infra_net`, use `[[SECRET]]` for secrets
-2. Add a vhost to `provision/roles/caddy/templates/Caddyfile.j2`, run `--tags caddy`
+2. Add or update routing in `stacks/caddy/Caddyfile`
 3. Komodo: create Stack + Procedure, copy webhook URL
 4. GitHub: add `KOMODO_WEBHOOK_<NAME>` secret
 5. `.github/workflows/deploy-stacks.yml`: add path filter for the new stack
