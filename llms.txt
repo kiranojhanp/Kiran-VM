@@ -115,7 +115,7 @@ docker compose -f /opt/caddy/docker-compose.yml ps
 
 ## Secrets
 
-All secrets live in `provision/secrets.yml` (vault-encrypted). See `provision/secrets.yml.example` for the full list and generation commands.
+All secrets live in `provision/secrets.yml` (vault-encrypted). Use `ansible-vault view provision/secrets.yml` to inspect keys and `ansible-vault edit provision/secrets.yml` to update values.
 
 The vault password lives at `~/.vault_pass` on each machine that runs Ansible — never committed to the repo. Store it in your password manager.
 

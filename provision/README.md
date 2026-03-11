@@ -104,7 +104,7 @@ ansible-vault rekey secrets.yml
 # update ~/.vault_pass with the new value
 ```
 
-See `secrets.yml.example` for the full list of required secrets and how to generate each one.
+`secrets.yml` is the source of truth for required secrets. Use `ansible-vault view secrets.yml` to inspect current keys, and `ansible-vault edit secrets.yml` to add/update values.
 
 ---
 
@@ -118,7 +118,6 @@ See `secrets.yml.example` for the full list of required secrets and how to gener
 | `inventory/hosts.ini`      | Active inventory (gitignored, generated)             |
 | `group_vars/all.yml`       | Non-secret config (ports, image tags, paths, domain) |
 | `secrets.yml`              | Vault-encrypted secrets (passwords, API tokens)      |
-| `secrets.yml.example`      | Documents all required keys and how to generate them |
 | `requirements.yml`         | Ansible collection dependencies                      |
 | `ansible.cfg`              | Ansible defaults (inventory, SSH, vault)             |
 

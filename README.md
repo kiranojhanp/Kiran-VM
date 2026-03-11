@@ -41,7 +41,6 @@ task up                    # alias: task apply
 3) Harden + provision server
 
 ```bash
-cp provision/secrets.yml.example provision/secrets.yml
 task hosts                 # alias: task inventory
 task bootstrap             # alias: task harden
 task provision             # alias: task ans
