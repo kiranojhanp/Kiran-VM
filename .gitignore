@@ -2,18 +2,19 @@
 .worktrees/
 
 # Secrets — never commit
-ansible/secrets.yml
+provision/secrets.yml
 .secrets.env
 
-# pyinfra provisioning
+# Provisioning local env
 provision/.env
 provision/.venv
 
 # Inventory — machine-specific, never commit (use hosts.ini.example as template)
-ansible/inventory/hosts.ini
+provision/inventory/hosts.ini
 
 # Pulumi infra — build output and dependencies
 infra/node_modules/
 infra/bin/
 
-provision/
+# Ruff lint cache
+**/.ruff_cache/

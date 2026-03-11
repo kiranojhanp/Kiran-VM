@@ -107,13 +107,13 @@ pulumi down
 ## After provisioning
 
 ```bash
-cd ../ansible
+cd ../provision
 ./inventory/generate.sh   # pull IP from Pulumi stack → writes hosts.ini
 ./bootstrap.sh            # first-run only: hardens sshd (22 → 2222)
 ansible-playbook site.yml # full provisioning
 ```
 
-See `../ansible/README.md` for the complete provisioning guide.
+See `../provision/README.md` for the complete provisioning guide.
 
 ## Always Free limits
 

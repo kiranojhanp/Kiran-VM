@@ -5,7 +5,7 @@ Portable self-hosted VM setup on Oracle Cloud Always Free.
 Core pipeline:
 
 ```
-Pulumi -> Ansible -> Komodo -> stacks/
+Pulumi -> Provision -> Komodo -> stacks/
 ```
 
 ## Portability contract
@@ -41,7 +41,7 @@ task up                    # alias: task apply
 3) Harden + provision server
 
 ```bash
-cp ansible/secrets.yml.example ansible/secrets.yml
+cp provision/secrets.yml.example provision/secrets.yml
 task hosts                 # alias: task inventory
 task bootstrap             # alias: task harden
 task provision             # alias: task ans
@@ -69,7 +69,7 @@ Available targets cover the core flow:
 - infra dependency sync + Pulumi lifecycle
 - host inventory generation from Pulumi output
 - first-run SSH bootstrap hardening
-- full Ansible server provisioning
+- full server provisioning
 
 ## Deploying apps
 
@@ -84,6 +84,6 @@ Any push to `stacks/<name>/` triggers the matching Komodo procedure.
 ## Docs map
 
 - `infra/README.md`: Pulumi stack config and OCI details
-- `ansible/README.md`: server hardening/provisioning details
+- `provision/README.md`: server hardening/provisioning details
 - `stacks/README.md`: app stack layout and conventions
 - `llms.txt`: machine-oriented repo summary

@@ -24,7 +24,7 @@ Apps (`sure`, `gitea`, `databasus`, `n8n`) are scaffolded by Ansible and then ma
 
 ```
 infra/        Pulumi program (Python) — VM provisioning
-ansible/      Ansible roles — server provisioning
+provision/    Ansible roles — server provisioning
 stacks/       Docker Compose files for each app (consumed by Komodo)
 ```
 
@@ -44,7 +44,7 @@ See `infra/README.md` for config setup (OCI credentials, SSH key, region).
 ### Step 2 — Generate inventory
 
 ```bash
-cd ansible
+cd provision
 ./inventory/generate.sh
 ```
 
@@ -64,7 +64,7 @@ A fresh VM starts on the initial SSH port from `infra/constants.py` (default `22
 ansible-playbook site.yml
 ```
 
-See `ansible/README.md` for day-to-day usage, vault setup, and troubleshooting.
+See `provision/README.md` for day-to-day usage, vault setup, and troubleshooting.
 
 ### Step 5 — Configure DNS
 
@@ -74,21 +74,21 @@ All subdomains are handled by Caddy with Cloudflare DNS-01 — no wildcard DNS r
 
 ### Step 6 — Set up Komodo
 
-1. Open `https://komodo.<your-domain>` and log in with `komodo_init_admin_username` / `komodo_password` from `ansible/secrets.yml`
+1. Open `https://komodo.<your-domain>` and log in with `komodo_init_admin_username` / `komodo_password` from `provision/secrets.yml`
 2. Add a **Server** pointing to `localhost` using the periphery passkey
 3. Add **Variables** (shared secrets the stacks reference by name):
 
 | Variable                     | Value source                      |
 | ---------------------------- | --------------------------------- |
-| `SHARED_POSTGRES_SURE_PASSWORD`  | `ansible/secrets.yml`             |
-| `SHARED_POSTGRES_GITEA_PASSWORD` | `ansible/secrets.yml`             |
-| `SHARED_POSTGRES_N8N_PASSWORD`   | `ansible/secrets.yml`             |
-| `GITEA_SECRET_KEY`               | `ansible/secrets.yml`             |
-| `SURE_SECRET_KEY_BASE`           | `ansible/secrets.yml`             |
-| `OPENAI_ACCESS_TOKEN`            | `ansible/secrets.yml`             |
-| `DATABASUS_SECRET_KEY`           | `ansible/secrets.yml`             |
-| `R2_ACCESS_KEY_ID`               | `ansible/secrets.yml`             |
-| `R2_SECRET_ACCESS_KEY`           | `ansible/secrets.yml`             |
+| `SHARED_POSTGRES_SURE_PASSWORD`  | `provision/secrets.yml`           |
+| `SHARED_POSTGRES_GITEA_PASSWORD` | `provision/secrets.yml`           |
+| `SHARED_POSTGRES_N8N_PASSWORD`   | `provision/secrets.yml`           |
+| `GITEA_SECRET_KEY`               | `provision/secrets.yml`           |
+| `SURE_SECRET_KEY_BASE`           | `provision/secrets.yml`           |
+| `OPENAI_ACCESS_TOKEN`            | `provision/secrets.yml`           |
+| `DATABASUS_SECRET_KEY`           | `provision/secrets.yml`           |
+| `R2_ACCESS_KEY_ID`               | `provision/secrets.yml`           |
+| `R2_SECRET_ACCESS_KEY`           | `provision/secrets.yml`           |
 | `N8N_ENCRYPTION_KEY`             | Generate: `openssl rand -hex 32` — **store in password manager, never lose** |
 
 4. Create a **Stack** for each app, pointing to the compose file in `stacks/`
@@ -115,7 +115,7 @@ docker compose -f /opt/caddy/docker-compose.yml ps
 
 ## Secrets
 
-All secrets live in `ansible/secrets.yml` (vault-encrypted). See `ansible/secrets.yml.example` for the full list and generation commands.
+All secrets live in `provision/secrets.yml` (vault-encrypted). See `provision/secrets.yml.example` for the full list and generation commands.
 
 The vault password lives at `~/.vault_pass` on each machine that runs Ansible — never committed to the repo. Store it in your password manager.
 
@@ -134,12 +134,12 @@ Iptables explicitly **drops** direct access to `komodo_port` (9120) from outside
 ## Adding a new app
 
 1. Add a Docker Compose file to `stacks/<appname>/`
-2. Create `ansible/roles/<appname>/tasks/main.yml` — scaffold `/opt/<appname>` with correct ownership
-3. Add the role to `ansible/site.yml` (before `caddy`)
-4. Add a virtual host to `ansible/roles/caddy/templates/Caddyfile.j2`
-5. Add non-secret config to `ansible/group_vars/all.yml` (port, image, dir, subdomain)
-6. Add secrets: `ansible-vault edit ansible/secrets.yml`
-7. Add a database to `ansible/roles/infra/templates/init.sql.j2` if needed
+2. Create `provision/roles/<appname>/tasks/main.yml` — scaffold `/opt/<appname>` with correct ownership
+3. Add the role to `provision/site.yml` (before `caddy`)
+4. Add a virtual host to `provision/roles/caddy/templates/Caddyfile.j2`
+5. Add non-secret config to `provision/group_vars/all.yml` (port, image, dir, subdomain)
+6. Add secrets: `ansible-vault edit provision/secrets.yml`
+7. Add a database to `provision/roles/infra/templates/init.sql.j2` if needed
 8. Run: `ansible-playbook site.yml`
 9. Create a Stack + Procedure in Komodo
 10. Add a GitHub webhook and repository secret

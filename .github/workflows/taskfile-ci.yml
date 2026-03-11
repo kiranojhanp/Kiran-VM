@@ -6,7 +6,7 @@ on:
       - Taskfile.yml
       - README.md
       - infra/README.md
-      - ansible/README.md
+      - provision/README.md
       - .github/workflows/taskfile-ci.yml
   push:
     branches: [main]
@@ -14,7 +14,7 @@ on:
       - Taskfile.yml
       - README.md
       - infra/README.md
-      - ansible/README.md
+      - provision/README.md
       - .github/workflows/taskfile-ci.yml
 
 jobs:

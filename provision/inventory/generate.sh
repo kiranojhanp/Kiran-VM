@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# generate.sh — write ansible/inventory/hosts.ini from live Pulumi stack output
+# generate.sh — write provision/inventory/hosts.ini from live Pulumi stack output
 #
 # Usage:
 #   ./inventory/generate.sh

@@ -27,7 +27,7 @@ Stack-specific env vars (not global secrets) go in the Stack's Environment tab i
 ## Adding a new stack
 
 1. `stacks/<name>/compose.yaml` — bind to `127.0.0.1:<port>`, join `infra_net`, use `[[SECRET]]` for secrets
-2. Add a vhost to `ansible/roles/caddy/templates/Caddyfile.j2`, run `--tags caddy`
+2. Add a vhost to `provision/roles/caddy/templates/Caddyfile.j2`, run `--tags caddy`
 3. Komodo: create Stack + Procedure, copy webhook URL
 4. GitHub: add `KOMODO_WEBHOOK_<NAME>` secret
 5. `.github/workflows/deploy-stacks.yml`: add path filter for the new stack
