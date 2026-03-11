@@ -1,0 +1,48 @@
+# ── Project Defaults ──────────────────────────────────────────────────────────
+PROJECT_NAME_DEFAULT = "kiran-vm"
+
+# ── Resource Name Suffixes ────────────────────────────────────────────────────
+SUFFIX_COMPARTMENT = "-compartment"
+SUFFIX_VCN = "-vcn"
+SUFFIX_IGW = "-igw"
+SUFFIX_RT = "-rt"
+SUFFIX_SL = "-sl"
+SUFFIX_SUBNET = "-subnet"
+SUFFIX_VM = "-vm"
+SUFFIX_VNIC = "-vnic"
+
+# ── Network ───────────────────────────────────────────────────────────────────
+ANYWHERE = "0.0.0.0/0"
+VCN_CIDR = "10.0.0.0/16"
+SUBNET_CIDR = "10.0.0.0/24"
+SUBNET_DNS_LABEL = "public"
+
+# ── Ports ─────────────────────────────────────────────────────────────────────
+PORT_HTTP = 80
+PORT_HTTPS = 443
+SSH_PORT_INITIAL = 22  # allowed during bootstrap (cloud-init / first pyinfra run)
+SSH_PORT_HARDENED = 2222  # sshd moves here after common role runs
+
+# ── OCI Protocol Numbers ──────────────────────────────────────────────────────
+PROTO_TCP = "6"
+PROTO_ICMP = "1"
+
+# ── ICMP ──────────────────────────────────────────────────────────────────────
+ICMP_TYPE_PATH_MTU = 3  # path MTU discovery (required for TCP to work correctly)
+ICMP_CODE_PATH_MTU = 4
+ICMP_TYPE_PING = 8
+
+# ── Compute ───────────────────────────────────────────────────────────────────
+# VM.Standard.A1.Flex — Oracle Always Free: 4 OCPU, 24 GB RAM, up to 200 GB storage
+INSTANCE_SHAPE = "VM.Standard.A1.Flex"
+INSTANCE_OCPUS = 4
+INSTANCE_MEM_GB = 24
+
+# ── OS Image ──────────────────────────────────────────────────────────────────
+IMAGE_OS = "Canonical Ubuntu"
+IMAGE_OS_VERSION = "22.04"
+
+# ── Config Defaults ───────────────────────────────────────────────────────────
+# bootVolumeSizeGb: (Oracle Always Free gives 200 GB total block storage across all instances)
+BOOT_VOLUME_GB_DEFAULT = "200"
+AD_INDEX_DEFAULT = "0"  # try a higher index if the first AD is out of A1 capacity
