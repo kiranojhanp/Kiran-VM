@@ -52,7 +52,7 @@ Reads the public IP from the live Pulumi stack and writes `inventory/hosts.ini`.
 
 ### Step 3 — Bootstrap (first run only)
 
-A fresh VM starts on the initial SSH port from `infra/constants.py` (default `22`). Bootstrap moves sshd to the hardened port from the same file (default `2222`) in a safe two-phase flow:
+A fresh VM starts on the initial SSH port from generated `infra/constants.py` (sourced from Taskfile vars, default `22`). Bootstrap moves sshd to the hardened port from the same generated file (default `2222`) in a safe two-phase flow:
 
 ```bash
 ./bootstrap.sh

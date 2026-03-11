@@ -14,7 +14,7 @@ Pulumi (Python) program that provisions an Oracle Cloud Always Free ARM VM insid
 | Public Subnet    | `10.0.0.0/24`                                                 |
 | Compute Instance | `VM.Standard.A1.Flex` — 4 OCPU / 24 GB RAM / 200 GB boot volume (default) |
 
-All constants (CIDRs, ports, image, shape) live in `constants.py` — `__main__.py` is not meant to be edited directly.
+All constants (CIDRs, ports, image, shape) are defined in `../Taskfile.yml` vars and auto-generated into `constants.py` by `task sync` / `task init`.
 
 ## Prerequisites
 
@@ -59,7 +59,7 @@ pulumi config set kiran-vm-infra:projectName  <your-project-name>
 pulumi config set kiran-vm-infra:sshPublicKey "$(cat ~/.ssh/id_ed25519.pub)"
 
 # Optional overrides (defaults shown)
-pulumi config set kiran-vm-infra:bootVolumeSizeGb 200   # default from constants.py
+pulumi config set kiran-vm-infra:bootVolumeSizeGb 200   # default from Taskfile.yml -> constants.py
 pulumi config set kiran-vm-infra:adIndex          0     # try 1 or 2 if AD is out of A1 capacity
 ```
 

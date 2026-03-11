@@ -3,6 +3,35 @@ version: '3'
 vars:
   INFRA_DIR: infra
   TARGET_STACK: '{{default "kiran-prod" .STACK}}'
+  PROJECT_NAME_DEFAULT: kiran-vm
+  SUFFIX_COMPARTMENT: -compartment
+  SUFFIX_VCN: -vcn
+  SUFFIX_IGW: -igw
+  SUFFIX_RT: -rt
+  SUFFIX_SL: -sl
+  SUFFIX_SUBNET: -subnet
+  SUFFIX_VM: -vm
+  SUFFIX_VNIC: -vnic
+  ANYWHERE: 0.0.0.0/0
+  VCN_CIDR: 10.0.0.0/16
+  SUBNET_CIDR: 10.0.0.0/24
+  SUBNET_DNS_LABEL: public
+  PORT_HTTP: 80
+  PORT_HTTPS: 443
+  SSH_PORT_INITIAL: 22
+  SSH_PORT_HARDENED: 2222
+  PROTO_TCP: '6'
+  PROTO_ICMP: '1'
+  ICMP_TYPE_PATH_MTU: 3
+  ICMP_CODE_PATH_MTU: 4
+  ICMP_TYPE_PING: 8
+  INSTANCE_SHAPE: VM.Standard.A1.Flex
+  INSTANCE_OCPUS: 4
+  INSTANCE_MEM_GB: 24
+  IMAGE_OS: Canonical Ubuntu
+  IMAGE_OS_VERSION: '22.04'
+  BOOT_VOLUME_GB_DEFAULT: '200'
+  AD_INDEX_DEFAULT: '0'
 
 tasks:
   default:
@@ -38,15 +67,54 @@ tasks:
 
   _select:stack:
     internal: true
-    deps: [_check:infra]
+    deps: [_check:infra, _sync:constants]
     dir: '{{.INFRA_DIR}}'
     cmds:
       - pulumi stack select {{.TARGET_STACK}} || pulumi stack init {{.TARGET_STACK}}
 
+  _sync:constants:
+    internal: true
+    run: once
+    preconditions:
+      - sh: command -v python3 >/dev/null 2>&1
+        msg: python3 is required
+    env:
+      PROJECT_NAME_DEFAULT: '{{.PROJECT_NAME_DEFAULT}}'
+      SUFFIX_COMPARTMENT: '{{.SUFFIX_COMPARTMENT}}'
+      SUFFIX_VCN: '{{.SUFFIX_VCN}}'
+      SUFFIX_IGW: '{{.SUFFIX_IGW}}'
+      SUFFIX_RT: '{{.SUFFIX_RT}}'
+      SUFFIX_SL: '{{.SUFFIX_SL}}'
+      SUFFIX_SUBNET: '{{.SUFFIX_SUBNET}}'
+      SUFFIX_VM: '{{.SUFFIX_VM}}'
+      SUFFIX_VNIC: '{{.SUFFIX_VNIC}}'
+      ANYWHERE: '{{.ANYWHERE}}'
+      VCN_CIDR: '{{.VCN_CIDR}}'
+      SUBNET_CIDR: '{{.SUBNET_CIDR}}'
+      SUBNET_DNS_LABEL: '{{.SUBNET_DNS_LABEL}}'
+      PORT_HTTP: '{{.PORT_HTTP}}'
+      PORT_HTTPS: '{{.PORT_HTTPS}}'
+      SSH_PORT_INITIAL: '{{.SSH_PORT_INITIAL}}'
+      SSH_PORT_HARDENED: '{{.SSH_PORT_HARDENED}}'
+      PROTO_TCP: '{{.PROTO_TCP}}'
+      PROTO_ICMP: '{{.PROTO_ICMP}}'
+      ICMP_TYPE_PATH_MTU: '{{.ICMP_TYPE_PATH_MTU}}'
+      ICMP_CODE_PATH_MTU: '{{.ICMP_CODE_PATH_MTU}}'
+      ICMP_TYPE_PING: '{{.ICMP_TYPE_PING}}'
+      INSTANCE_SHAPE: '{{.INSTANCE_SHAPE}}'
+      INSTANCE_OCPUS: '{{.INSTANCE_OCPUS}}'
+      INSTANCE_MEM_GB: '{{.INSTANCE_MEM_GB}}'
+      IMAGE_OS: '{{.IMAGE_OS}}'
+      IMAGE_OS_VERSION: '{{.IMAGE_OS_VERSION}}'
+      BOOT_VOLUME_GB_DEFAULT: '{{.BOOT_VOLUME_GB_DEFAULT}}'
+      AD_INDEX_DEFAULT: '{{.AD_INDEX_DEFAULT}}'
+    cmds:
+      - python3 infra/sync_constants.py
+
   sync:
     desc: Install infra dependencies (uv sync)
     aliases: [deps]
-    deps: [_check:infra]
+    deps: [_check:infra, _sync:constants]
     dir: '{{.INFRA_DIR}}'
     cmds:
       - uv sync
@@ -54,7 +122,7 @@ tasks:
   init:
     desc: Initialize or select Pulumi stack (default kiran-prod)
     aliases: [new]
-    deps: [_check:infra]
+    deps: [_check:infra, _sync:constants]
     dir: '{{.INFRA_DIR}}'
     cmds:
       - pulumi stack select {{.TARGET_STACK}} || pulumi stack init {{.TARGET_STACK}}

@@ -10,15 +10,15 @@ Pulumi -> Provision -> Komodo -> stacks/
 
 ## Portability contract
 
-If you want to spin this up in a different OCI account/region with the same hardening defaults, start in `infra/constants.py`.
+If you want to spin this up in a different OCI account/region with the same hardening defaults, start in `Taskfile.yml` vars.
 
-That file is the single source of truth for:
+Those vars are the single source of truth for:
 - VM shape/CPU/RAM defaults
 - network CIDRs and open ports
 - bootstrap SSH port and hardened SSH port
 - Ubuntu image defaults
 
-`infra/__main__.py` consumes those values and should usually not need edits.
+`task sync` / `task init` auto-populate `infra/constants.py` from those vars, and `infra/__main__.py` consumes the generated constants.
 
 ## Minimal setup (first run)
 
@@ -46,7 +46,7 @@ task bootstrap             # alias: task harden
 task provision             # alias: task ans
 ```
 
-After this, SSH uses the hardened port from `infra/constants.py` (default `2222`).
+After this, SSH uses the hardened port from generated `infra/constants.py` (default `2222`).
 
 ## Task recipes
 

@@ -29,7 +29,7 @@ Reads the public IP from the live Pulumi stack and writes `inventory/hosts.ini`.
 
 ### 2. Bootstrap (initial SSH port → hardened SSH port)
 
-A fresh VM starts on the initial SSH port from `../infra/constants.py` (default `22`). The `common` role moves sshd to the hardened port from the same file (default `2222`). The bootstrap script keeps the initial port open during the transition, confirms the hardened port is reachable, then closes the initial port.
+A fresh VM starts on the initial SSH port from generated `../infra/constants.py` (sourced from `../Taskfile.yml`, default `22`). The `common` role moves sshd to the hardened port from the same generated constants file (default `2222`). The bootstrap script keeps the initial port open during the transition, confirms the hardened port is reachable, then closes the initial port.
 
 ```bash
 task bootstrap
@@ -73,7 +73,7 @@ ansible-playbook site.yml --skip-tags caddy
 
 Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `sure`, `gitea`, `databasus`, `n8n`, `caddy`, `services`
 
-`generate.sh` and `bootstrap.sh` read shared SSH ports from `../infra/constants.py`, so Pulumi + Ansible stay aligned without duplicate hardcoded port values.
+`generate.sh` and `bootstrap.sh` read shared SSH ports from generated `../infra/constants.py` (from `../Taskfile.yml` vars), so Pulumi + Ansible stay aligned without duplicate hardcoded port values.
 
 ---
 
