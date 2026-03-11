@@ -1,92 +1,79 @@
 # kiran-vm
 
-Self-hosted server infrastructure on Oracle Cloud Always Free ARM. Provisions a VM, hardens it, and runs a set of Docker apps behind Caddy — all automated from `git push`.
+Portable self-hosted VM setup on Oracle Cloud Always Free.
+
+Core pipeline:
 
 ```
-Pulumi → Ansible → Komodo → stacks/
+Pulumi -> Ansible -> Komodo -> stacks/
 ```
 
-- [`infra/`](./infra/README.md) — provision the VM
-- [`ansible/`](./ansible/README.md) — provision the server
-- [`stacks/`](./stacks/README.md) — deploy apps
+## Portability contract
 
----
+If you want to spin this up in a different OCI account/region with the same hardening defaults, start in `infra/constants.py`.
 
-## How it works
+That file is the single source of truth for:
+- VM shape/CPU/RAM defaults
+- network CIDRs and open ports
+- bootstrap SSH port and hardened SSH port
+- Ubuntu image defaults
 
-```mermaid
-flowchart LR
-    A["Pulumi<br>OCI VM"] --> B["Ansible<br>OS + services"]
-    B --> C["Komodo<br>app deployments"]
-    C --> D["stacks/<br>Docker Compose"]
-```
+`infra/__main__.py` consumes those values and should usually not need edits.
 
-Traffic hits Caddy on 443, which proxies to internal app containers. All apps share a Postgres instance and Redis. Komodo manages deployments — push to `main` and GitHub Actions fires the right Komodo webhook.
+## Minimal setup (first run)
 
-## Quick start
+1) Configure infra
 
-**1. Provision the VM**
 ```bash
-cd infra && npm install
-pulumi stack init prod   # first time only
-pulumi up
-# note the publicIp output
+make infra.sync
+make infra.stack-init STACK=kiran-prod   # first time only
+
+# set required Pulumi config (OCI credentials + sshPublicKey)
+# see infra/README.md for exact commands
 ```
 
-**2. Provision the server**
+2) Provision VM
+
 ```bash
-cd ansible
-cp secrets.yml.example secrets.yml       # fill in all values
-cp inventory/hosts.ini.example inventory/hosts.ini  # paste publicIp here
-
-ansible-playbook site.yml \
-  --extra-vars "@secrets.yml" \
-  --extra-vars "ansible_become_password={{ deploy_password }}"
+make infra.up
 ```
 
-**3. Set up Komodo**
+3) Harden + provision server
 
-Open `https://komodo.<your-domain>`. For each app:
-1. Create a Stack pointing to `stacks/<name>/compose.yaml` in this repo
-2. Create a Procedure with two stages: Pull Repo → Deploy Stack
-3. Copy the webhook URL
+```bash
+cp ansible/secrets.yml.example ansible/secrets.yml
+make ansible.inventory
+make ansible.bootstrap
+make ansible.provision
+```
 
-**4. Add webhook secrets to GitHub**
+After this, SSH uses the hardened port from `infra/constants.py` (default `2222`).
 
-Settings → Secrets → Actions — one secret per app: `KOMODO_WEBHOOK_<NAME>`.
+## Make targets
 
-**5. Push to deploy**
+```bash
+make help
+```
+
+Available targets cover the core flow:
+- infra dependency sync + Pulumi lifecycle
+- host inventory generation from Pulumi output
+- first-run SSH bootstrap hardening
+- full Ansible server provisioning
+
+## Deploying apps
+
+1. Open `https://komodo.<your-domain>`
+2. For each app, create:
+   - a Stack pointing to `stacks/<name>/compose.yaml`
+   - a Procedure with stages: Pull Repo -> Deploy Stack
+3. Add GitHub Action secret `KOMODO_WEBHOOK_<NAME>` per app
 
 Any push to `stacks/<name>/` triggers the matching Komodo procedure.
 
----
+## Docs map
 
-## Common tasks
-
-**SSH to server**
-```bash
-ssh -p 2222 <deploy-user>@<server-ip>
-```
-
-**Re-run a specific role**
-```bash
-cd ansible
-ansible-playbook site.yml --extra-vars "@secrets.yml" \
-  --extra-vars "ansible_become_password={{ deploy_password }}" \
-  --tags caddy
-```
-
-**Redeploy an app manually** — Komodo UI → Stacks → Deploy
-
----
-
-## If you are an LLM
-
-Read [`llms.txt`](./llms.txt) first. It contains a structured summary of the repo, key facts needed to avoid common mistakes (container names, reserved env vars, network names), and links to the relevant files for each task.
-
-## Secrets
-
-- `ansible/secrets.yml` — provisioning secrets, gitignored, never leave local machine
-- Komodo Variables (Settings → Variables) — runtime secrets injected as `[[SECRET_NAME]]`
-
-The n8n encryption key deserves special attention: if lost, all n8n credentials are permanently unrecoverable. Keep a copy in a password manager.
+- `infra/README.md`: Pulumi stack config and OCI details
+- `ansible/README.md`: server hardening/provisioning details
+- `stacks/README.md`: app stack layout and conventions
+- `llms.txt`: machine-oriented repo summary
