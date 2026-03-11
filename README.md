@@ -25,8 +25,8 @@ That file is the single source of truth for:
 1) Configure infra
 
 ```bash
-make infra.sync
-make infra.stack-init STACK=kiran-prod   # first time only
+task sync
+task init STACK=kiran-prod   # first time only
 
 # set required Pulumi config (OCI credentials + sshPublicKey)
 # see infra/README.md for exact commands
@@ -35,24 +35,34 @@ make infra.stack-init STACK=kiran-prod   # first time only
 2) Provision VM
 
 ```bash
-make infra.up
+task up                    # alias: task apply
 ```
 
 3) Harden + provision server
 
 ```bash
 cp ansible/secrets.yml.example ansible/secrets.yml
-make ansible.inventory
-make ansible.bootstrap
-make ansible.provision
+task hosts                 # alias: task inventory
+task bootstrap             # alias: task harden
+task provision             # alias: task ans
 ```
 
 After this, SSH uses the hardened port from `infra/constants.py` (default `2222`).
 
-## Make targets
+## Task recipes
+
+Install Task: https://taskfile.dev/docs/guide
 
 ```bash
-make help
+task --list
+```
+
+Stack-aware usage (defaults to `kiran-prod`):
+
+```bash
+task preview STACK=kiran-prod   # alias: task plan
+task up STACK=kiran-prod        # alias: task apply
+task destroy STACK=kiran-prod CONFIRM=yes   # alias: task nuke
 ```
 
 Available targets cover the core flow:

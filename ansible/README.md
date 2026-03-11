@@ -22,7 +22,7 @@ Run these steps **once** in order after `pulumi up` in `../infra`.
 ### 1. Generate inventory
 
 ```bash
-./inventory/generate.sh
+task hosts
 ```
 
 Reads the public IP from the live Pulumi stack and writes `inventory/hosts.ini`. Re-run whenever the VM is replaced.
@@ -32,12 +32,20 @@ Reads the public IP from the live Pulumi stack and writes `inventory/hosts.ini`.
 A fresh VM starts on the initial SSH port from `../infra/constants.py` (default `22`). The `common` role moves sshd to the hardened port from the same file (default `2222`). The bootstrap script keeps the initial port open during the transition, confirms the hardened port is reachable, then closes the initial port.
 
 ```bash
-./bootstrap.sh
+task bootstrap
 ```
 
 ### 3. Full provisioning
 
 ```bash
+task provision
+```
+
+Equivalent direct commands:
+
+```bash
+./inventory/generate.sh
+./bootstrap.sh
 ansible-playbook site.yml
 ```
 

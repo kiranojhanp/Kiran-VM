@@ -1,0 +1,128 @@
+version: '3'
+
+vars:
+  INFRA_DIR: infra
+  TARGET_STACK: '{{default "kiran-prod" .STACK}}'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  help:
+    desc: List available tasks
+    aliases: [h, ls]
+    cmds:
+      - task --list
+
+  _check:infra:
+    internal: true
+    run: once
+    preconditions:
+      - sh: command -v uv >/dev/null 2>&1
+        msg: uv is required
+      - sh: command -v pulumi >/dev/null 2>&1
+        msg: pulumi is required
+    cmds:
+      - true
+
+  _check:ansible:
+    internal: true
+    run: once
+    preconditions:
+      - sh: command -v ansible-playbook >/dev/null 2>&1
+        msg: ansible-playbook is required
+    cmds:
+      - true
+
+  _select:stack:
+    internal: true
+    deps: [_check:infra]
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - pulumi stack select {{.TARGET_STACK}} || pulumi stack init {{.TARGET_STACK}}
+
+  sync:
+    desc: Install infra dependencies (uv sync)
+    aliases: [deps]
+    deps: [_check:infra]
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - uv sync
+
+  init:
+    desc: Initialize or select Pulumi stack (default kiran-prod)
+    aliases: [new]
+    deps: [_check:infra]
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - pulumi stack select {{.TARGET_STACK}} || pulumi stack init {{.TARGET_STACK}}
+
+  preview:
+    desc: Preview infra changes
+    aliases: [plan]
+    deps: [_select:stack]
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - pulumi preview
+
+  up:
+    desc: Provision or update VM
+    aliases: [apply]
+    deps: [_select:stack]
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - pulumi up
+
+  destroy:
+    desc: Destroy VM and network
+    aliases: [nuke]
+    deps: [_select:stack]
+    dir: '{{.INFRA_DIR}}'
+    requires:
+      vars:
+        - name: CONFIRM
+          enum: [yes]
+    cmds:
+      - pulumi down --yes
+
+  hosts:
+    desc: Generate ansible inventory from Pulumi output
+    aliases: [inventory]
+    deps: [_select:stack]
+    cmds:
+      - ./ansible/inventory/generate.sh
+
+  bootstrap:
+    desc: First-run SSH hardening bootstrap
+    aliases: [harden]
+    deps: [_select:stack, _check:ansible]
+    cmds:
+      - ./ansible/bootstrap.sh
+
+  provision:
+    desc: Run full Ansible provisioning
+    aliases: [ans]
+    deps: [_check:ansible, hosts]
+    preconditions:
+      - sh: test -f ansible/secrets.yml
+        msg: ansible/secrets.yml is required
+    cmds:
+      - ansible-playbook -i ansible/inventory/hosts.ini ansible/site.yml --extra-vars "@ansible/secrets.yml"
+
+  komodo:trigger:
+    desc: Trigger a Komodo webhook for a stack
+    preconditions:
+      - sh: command -v curl >/dev/null 2>&1
+        msg: curl is required
+    requires:
+      vars: [STACK, WEBHOOK_URL, WEBHOOK_SECRET]
+    cmds:
+      - >-
+        curl --fail --silent --show-error
+        -X POST
+        -H "Content-Type: application/json"
+        -H "X-Webhook-Secret: {{.WEBHOOK_SECRET}}"
+        -d '{"stack":"{{.STACK}}","event":"{{default "push" .GITHUB_EVENT_NAME}}","repository":"{{.GITHUB_REPOSITORY}}","commit":"{{.GITHUB_SHA}}","ref":"{{.GITHUB_REF}}","workflow":"{{.GITHUB_WORKFLOW}}"}'
+        "{{.WEBHOOK_URL}}"

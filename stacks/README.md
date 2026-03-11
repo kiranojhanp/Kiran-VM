@@ -6,7 +6,7 @@ All stacks bind to `127.0.0.1:<port>` (Caddy proxies them) and join `infra_net` 
 
 ## Deploying
 
-**Automatically** — push a change to `stacks/<name>/`. GitHub Actions fires the Komodo procedure for that stack only.
+**Automatically** — push a change to `stacks/<name>/`. GitHub Actions runs `task komodo:trigger` and fires the Komodo procedure for that stack only.
 
 **Manually** — Komodo UI → Stacks → select stack → Deploy.
 

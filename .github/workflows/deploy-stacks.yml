@@ -49,8 +49,10 @@ jobs:
       matrix:
         stack: ${{ fromJson(needs.detect.outputs.matrix) }}
     steps:
-      - name: Trigger Komodo procedure
-        uses: distributhor/workflow-webhook@v3
+      - uses: actions/checkout@v4
+      - name: Setup go-task
+        uses: pnorton5432/setup-task@v1
         with:
-          webhook_url: ${{ secrets[format('KOMODO_WEBHOOK_{0}', matrix.stack)] }}
-          webhook_secret: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
+          task-version: 3.29.1
+      - name: Trigger Komodo procedure
+        run: task komodo:trigger STACK="${{ matrix.stack }}" WEBHOOK_URL="${{ secrets[format('KOMODO_WEBHOOK_{0}', matrix.stack)] }}" WEBHOOK_SECRET="${{ secrets.KOMODO_WEBHOOK_SECRET }}"

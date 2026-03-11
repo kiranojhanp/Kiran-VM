@@ -1,0 +1,30 @@
+name: Validate Taskfile
+
+on:
+  pull_request:
+    paths:
+      - Taskfile.yml
+      - README.md
+      - infra/README.md
+      - ansible/README.md
+      - .github/workflows/taskfile-ci.yml
+  push:
+    branches: [main]
+    paths:
+      - Taskfile.yml
+      - README.md
+      - infra/README.md
+      - ansible/README.md
+      - .github/workflows/taskfile-ci.yml
+
+jobs:
+  validate-taskfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup go-task
+        uses: pnorton5432/setup-task@v1
+        with:
+          task-version: 3.29.1
+      - name: Validate task listing
+        run: task --list

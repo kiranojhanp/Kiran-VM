@@ -25,6 +25,15 @@ All constants (CIDRs, ports, image, shape) live in `constants.py` — `__main__.
 
 ## Setup
 
+Recommended from repo root:
+
+```bash
+task sync
+task init STACK=kiran-prod
+```
+
+Equivalent direct commands:
+
 ```bash
 cd infra
 
@@ -60,6 +69,16 @@ pulumi config set kiran-vm-infra:adIndex          0     # try 1 or 2 if AD is ou
 > - API key + fingerprint: My Profile → API Keys → Add API Key
 
 ## Usage
+
+Recommended from repo root:
+
+```bash
+task preview STACK=kiran-prod
+task up STACK=kiran-prod
+task destroy STACK=kiran-prod CONFIRM=yes
+```
+
+Equivalent direct commands:
 
 ```bash
 # Preview changes
