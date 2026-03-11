@@ -2,7 +2,7 @@
 
 Ansible playbooks for the production server running on Oracle Cloud (ARM64 Ubuntu).
 
-Handles OS hardening, Docker, shared infrastructure (Postgres + Redis), and application scaffolding. Ongoing app deployments are managed by [Komodo](https://komo.do) after initial provisioning.
+This layer handles OS hardening, Docker, shared infrastructure (Postgres + Redis), and app scaffolding. After initial provisioning, ongoing app deploys are handled by [Komodo](https://komo.do).
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ Reads the public IP from the live Pulumi stack and writes `inventory/hosts.ini`.
 
 ### 2. Bootstrap (initial SSH port → hardened SSH port)
 
-A fresh VM starts on the initial SSH port from generated `../infra/constants.py` (sourced from `../Taskfile.yml`, default `22`). The `common` role moves sshd to the hardened port from the same generated constants file (default `2222`). The bootstrap script keeps the initial port open during the transition, confirms the hardened port is reachable, then closes the initial port.
+A fresh VM starts on the initial SSH port from generated `../infra/constants.py` (sourced from `../Taskfile.yml`, default `22`). The `common` role then moves sshd to the hardened port from that same generated constants file (default `2222`). Bootstrap keeps the initial port open during the transition, confirms the hardened port is reachable, and then closes the initial port.
 
 ```bash
 task bootstrap
@@ -73,13 +73,13 @@ ansible-playbook site.yml --skip-tags caddy
 
 Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `sure`, `gitea`, `databasus`, `n8n`, `caddy`, `services`
 
-`generate.sh` and `bootstrap.sh` read shared SSH ports from generated `../infra/constants.py` (from `../Taskfile.yml` vars), so Pulumi + Ansible stay aligned without duplicate hardcoded port values.
+`generate.sh` and `bootstrap.sh` read shared SSH ports from generated `../infra/constants.py` (from `../Taskfile.yml` vars), so Pulumi and Ansible stay aligned without duplicate hardcoded values.
 
 ---
 
 ## Vault
 
-Secrets are stored in `secrets.yml`, encrypted with [ansible-vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html). The vault password lives at `~/.vault_pass` (outside the repo, never committed). `ansible.cfg` reads it automatically.
+Secrets are stored in `secrets.yml`, encrypted with [ansible-vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html). The vault password lives at `~/.vault_pass` (outside the repo, never committed), and `ansible.cfg` reads it automatically.
 
 ### Setup on a new machine
 
@@ -104,7 +104,7 @@ ansible-vault rekey secrets.yml
 # update ~/.vault_pass with the new value
 ```
 
-`secrets.yml` is the source of truth for required secrets. Use `ansible-vault view secrets.yml` to inspect current keys, and `ansible-vault edit secrets.yml` to add/update values.
+`secrets.yml` is the source of truth for required secrets. Use `ansible-vault view secrets.yml` to inspect current keys and `ansible-vault edit secrets.yml` to add or update values.
 
 ---
 
@@ -159,7 +159,7 @@ Then configure the app stack in Komodo.
 Bootstrap has not run yet, or it did not complete both phases. Run `./bootstrap.sh` again.
 
 **Connection refused on the initial SSH port**
-Cloud-init may still be running after `pulumi up`. Wait 60–90 seconds and retry `./bootstrap.sh`.
+Cloud-init may still be running right after `pulumi up`. Wait 60-90 seconds and retry `./bootstrap.sh`.
 
 **Caddy: certificate not issued**
 The Cloudflare API token needs `Zone → DNS → Edit` scope for the target zone. Check with `ansible-vault view secrets.yml`.

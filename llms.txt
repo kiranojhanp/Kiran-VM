@@ -1,6 +1,6 @@
 # kiran-vm
 
-Infrastructure and provisioning for a self-hosted server on Oracle Cloud Always Free.
+Infrastructure and provisioning for running a self-hosted server on Oracle Cloud Always Free.
 
 ## Stack
 
@@ -18,7 +18,7 @@ One ARM64 VM (`VM.Standard.A1.Flex`, 4 OCPU / 24 GB) running:
 - **Komodo** — Docker management UI backed by FerretDB (its own Postgres)
 - **Caddy** — Reverse proxy with automatic TLS via Cloudflare DNS-01
 
-Apps (`sure`, `gitea`, `databasus`, `n8n`) are scaffolded by Ansible and then managed by Komodo.
+Apps (`sure`, `gitea`, `databasus`, `n8n`) are scaffolded by Ansible, then managed day-to-day in Komodo.
 
 ## Repository layout
 
@@ -48,11 +48,11 @@ cd provision
 ./inventory/generate.sh
 ```
 
-Reads the public IP from the live Pulumi stack and writes `inventory/hosts.ini`.
+This reads the public IP from the current Pulumi stack and writes `inventory/hosts.ini`.
 
 ### Step 3 — Bootstrap (first run only)
 
-A fresh VM starts on the initial SSH port from generated `infra/constants.py` (sourced from Taskfile vars, default `22`). Bootstrap moves sshd to the hardened port from the same generated file (default `2222`) in a safe two-phase flow:
+A fresh VM starts on the initial SSH port from generated `infra/constants.py` (from Taskfile vars, default `22`). Bootstrap then moves sshd to the hardened port from that same generated file (default `2222`) using a safe two-phase flow:
 
 ```bash
 ./bootstrap.sh
@@ -70,7 +70,7 @@ See `provision/README.md` for day-to-day usage, vault setup, and troubleshooting
 
 Point your domain's DNS to the VM's public IP (`pulumi stack output publicIp --cwd infra`).
 
-All subdomains are handled by Caddy with Cloudflare DNS-01 — no wildcard DNS record needed, just A records for each subdomain.
+Caddy handles all subdomains with Cloudflare DNS-01, so you do not need a wildcard DNS record - just create A records for each subdomain.
 
 ### Step 6 — Set up Komodo
 
@@ -92,7 +92,7 @@ All subdomains are handled by Caddy with Cloudflare DNS-01 — no wildcard DNS r
 | `N8N_ENCRYPTION_KEY`             | Generate: `openssl rand -hex 32` — **store in password manager, never lose** |
 
 4. Create a **Stack** for each app, pointing to the compose file in `stacks/`
-5. Create a **Procedure** per app with `DeployStack` action for webhook-triggered deploys
+5. Create a **Procedure** per app with a `DeployStack` action for webhook-triggered deploys
 6. Add webhooks from GitHub → Komodo for CI/CD
 
 ### Step 7 — Verify
@@ -115,15 +115,15 @@ docker compose -f /opt/caddy/docker-compose.yml ps
 
 ## Secrets
 
-All secrets live in `provision/secrets.yml` (vault-encrypted). Use `ansible-vault view provision/secrets.yml` to inspect keys and `ansible-vault edit provision/secrets.yml` to update values.
+All secrets live in `provision/secrets.yml` (vault-encrypted). Use `ansible-vault view provision/secrets.yml` to inspect keys, and `ansible-vault edit provision/secrets.yml` to update values.
 
-The vault password lives at `~/.vault_pass` on each machine that runs Ansible — never committed to the repo. Store it in your password manager.
+The vault password lives at `~/.vault_pass` on each machine that runs Ansible - never commit it to the repo. Keep it in your password manager.
 
 ---
 
 ## Networking
 
-Apps communicate over the `infra_net` Docker bridge network. They connect to Postgres and Redis using container names, not `localhost`.
+Apps communicate over the `infra_net` Docker bridge network. They should connect to Postgres and Redis using container names, not `localhost`.
 
 Komodo binds to `127.0.0.1` only and is accessible exclusively via Caddy reverse proxy.
 
@@ -155,13 +155,13 @@ pulumi config set kiran-vm-infra:adIndex 1  # then pulumi up
 ```
 
 **Connection refused on the hardened SSH port after bootstrap**
-Check that `./bootstrap.sh` completed both phases (it prints "Bootstrap complete" on success). If it timed out, re-run bootstrap once. If the server is still unreachable, redeploy with `pulumi down && pulumi up` and run bootstrap again.
+Check that `./bootstrap.sh` completed both phases (it prints "Bootstrap complete" on success). If it timed out, run bootstrap again once. If the server is still unreachable, redeploy with `pulumi down && pulumi up`, then run bootstrap again.
 
 **Container can't reach Postgres**
 Apps must join `infra_net` and use the container name `infra-postgres-1` as the host. Using `localhost` or `127.0.0.1` will fail.
 
 **n8n workflows show UTC timestamps**
-Use `N8N_TZ` env var, not `TZ` — Komodo drops `TZ` during stack deployment.
+Use `N8N_TZ`, not `TZ` - Komodo drops `TZ` during stack deployment.
 
 **`[[SECRET_NAME]]` appears literally in app**
 The Komodo Variable is missing or misspelled. Check Komodo → Variables.

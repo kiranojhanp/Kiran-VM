@@ -14,7 +14,7 @@ Pulumi (Python) program that provisions an Oracle Cloud Always Free ARM VM insid
 | Public Subnet    | `10.0.0.0/24`                                                 |
 | Compute Instance | `VM.Standard.A1.Flex` — 4 OCPU / 24 GB RAM / 200 GB boot volume (default) |
 
-All constants (CIDRs, ports, image, shape) are defined in `../Taskfile.yml` vars and auto-generated into `constants.py` by `task sync` / `task init`.
+All constants (CIDRs, ports, image, shape) are defined in `../Taskfile.yml` vars and generated into `constants.py` by `task sync` or `task init`.
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ All constants (CIDRs, ports, image, shape) are defined in `../Taskfile.yml` vars
 
 ## Setup
 
-Recommended from repo root:
+From the repo root:
 
 ```bash
 task sync
@@ -70,7 +70,7 @@ pulumi config set kiran-vm-infra:adIndex          0     # try 1 or 2 if AD is ou
 
 ## Usage
 
-Recommended from repo root:
+From the repo root:
 
 ```bash
 task preview STACK=kiran-prod

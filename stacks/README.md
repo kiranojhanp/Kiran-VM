@@ -1,14 +1,14 @@
 # stacks/
 
-Docker Compose files for each app, managed by [Komodo](https://komo.do). Push to `main` → GitHub Actions → Komodo webhook → stack redeploys.
+Docker Compose files for each app, managed by [Komodo](https://komo.do). A push to `main` triggers GitHub Actions, which calls the matching Komodo webhook and redeploys that stack.
 
 All stacks bind to `127.0.0.1:<port>` (Caddy proxies them) and join `infra_net` to reach shared Postgres and Redis.
 
 ## Deploying
 
-**Automatically** — push a change to `stacks/<name>/`. GitHub Actions runs `task komodo:trigger` and fires the Komodo procedure for that stack only.
+**Automatically** - push a change to `stacks/<name>/`. GitHub Actions runs `task komodo:trigger` and fires the Komodo procedure for that stack only.
 
-**Manually** — Komodo UI → Stacks → select stack → Deploy.
+**Manually** - Komodo UI -> Stacks -> select stack -> Deploy.
 
 ## Secrets
 
@@ -20,9 +20,9 @@ Stack-specific env vars (not global secrets) go in the Stack's Environment tab i
 
 ## n8n gotchas
 
-**Timezone** — use `N8N_TZ`, not `TZ`. Komodo treats `TZ` as reserved and silently drops it.
+**Timezone** - use `N8N_TZ`, not `TZ`. Komodo treats `TZ` as reserved and silently drops it.
 
-**Encryption key** — `N8N_ENCRYPTION_KEY` must be set in Komodo Variables. If this key is ever lost, all stored n8n credentials are permanently unrecoverable. Keep a copy in a password manager.
+**Encryption key** - `N8N_ENCRYPTION_KEY` must be set in Komodo Variables. If this key is ever lost, all stored n8n credentials are permanently unrecoverable. Keep a copy in a password manager.
 
 ## Adding a new stack
 
@@ -34,10 +34,10 @@ Stack-specific env vars (not global secrets) go in the Stack's Environment tab i
 
 ## Troubleshooting
 
-**502 Bad Gateway** — container isn't running. Check `docker logs <container>` or Komodo → Stacks → Logs.
+**502 Bad Gateway** - container is not running. Check `docker logs <container>` or Komodo -> Stacks -> Logs.
 
-**`[[SECRET]]` shows literally** — variable name doesn't exist in Komodo Variables. Check for typos.
+**`[[SECRET]]` shows literally** - variable name does not exist in Komodo Variables. Check for typos.
 
-**Can't reach Postgres** — verify the container is on `infra_net`: `docker network inspect infra_net`. Check `compose.yaml` declares it as external. Use the actual container name (`docker ps | grep postgres`) not an assumed hostname.
+**Can't reach Postgres** - verify the container is on `infra_net`: `docker network inspect infra_net`. Check `compose.yaml` declares it as external. Use the actual container name (`docker ps | grep postgres`), not an assumed hostname.
 
-**Webhook not firing** — check GitHub Actions logs and verify the path filter in `deploy-stacks.yml` matches the changed file.
+**Webhook not firing** - check GitHub Actions logs and verify the path filter in `deploy-stacks.yml` matches the changed file.

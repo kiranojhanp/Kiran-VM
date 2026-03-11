@@ -1,6 +1,6 @@
 # kiran-vm
 
-Portable self-hosted VM setup on Oracle Cloud Always Free.
+A practical, self-hosted VM setup on Oracle Cloud Always Free.
 
 Core pipeline:
 
@@ -10,15 +10,15 @@ Pulumi -> Provision -> Komodo -> stacks/
 
 ## Portability contract
 
-If you want to spin this up in a different OCI account/region with the same hardening defaults, start in `Taskfile.yml` vars.
+If you want to run this in another OCI account or region, start with the vars in `Taskfile.yml`.
 
-Those vars are the single source of truth for:
+Those vars are the source of truth for:
 - VM shape/CPU/RAM defaults
 - network CIDRs and open ports
 - bootstrap SSH port and hardened SSH port
 - Ubuntu image defaults
 
-`task sync` / `task init` auto-populate `infra/constants.py` from those vars, and `infra/__main__.py` consumes the generated constants.
+`task sync` and `task init` generate `infra/constants.py` from those vars, and `infra/__main__.py` consumes the generated values.
 
 ## Minimal setup (first run)
 
@@ -46,7 +46,37 @@ task bootstrap             # alias: task harden
 task provision             # alias: task ans
 ```
 
-After this, SSH uses the hardened port from generated `infra/constants.py` (default `2222`).
+After that, SSH moves to the hardened port from generated `infra/constants.py` (default `2222`).
+
+## Start Here checklist
+
+Use this if you want a single path from zero to running server.
+
+1. Install prerequisites and Task (`task --list` should work).
+2. Configure OCI + Pulumi values (follow `infra/README.md`).
+3. Run infra lifecycle from repo root:
+
+```bash
+task sync
+task init STACK=kiran-prod
+task up STACK=kiran-prod
+```
+
+4. Generate inventory and harden SSH:
+
+```bash
+task hosts
+task bootstrap
+```
+
+5. Add vault secrets and provision services:
+
+```bash
+ansible-vault edit provision/secrets.yml
+task provision
+```
+
+6. Configure Komodo stacks/procedures for apps (see `stacks/README.md`).
 
 ## Task recipes
 
@@ -64,7 +94,7 @@ task up STACK=kiran-prod        # alias: task apply
 task destroy STACK=kiran-prod CONFIRM=yes   # alias: task nuke
 ```
 
-Available targets cover the core flow:
+The available targets cover the full flow:
 - infra dependency sync + Pulumi lifecycle
 - host inventory generation from Pulumi output
 - first-run SSH bootstrap hardening
