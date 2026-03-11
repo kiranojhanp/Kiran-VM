@@ -5,9 +5,15 @@
 ansible/secrets.yml
 .secrets.env
 
+# pyinfra provisioning
+provision/.env
+provision/.venv
+
 # Inventory — machine-specific, never commit (use hosts.ini.example as template)
 ansible/inventory/hosts.ini
 
 # Pulumi infra — build output and dependencies
 infra/node_modules/
 infra/bin/
+
+provision/
