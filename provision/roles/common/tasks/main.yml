@@ -1,5 +1,16 @@
 ---
 # ── Phase 1: System update ────────────────────────────────────────────────
+- name: Wait for apt/dpkg locks to be released
+  ansible.builtin.shell: |
+    while fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || \
+          fuser /var/lib/dpkg/lock >/dev/null 2>&1 || \
+          fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+      sleep 3
+    done
+  args:
+    executable: /bin/bash
+  changed_when: false
+
 - name: Enable universe repository
   ansible.builtin.apt_repository:
     repo: "deb http://ports.ubuntu.com/ubuntu-ports {{ ansible_distribution_release }} universe"
