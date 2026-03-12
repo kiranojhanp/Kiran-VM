@@ -42,7 +42,7 @@
 -A INPUT -p tcp --dport 443 -j ACCEPT
 
 # ── Explicit denies ─────────────────────────────────────────────────────────
-# Komodo (only accessible via Caddy reverse proxy on localhost)
+# Komodo (only accessible via Traefik reverse proxy; core binds localhost)
 -A INPUT -p tcp --dport {{ komodo_port }} -j DROP
 
 # ── Default: DROP everything else (set by chain policy above) ──────────────

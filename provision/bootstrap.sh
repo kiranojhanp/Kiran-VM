@@ -9,7 +9,9 @@
 #   ./bootstrap.sh 1.2.3.4     # override IP manually
 #
 # After this completes, use the normal workflow:
-#   ansible-playbook site.yml
+#   task provision
+# or
+#   ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml"
 
 set -euo pipefail
 
@@ -70,7 +72,7 @@ for i in $(seq 1 12); do
   fi
   if [[ "${i}" -eq 12 ]]; then
     echo "ERROR: Port ${SSH_PORT_HARDENED} unreachable after 60s. Port ${SSH_PORT_INITIAL} left open for recovery." >&2
-    echo "Investigate, then manually run: ansible-playbook site.yml --tags common" >&2
+    echo "Investigate, then manually run: ansible-playbook site.yml --inventory \"${PUBLIC_IP},\" --tags common" >&2
     exit 1
   fi
   echo "  Attempt ${i}/12 — retrying in 5s..."
@@ -81,4 +83,5 @@ echo ""
 echo "Bootstrap complete. sshd is on port ${SSH_PORT_HARDENED}, port ${SSH_PORT_INITIAL} is closed."
 echo "Next steps:"
 echo "  1. Generate inventory:  ./inventory/generate.sh"
-echo "  2. Run full playbook:   ansible-playbook site.yml"
+echo "  2. Run full playbook:   ansible-playbook -i inventory/hosts.ini site.yml --extra-vars \"@secrets.yml\""
+echo "  3. Or from repo root:   task provision"

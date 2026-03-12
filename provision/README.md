@@ -46,33 +46,44 @@ Equivalent direct commands:
 ```bash
 ./inventory/generate.sh
 ./bootstrap.sh
-ansible-playbook site.yml
+ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml"
 ```
 
 ---
 
 ## Day-to-day usage
 
+Recommended (from repo root):
+
+```bash
+task hosts
+task provision
+```
+
+Direct Ansible usage (from `provision/`):
+
 ```bash
 # Full playbook
-ansible-playbook site.yml
+ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml"
 
 # Dry run — shows what would change without applying it
-ansible-playbook site.yml --check --diff
+ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" --check --diff
 
 # Single role
-ansible-playbook site.yml --tags docker
+ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" --tags docker
 
 # Service roles
-ansible-playbook site.yml --tags services
+ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" --tags services
 
 # Skip a role
-ansible-playbook site.yml --skip-tags infra
+ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" --skip-tags infra
 ```
 
 Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `services`
 
 `generate.sh` and `bootstrap.sh` read shared SSH ports from generated `../infra/constants.py` (from `../Taskfile.yml` vars), so Pulumi and Ansible stay aligned without duplicate hardcoded values.
+
+`task provision` also passes `shared_docker_network` from `Taskfile.yml` (`SHARED_DOCKER_NETWORK`, default `internal-network`).
 
 ---
 
