@@ -24,53 +24,7 @@ komodo.fewa.app {
   reverse_proxy 127.0.0.1:9120
 }
 
-sure.fewa.app {
-  tls {
-    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-  }
-  encode gzip
-  import security_headers
-  log {
-    output file /var/log/caddy/sure-access.log
-  }
-  reverse_proxy 127.0.0.1:3000
-}
-
-git.fewa.app {
-  tls {
-    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-  }
-  encode gzip
-  import security_headers
-  log {
-    output file /var/log/caddy/gitea-access.log
-  }
-  reverse_proxy 127.0.0.1:3001
-}
-
-backup.fewa.app {
-  tls {
-    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-  }
-  encode gzip
-  import security_headers
-  log {
-    output file /var/log/caddy/databasus-access.log
-  }
-  reverse_proxy 127.0.0.1:4005
-}
-
-n8n.fewa.app {
-  tls {
-    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-  }
-  encode gzip
-  import security_headers
-  log {
-    output file /var/log/caddy/n8n-access.log
-  }
-  reverse_proxy 127.0.0.1:5678
-}
+# Add app routes below and proxy them to host-local ports.
 
 fewa.app {
   tls {

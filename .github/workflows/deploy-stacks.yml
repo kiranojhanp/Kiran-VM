@@ -1,54 +1,19 @@
-name: Deploy stacks on change
+name: Deploy caddy stack on change
 
-# Triggered on pushes to main that touch any stack.
-# - "detect" job figures out which stacks changed using paths-filter.
-# - "deploy" job fans out one parallel job per changed stack via matrix.
-#
-# Adding a new stack:
-#   1. Add a filter entry below (stack-name → stacks/<name>/**)
-#   2. Add a GitHub secret: KOMODO_WEBHOOK_<NAME_UPPERCASED>
+# Triggered on pushes to main that touch stacks/caddy/**.
 
 on:
   push:
     branches: [main]
     paths:
-      - "stacks/**"
+      - "stacks/caddy/**"
 
 # ── Jobs ──────────────────────────────────────────────────────────────────────
 
 jobs:
-
-  # Detect which stacks have changed files and output them as a JSON array
-  # that the deploy matrix will consume.
-  detect:
-    name: Detect changed stacks
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.filter.outputs.changes }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Find changed stacks
-        uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            sure:       ["stacks/sure/**"]
-            databasus:  ["stacks/databasus/**"]
-            gitea:      ["stacks/gitea/**"]
-            n8n:        ["stacks/n8n/**"]
-            caddy:      ["stacks/caddy/**"]
-
-  # Deploy each changed stack in parallel via Komodo procedure webhooks.
-  # Webhook URL is looked up from secrets as KOMODO_WEBHOOK_<STACK_UPPERCASED>.
   deploy:
-    name: Deploy ${{ matrix.stack }}
-    needs: detect
-    if: needs.detect.outputs.matrix != '[]'
+    name: Deploy caddy
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        stack: ${{ fromJson(needs.detect.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup go-task
@@ -56,4 +21,4 @@ jobs:
         with:
           task-version: 3.29.1
       - name: Trigger Komodo procedure
-        run: task komodo:trigger STACK="${{ matrix.stack }}" WEBHOOK_URL="${{ secrets[format('KOMODO_WEBHOOK_{0}', matrix.stack)] }}" WEBHOOK_SECRET="${{ secrets.KOMODO_WEBHOOK_SECRET }}"
+        run: task komodo:trigger STACK="caddy" WEBHOOK_URL="${{ secrets.KOMODO_WEBHOOK_CADDY }}" WEBHOOK_SECRET="${{ secrets.KOMODO_WEBHOOK_SECRET }}"

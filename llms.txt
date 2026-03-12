@@ -1,170 +1,53 @@
 # kiran-vm
 
-Infrastructure and provisioning for running a self-hosted server on Oracle Cloud Always Free.
+Infrastructure and provisioning for a self-hosted VM on Oracle Cloud Always Free.
 
 ## Stack
 
-| Layer       | Tool    | Purpose                                          |
-| ----------- | ------- | ------------------------------------------------ |
-| Infra       | Pulumi  | Provisions the VM, VCN, subnet, security rules   |
-| Provisioning | Ansible | OS hardening, Docker, shared services, app dirs |
-| Deployments | Komodo  | Manages Docker Compose stacks for each app       |
+| Layer | Tool | Purpose |
+| --- | --- | --- |
+| Infra | Pulumi | Provisions VM, VCN, subnet, and security rules |
+| Provisioning | Ansible | Hardening, Docker, shared infra, Komodo install |
+| Deployments | Komodo | Manages Docker Compose stacks |
 
 ## Architecture
 
 One ARM64 VM (`VM.Standard.A1.Flex`, 4 OCPU / 24 GB) running:
 
-- **Shared infra** — Postgres 17 + Redis (one instance, per-app databases)
-- **Komodo** — Docker management UI backed by FerretDB (its own Postgres)
-- **Caddy** — Reverse proxy with automatic TLS via Cloudflare DNS-01
+- Shared infra: Postgres 17 + Redis
+- Komodo: stack orchestration UI backed by FerretDB
+- Caddy: reverse proxy with Cloudflare DNS-01 TLS
 
-Apps (`sure`, `gitea`, `databasus`, `n8n`, `caddy`) are scaffolded by Ansible and/or defined in `stacks/`, then managed day-to-day in Komodo.
+This repo officially curates one stack in `stacks/`: `caddy`.
 
 ## Repository layout
 
 ```
-infra/        Pulumi program (Python) — VM provisioning
-provision/    Ansible roles — server provisioning
-stacks/       Docker Compose files for each app (consumed by Komodo)
+infra/        Pulumi program (Python) for VM provisioning
+provision/    Ansible roles for hardening + base services
+stacks/       Komodo-managed stacks (caddy only in-repo)
 ```
 
----
+## Deployment flow
 
-## Full deployment walkthrough
-
-### Step 1 — Provision the VM
-
-```bash
-cd infra
-pulumi up
-```
-
-See `infra/README.md` for config setup (OCI credentials, SSH key, region).
-
-### Step 2 — Generate inventory
-
-```bash
-cd provision
-./inventory/generate.sh
-```
-
-This reads the public IP from the current Pulumi stack and writes `inventory/hosts.ini`.
-
-### Step 3 — Bootstrap (first run only)
-
-A fresh VM starts on the initial SSH port from generated `infra/constants.py` (from Taskfile vars, default `22`). Bootstrap then moves sshd to the hardened port from that same generated file (default `2222`) using a safe two-phase flow:
-
-```bash
-./bootstrap.sh
-```
-
-### Step 4 — Full provisioning
-
-```bash
-ansible-playbook site.yml
-```
-
-See `provision/README.md` for day-to-day usage, vault setup, and troubleshooting.
-
-### Step 5 — Configure DNS
-
-Point your domain's DNS to the VM's public IP (`pulumi stack output publicIp --cwd infra`).
-
-Caddy handles all subdomains with Cloudflare DNS-01, so you do not need a wildcard DNS record - just create A records for each subdomain.
-
-### Step 6 — Set up Komodo
-
-1. Open `https://komodo.<your-domain>` and log in with `komodo_init_admin_username` / `komodo_password` from `provision/secrets.yml`
-2. Add a **Server** pointing to `localhost` using the periphery passkey
-3. Add **Variables** (shared secrets the stacks reference by name):
-
-| Variable                     | Value source                      |
-| ---------------------------- | --------------------------------- |
-| `SHARED_POSTGRES_SURE_PASSWORD`  | `provision/secrets.yml`           |
-| `SHARED_POSTGRES_GITEA_PASSWORD` | `provision/secrets.yml`           |
-| `SHARED_POSTGRES_N8N_PASSWORD`   | `provision/secrets.yml`           |
-| `GITEA_SECRET_KEY`               | `provision/secrets.yml`           |
-| `SURE_SECRET_KEY_BASE`           | `provision/secrets.yml`           |
-| `OPENAI_ACCESS_TOKEN`            | `provision/secrets.yml`           |
-| `DATABASUS_SECRET_KEY`           | `provision/secrets.yml`           |
-| `R2_ACCESS_KEY_ID`               | `provision/secrets.yml`           |
-| `R2_SECRET_ACCESS_KEY`           | `provision/secrets.yml`           |
-| `N8N_ENCRYPTION_KEY`             | Generate: `openssl rand -hex 32` — **store in password manager, never lose** |
-
-4. Create a **Stack** for each app, pointing to the compose file in `stacks/`
-5. Create a **Procedure** per app with a `DeployStack` action for webhook-triggered deploys
-6. Add webhooks from GitHub → Komodo for CI/CD
-
-### Step 7 — Verify
-
-```bash
-# SSH into the server (always uses current configured port)
-pulumi stack output sshCommand --cwd infra
-
-# Check running containers
-docker ps
-
-# Check shared infra
-docker compose -f /opt/infra/docker-compose.yml ps
-
-# Check Caddy
-docker ps --filter name=caddy
-```
-
----
+1. `task sync && task init STACK=<stack> && task up STACK=<stack>`
+2. `task hosts && task bootstrap && task provision`
+3. Point DNS to the VM public IP
+4. In Komodo, configure server + variables + caddy stack/procedure
+5. Push `stacks/caddy/**` changes to trigger caddy redeploy
 
 ## Secrets
 
-All secrets live in `provision/secrets.yml` (vault-encrypted). Use `ansible-vault view provision/secrets.yml` to inspect keys, and `ansible-vault edit provision/secrets.yml` to update values.
-
-The vault password lives at `~/.vault_pass` on each machine that runs Ansible - never commit it to the repo. Keep it in your password manager.
-
----
+- Infrastructure/provisioning secrets: `provision/secrets.yml` (ansible-vault)
+- Runtime stack secrets: Komodo Variables
+- Required for caddy TLS: `CLOUDFLARE_API_TOKEN`
 
 ## Networking
 
-Apps communicate over the `infra_net` Docker bridge network. They should connect to Postgres and Redis using container names, not `localhost`.
+- Komodo binds to `127.0.0.1` and is exposed only through Caddy
+- Public inbound ports are SSH (`22` first-run optional + hardened SSH), `80`, `443`
+- Apps should bind host-local ports and be proxied by Caddy
 
-Komodo binds to `127.0.0.1` only and is accessible exclusively via Caddy reverse proxy.
+## Extending beyond caddy
 
-Iptables explicitly **drops** direct access to `komodo_port` (9120) from outside.
-
----
-
-## Adding a new app
-
-1. Add a Docker Compose file to `stacks/<appname>/`
-2. Create `provision/roles/<appname>/tasks/main.yml` — scaffold `/opt/<appname>` with correct ownership
-3. Add the role to `provision/site.yml`
-4. Add a virtual host to `stacks/caddy/Caddyfile`
-5. Add non-secret config to `provision/group_vars/all.yml` (port, image, dir, subdomain)
-6. Add secrets: `ansible-vault edit provision/secrets.yml`
-7. Add a database to `provision/roles/infra/templates/init.sql.j2` if needed
-8. Run: `ansible-playbook site.yml`
-9. Create a Stack + Procedure in Komodo
-10. Add a GitHub webhook and repository secret
-
----
-
-## Troubleshooting
-
-**A1 capacity unavailable**
-Oracle Free Tier A1 instances are often capacity-constrained. Try a different availability domain:
-```bash
-pulumi config set kiran-vm-infra:adIndex 1  # then pulumi up
-```
-
-**Connection refused on the hardened SSH port after bootstrap**
-Check that `./bootstrap.sh` completed both phases (it prints "Bootstrap complete" on success). If it timed out, run bootstrap again once. If the server is still unreachable, redeploy with `pulumi down && pulumi up`, then run bootstrap again.
-
-**Container can't reach Postgres**
-Apps must join `infra_net` and use the container name `infra-postgres-1` as the host. Using `localhost` or `127.0.0.1` will fail.
-
-**n8n workflows show UTC timestamps**
-Use `N8N_TZ`, not `TZ` - Komodo drops `TZ` during stack deployment.
-
-**`[[SECRET_NAME]]` appears literally in app**
-The Komodo Variable is missing or misspelled. Check Komodo → Variables.
-
-**Caddy not issuing certificates**
-The Cloudflare API token needs `Zone → DNS → Edit` scope for the target zone only.
+You can add your own Komodo-managed stacks, but they are intentionally out of scope for this boilerplate.

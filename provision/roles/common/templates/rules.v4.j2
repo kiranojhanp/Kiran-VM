@@ -41,11 +41,6 @@
 -A INPUT -p tcp --dport 80 -j ACCEPT
 -A INPUT -p tcp --dport 443 -j ACCEPT
 
-# ── Gitea SSH ────────────────────────────────────────────────────────────────
-# Gitea runs rootless; its internal SSH listens on container port 2222
-# mapped to host port {{ gitea_ssh_port }}.
--A INPUT -p tcp --dport {{ gitea_ssh_port }} -j ACCEPT
-
 # ── Explicit denies ─────────────────────────────────────────────────────────
 # Komodo (only accessible via Caddy reverse proxy on localhost)
 -A INPUT -p tcp --dport {{ komodo_port }} -j DROP

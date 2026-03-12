@@ -1,16 +1,3 @@
 -- Shared Postgres init script
 -- Runs once on first container start (only when data volume is empty).
--- Creates per-app users and databases.
-
--- Sure
-CREATE USER sure_user WITH PASSWORD '{{ shared_postgres_sure_password }}';
-CREATE DATABASE sure_production OWNER sure_user;
-
--- Gitea
-CREATE USER gitea_user WITH PASSWORD '{{ shared_postgres_gitea_password }}';
-CREATE DATABASE gitea OWNER gitea_user;
-
--- n8n
-CREATE USER n8n_user WITH PASSWORD '{{ shared_postgres_n8n_password }}';
-CREATE DATABASE n8n OWNER n8n_user;
-
+-- Keep this file as the extension point for optional app bootstrap SQL.

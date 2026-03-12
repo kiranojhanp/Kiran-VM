@@ -2,7 +2,7 @@
 
 Ansible playbooks for the production server running on Oracle Cloud (ARM64 Ubuntu).
 
-This layer handles OS hardening, Docker, shared infrastructure (Postgres + Redis), and app scaffolding. After initial provisioning, ongoing app deploys are handled by [Komodo](https://komo.do).
+This layer handles OS hardening, Docker, shared infrastructure (Postgres + Redis), and Komodo installation. After initial provisioning, ongoing app deploys are handled by [Komodo](https://komo.do).
 
 ## Prerequisites
 
@@ -63,14 +63,14 @@ ansible-playbook site.yml --check --diff
 # Single role
 ansible-playbook site.yml --tags docker
 
-# All service roles at once
+# Service roles
 ansible-playbook site.yml --tags services
 
 # Skip a role
-ansible-playbook site.yml --skip-tags n8n
+ansible-playbook site.yml --skip-tags infra
 ```
 
-Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `sure`, `gitea`, `databasus`, `n8n`, `services`
+Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `services`
 
 `generate.sh` and `bootstrap.sh` read shared SSH ports from generated `../infra/constants.py` (from `../Taskfile.yml` vars), so Pulumi and Ansible stay aligned without duplicate hardcoded values.
 
@@ -128,26 +128,18 @@ ansible-vault rekey secrets.yml
 | ----------- | ----------------------- | ----------------------------------------------------------------------- |
 | `common`    | `common`, `hardening`   | OS hardening: sshd, iptables, fail2ban, sysctl, swap, auditd, AppArmor |
 | `docker`    | `docker`                | Docker CE + Compose plugin; daemon config                               |
-| `infra`     | `infra`, `services`     | Shared Postgres 17 + Redis; `init.sql` creates per-app databases        |
-| `komodo`    | `komodo`, `services`    | Komodo + FerretDB stack; ongoing lifecycle managed by Komodo            |
-| `sure`      | `sure`, `services`      | Directory scaffold; lifecycle managed by Komodo                         |
-| `gitea`     | `gitea`, `services`     | Directory scaffold + custom templates; lifecycle managed by Komodo      |
-| `databasus` | `databasus`, `services` | Directory scaffold; lifecycle managed by Komodo                         |
-| `n8n`       | `n8n`, `services`       | Directory scaffold (uid 1000 for rootless); lifecycle managed by Komodo |
+| `infra`     | `infra`, `services`     | Shared Postgres 17 + Redis; `init.sql` is an optional bootstrap hook |
+| `komodo`    | `komodo`, `services`    | Komodo + FerretDB stack; ongoing stack lifecycle managed in Komodo |
 
 ---
 
 ## Adding a new app
 
-1. Create `roles/<appname>/tasks/main.yml` — create `/opt/<appname>` with correct ownership
-2. Add or update a virtual host block in `../stacks/caddy/Caddyfile`
-3. Add the role to `site.yml`
-4. Add secrets: `ansible-vault edit secrets.yml`
-5. Add non-secret config to `group_vars/all.yml` (port, image, dir, subdomain)
-6. Add the database to `roles/infra/templates/init.sql.j2` if needed
-7. Run: `ansible-playbook site.yml`
-
-Then configure the app stack in Komodo.
+1. Add a compose file in your own stack path (this repo only curates `stacks/caddy`)
+2. Add or update routing in `../stacks/caddy/Caddyfile`
+3. Add app secrets in Komodo Variables
+4. If needed, add bootstrap SQL in `roles/infra/templates/init.sql.j2`
+5. Deploy the app stack from Komodo
 
 ---
 

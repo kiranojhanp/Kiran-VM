@@ -5,7 +5,7 @@ A practical, self-hosted VM setup on Oracle Cloud Always Free.
 Core pipeline:
 
 ```
-Pulumi -> Provision -> Komodo -> stacks/
+Pulumi -> Provision -> Komodo -> stacks/caddy
 ```
 
 ## Portability contract
@@ -76,7 +76,7 @@ ansible-vault edit provision/secrets.yml
 task provision
 ```
 
-6. Configure Komodo stacks/procedures for apps (see `stacks/README.md`).
+6. Configure Komodo caddy stack/procedure (see `stacks/README.md`).
 
 ## Task recipes
 
@@ -100,15 +100,14 @@ The available targets cover the full flow:
 - first-run SSH bootstrap hardening
 - full server provisioning
 
-## Deploying apps
+## Deploying caddy
 
 1. Open `https://komodo.<your-domain>`
-2. For each app, create:
-   - a Stack pointing to `stacks/<name>/compose.yaml`
-   - a Procedure with stages: Pull Repo -> Deploy Stack
-3. Add GitHub Action secret `KOMODO_WEBHOOK_<NAME>` per app
+2. Create a Stack pointing to `stacks/caddy/compose.yaml`
+3. Create a Procedure for caddy deploys
+4. Add GitHub Action secret `KOMODO_WEBHOOK_CADDY`
 
-Any push to `stacks/<name>/` triggers the matching Komodo procedure.
+Any push to `stacks/caddy/` triggers the caddy Komodo procedure.
 
 ## Docs map
 

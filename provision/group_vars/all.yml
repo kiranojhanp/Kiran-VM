@@ -30,32 +30,9 @@ ferretdb_image: "ghcr.io/ferretdb/ferretdb:2.7.0"
 ferretdb_pg_image: "ghcr.io/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7.0"
 
 # ── Shared Infra ────────────────────────────────────────
-# Shared Postgres + Redis used by Sure, Gitea, n8n.
-# Note: Komodo/FerretDB uses its own separate postgres-documentdb image (see below).
+# Shared Postgres + Redis for self-hosted app stacks.
+# Note: Komodo/FerretDB uses its own separate postgres-documentdb image.
 postgres_image: "postgres:17"
 redis_image: "redis:7.4.8"
 infra_dir: /opt/infra
 komodo_dir: /opt/komodo
-sure_dir: /opt/sure
-gitea_dir: /opt/gitea
-
-# ── Sure ────────────────────────────────────────────────
-sure_subdomain: "sure.{{ domain }}"
-sure_port: 3000
-
-# ── Gitea ───────────────────────────────────────────────
-gitea_subdomain: "git.{{ domain }}"
-gitea_http_port: 3001
-gitea_ssh_port: 2223
-gitea_image: "docker.gitea.com/gitea:1.22.6-rootless"
-
-# ── Databasus ───────────────────────────────────────────
-databasus_subdomain: "backup.{{ domain }}"
-databasus_port: 4005
-databasus_image: "databasus/databasus:3.18.0"
-databasus_dir: /opt/databasus
-
-# ── n8n ─────────────────────────────────────────────────
-n8n_subdomain: "n8n.{{ domain }}"
-n8n_port: 5678
-n8n_dir: /opt/n8n

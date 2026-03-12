@@ -1,7 +1,7 @@
 ---
 # ── Infra role: shared Postgres + Redis ───────────────────────────────────────
-# This role owns the shared infrastructure containers used by all apps.
-# It must run before any app role (sure, postiz, komodo).
+# This role owns the shared infrastructure containers used by app stacks.
+# It must run before Komodo-managed stacks are deployed.
 
 - name: Create infra directory
   ansible.builtin.file:
@@ -29,7 +29,7 @@
     mode: "0600"
   notify: Restart infra
 
-- name: Deploy Postgres init SQL (creates per-app users and databases)
+- name: Deploy Postgres init SQL (optional bootstrap SQL)
   ansible.builtin.template:
     src: init.sql.j2
     dest: "{{ infra_dir }}/init.sql"

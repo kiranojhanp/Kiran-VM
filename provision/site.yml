@@ -29,15 +29,3 @@
 
     - role: komodo
       tags: [komodo, services]
-
-    - role: sure
-      tags: [sure, services]
-
-    - role: gitea
-      tags: [gitea, services]
-
-    - role: databasus
-      tags: [databasus, services]
-
-    - role: n8n
-      tags: [n8n, services]
