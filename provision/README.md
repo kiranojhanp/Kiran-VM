@@ -135,11 +135,12 @@ ansible-vault rekey secrets.yml
 
 ## Adding your own app stack (optional)
 
-1. Add a compose file in your own stack path (this repo only curates `stacks/caddy`)
-2. Add or update routing in `../stacks/caddy/Caddyfile`
-3. Add app secrets in Komodo Variables
-4. If needed, add bootstrap SQL in `roles/infra/templates/init.sql.j2`
-5. Deploy the app stack from Komodo
+1. Add a compose file in your own stack path (this repo only curates `stacks/traefik`)
+2. Add your app stack to the shared `shared_docker_network` (default: `internal-network`) and set a stable service alias
+3. Add or update routing in `../stacks/traefik/dynamic.yml`
+4. Add app secrets in Komodo Variables
+5. If needed, add bootstrap SQL in `roles/infra/templates/init.sql.j2`
+6. Deploy the app stack from Komodo
 
 ---
 
@@ -151,8 +152,8 @@ Bootstrap has not run yet, or it did not complete both phases. Run `./bootstrap.
 **Connection refused on the initial SSH port**
 Cloud-init may still be running right after `pulumi up`. Wait 60-90 seconds and retry `./bootstrap.sh`.
 
-**Caddy: certificate not issued**
+**Traefik: certificate not issued**
 The Cloudflare API token needs `Zone -> DNS -> Edit` scope for the target zone. Check Komodo Variables for `CLOUDFLARE_API_TOKEN`.
 
 **Komodo not reachable at its subdomain**
-Komodo binds to `127.0.0.1` and is only accessible via Caddy. Check that Caddy is running in Komodo and confirm there is a matching `komodo.<domain>` vhost in `stacks/caddy/Caddyfile`.
+Check that the Traefik stack is running in Komodo, the Komodo stack is attached to `shared_docker_network` (default: `internal-network`) with alias `komodo`, and there is a matching route in `stacks/traefik/dynamic.yml`.

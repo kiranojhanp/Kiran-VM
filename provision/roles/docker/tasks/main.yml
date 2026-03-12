@@ -49,6 +49,12 @@
     enabled: true
     state: started
 
+- name: Ensure shared Docker network exists
+  community.docker.docker_network:
+    name: "{{ shared_docker_network }}"
+    driver: bridge
+    state: present
+
 - name: Add ubuntu to docker group
   ansible.builtin.user:
     name: ubuntu

@@ -1,0 +1,64 @@
+## Traefik -- reverse proxy + TLS (Cloudflare DNS challenge)
+## Managed by Komodo (git-backed) -- edit this folder and push to redeploy.
+##
+## Stack Environment vars expected (set in Komodo Stack Config):
+##   Secret (Komodo Variables -> [[VAR_NAME]]):
+##     CLOUDFLARE_API_TOKEN=[[CLOUDFLARE_API_TOKEN]]
+##   Non-secret:
+##     SHARED_DOCKER_NETWORK=internal-network
+
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - --configFile=/etc/traefik/traefik.yml
+    restart: unless-stopped
+    init: true
+    environment:
+      CF_DNS_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - traefik_letsencrypt:/letsencrypt
+    networks:
+      - shared
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 512m
+
+  fewa-site:
+    image: hashicorp/http-echo:1.0.0
+    command:
+      - -listen
+      - :5678
+      - -text
+      - fewa.app - coming soon
+    restart: unless-stopped
+    init: true
+    networks:
+      - shared
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 64m
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+
+volumes:
+  traefik_letsencrypt:

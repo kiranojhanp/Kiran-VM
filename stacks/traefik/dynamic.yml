@@ -1,0 +1,60 @@
+http:
+  routers:
+    komodo:
+      rule: Host(`komodo.fewa.app`)
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - compress
+      service: komodo
+      tls:
+        certResolver: cloudflare
+
+    root:
+      rule: Host(`fewa.app`)
+      entryPoints:
+        - websecure
+      middlewares:
+        - root-security-headers
+        - compress
+      service: fewa-site
+      tls:
+        certResolver: cloudflare
+
+  services:
+    komodo:
+      loadBalancer:
+        servers:
+          - url: http://komodo:9120
+
+    fewa-site:
+      loadBalancer:
+        servers:
+          - url: http://fewa-site:5678
+
+  middlewares:
+    compress:
+      compress: {}
+
+    security-headers:
+      headers:
+        customFrameOptionsValue: SAMEORIGIN
+        contentTypeNosniff: true
+        referrerPolicy: strict-origin-when-cross-origin
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        customResponseHeaders:
+          Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' wss:; frame-ancestors 'self'"
+
+    root-security-headers:
+      headers:
+        customFrameOptionsValue: SAMEORIGIN
+        contentTypeNosniff: true
+        referrerPolicy: strict-origin-when-cross-origin
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        customResponseHeaders:
+          Content-Security-Policy: "default-src 'self'"

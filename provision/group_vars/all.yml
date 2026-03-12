@@ -32,6 +32,7 @@ ferretdb_pg_image: "ghcr.io/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7
 # ── Shared Infra ────────────────────────────────────────
 # Shared Postgres + Redis for self-hosted app stacks.
 # Note: Komodo/FerretDB uses its own separate postgres-documentdb image.
+shared_docker_network: internal-network
 postgres_image: "postgres:17"
 redis_image: "redis:7.4.8"
 infra_dir: /opt/infra

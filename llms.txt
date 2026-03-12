@@ -16,9 +16,9 @@ One ARM64 VM (`VM.Standard.A1.Flex`, 4 OCPU / 24 GB) running:
 
 - Shared infra: Postgres 17 + Redis
 - Komodo: stack orchestration UI backed by FerretDB
-- Caddy: reverse proxy with Cloudflare DNS-01 TLS
+- Traefik: reverse proxy with Cloudflare DNS-01 TLS
 
-This repo officially curates one stack in `stacks/`: `caddy`.
+This repo officially curates one stack in `stacks/`: `traefik`.
 
 Design intent: keep non-Docker host software minimal, with Docker handling runtime services.
 
@@ -27,7 +27,7 @@ Design intent: keep non-Docker host software minimal, with Docker handling runti
 ```
 infra/        Pulumi program (Python) for VM provisioning
 provision/    Ansible roles for hardening + base services
-stacks/       Komodo-managed stacks (caddy only in-repo)
+stacks/       Komodo-managed stacks (traefik only in-repo)
 ```
 
 ## Deployment flow
@@ -35,21 +35,21 @@ stacks/       Komodo-managed stacks (caddy only in-repo)
 1. `task sync && task init STACK=<stack> && task up STACK=<stack>`
 2. `task hosts && task bootstrap && task provision`
 3. Point DNS to the VM public IP
-4. In Komodo, configure server + variables + caddy stack/procedure
-5. Push `stacks/caddy/**` changes to trigger caddy redeploy
+4. In Komodo, configure server + variables + traefik stack/procedure
+5. Push `stacks/traefik/**` changes to trigger traefik redeploy
 
 ## Secrets
 
 - Infrastructure/provisioning secrets: `provision/secrets.yml` (ansible-vault)
 - Runtime stack secrets: Komodo Variables
-- Required for caddy TLS: `CLOUDFLARE_API_TOKEN`
+- Required for traefik TLS: `CLOUDFLARE_API_TOKEN`
 
 ## Networking
 
-- Komodo binds to `127.0.0.1` and is exposed only through Caddy
+- Komodo should be attached to the shared `shared_docker_network` (default: `internal-network`) and exposed via Traefik
 - Public inbound ports are SSH (`22` first-run optional + hardened SSH), `80`, `443`
-- Apps should bind host-local ports and be proxied by Caddy
+- Apps should join `shared_docker_network` (default: `internal-network`) and be proxied by Traefik using service-name routing
 
-## Extending beyond caddy
+## Extending beyond traefik
 
 You can add your own Komodo-managed stacks, but they are intentionally out of scope for this boilerplate.

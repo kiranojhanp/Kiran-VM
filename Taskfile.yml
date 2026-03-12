@@ -20,6 +20,7 @@ vars:
   PORT_HTTPS: 443
   SSH_PORT_INITIAL: 22
   SSH_PORT_HARDENED: 2222
+  SHARED_DOCKER_NETWORK: internal-network
   PROTO_TCP: '6'
   PROTO_ICMP: '1'
   ICMP_TYPE_PATH_MTU: 3
@@ -178,7 +179,7 @@ tasks:
       - sh: test -f provision/secrets.yml
         msg: provision/secrets.yml is required
     cmds:
-      - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --extra-vars "@provision/secrets.yml"
+      - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --extra-vars "@provision/secrets.yml" --extra-vars "shared_docker_network={{.SHARED_DOCKER_NETWORK}}"
 
   komodo:trigger:
     desc: Trigger a Komodo webhook for a stack

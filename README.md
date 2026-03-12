@@ -5,13 +5,13 @@ A practical, minimal self-hosted VM baseline on Oracle Cloud Always Free.
 Core pipeline:
 
 ```
-Pulumi -> Provision -> Komodo -> stacks/caddy
+Pulumi -> Provision -> Komodo -> stacks/traefik
 ```
 
 Scope by design:
 - Pulumi creates VM + network
 - Ansible hardens host + installs Docker + Komodo
-- This repo curates only `stacks/caddy`; other apps are user-managed via Docker/Komodo
+- This repo curates only `stacks/traefik`; other apps are user-managed via Docker/Komodo
 
 ## Portability contract
 
@@ -81,7 +81,7 @@ ansible-vault edit provision/secrets.yml
 task provision
 ```
 
-6. Configure Komodo caddy stack/procedure (see `stacks/README.md`).
+6. Configure Komodo traefik stack/procedure (see `stacks/README.md`).
 
 ## Task recipes
 
@@ -105,18 +105,18 @@ The available targets cover the full flow:
 - first-run SSH bootstrap hardening
 - full server provisioning
 
-## Deploying caddy
+## Deploying traefik
 
 1. Open `https://komodo.<your-domain>`
-2. Create a Stack pointing to `stacks/caddy/compose.yaml`
-3. Create a Procedure for caddy deploys
-4. Add GitHub Action secret `KOMODO_WEBHOOK_CADDY`
+2. Create a Stack pointing to `stacks/traefik/compose.yaml`
+3. Create a Procedure for traefik deploys
+4. Add GitHub Action secret `KOMODO_WEBHOOK_TRAEFIK`
 
-Any push to `stacks/caddy/` triggers the caddy Komodo procedure.
+Any push to `stacks/traefik/` triggers the traefik Komodo procedure.
 
 ## Docs map
 
 - `infra/README.md`: Pulumi stack config and OCI details
 - `provision/README.md`: server hardening/provisioning details
-- `stacks/README.md`: caddy stack layout and conventions
+- `stacks/README.md`: traefik stack layout and conventions
 - `llms.txt`: machine-oriented repo summary

@@ -5,6 +5,9 @@
 networks:
   komodo-net:
     driver: bridge
+  shared-proxy-net:
+    external: true
+    name: "{{ shared_docker_network }}"
 
 volumes:
   ferretdb-pg-data:
@@ -58,7 +61,10 @@ services:
     volumes:
       - "{{ komodo_dir }}/data:/etc/komodo"
     networks:
-      - komodo-net
+      komodo-net:
+      shared-proxy-net:
+        aliases:
+          - komodo
     depends_on:
       ferretdb:
         condition: service_started
