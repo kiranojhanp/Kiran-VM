@@ -7,7 +7,7 @@
 ##   Secret (Komodo Variables -> [[VAR_NAME]]):
 ##     CLOUDFLARE_API_TOKEN=[[CLOUDFLARE_API_TOKEN]]
 ##   Non-secret:
-##     SHARED_DOCKER_NETWORK=internal-network
+##     SHARED_DOCKER_NETWORK=__SHARED_NETWORK__
 
 services:
   traefik:
@@ -43,7 +43,7 @@ services:
       - -listen
       - :5678
       - -text
-      - fewa.app - coming soon
+      - __SITE_MESSAGE__
     restart: unless-stopped
     init: true
     networks:
@@ -59,7 +59,7 @@ services:
 
 networks:
   shared:
-    name: internal-network
+    name: __SHARED_NETWORK__
     external: true
 
 volumes:

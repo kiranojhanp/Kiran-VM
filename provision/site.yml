@@ -1,8 +1,8 @@
 ---
-# fewa.app production server — full provisioning playbook
+# Production server provisioning playbook
 #
 # Usage:
-#   ansible-playbook site.yml
+#   ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml"
 #
 # Secrets are loaded automatically from secrets.yml (vault-encrypted).
 # Vault password is read from ~/.vault_pass via ansible.cfg.

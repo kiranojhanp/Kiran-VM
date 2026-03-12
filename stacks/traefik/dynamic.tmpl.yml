@@ -3,7 +3,7 @@
 http:
   routers:
     komodo:
-      rule: Host(`komodo.fewa.app`)
+      rule: Host(`__KOMODO_HOST__`)
       entryPoints:
         - websecure
       middlewares:
@@ -14,7 +14,7 @@ http:
         certResolver: cloudflare
 
     root:
-      rule: Host(`fewa.app`)
+      rule: Host(`__DOMAIN_NAME__`)
       entryPoints:
         - websecure
       middlewares:

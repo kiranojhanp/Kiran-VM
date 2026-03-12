@@ -13,6 +13,9 @@ Everything else should be added as your own Komodo-managed stacks.
 - `stacks/traefik/compose.yaml`
 - `stacks/traefik/traefik.yml`
 - `stacks/traefik/dynamic.yml`
+- `stacks/traefik/*.tmpl.yml|yaml` (templates)
+
+The concrete `compose.yaml`, `traefik.yml`, and `dynamic.yml` files are generated from templates by `task sync` using `Taskfile.yml` vars.
 
 `traefik` runs on a shared external Docker network (`internal-network` by default) so app stacks can be routed by service name.
 
@@ -42,12 +45,14 @@ Required for traefik:
 
 ## Routing updates
 
-Edit `stacks/traefik/dynamic.yml` to add or change domains and upstream services.
+Edit `Taskfile.yml` defaults for domain/cert settings, then run `task sync` to regenerate Traefik configs. For structural routing changes, update `stacks/traefik/dynamic.tmpl.yml`.
 
-For this repo's default routes:
+For this repo's default routes (derived from Taskfile vars):
 
-- `komodo.fewa.app` routes to `http://komodo:9120` on `SHARED_DOCKER_NETWORK`.
-- `fewa.app` routes to the built-in `fewa-site` container.
+- `${KOMODO_SUBDOMAIN_LABEL}.${DOMAIN_NAME_DEFAULT}` routes to `http://komodo:9120` on `SHARED_DOCKER_NETWORK`.
+- `${DOMAIN_NAME_DEFAULT}` routes to the built-in `fewa-site` container.
+
+Pulumi-managed DNS subdomains are controlled by `DNS_SUBDOMAIN_LABELS` in `Taskfile.yml`.
 
 ## Troubleshooting
 

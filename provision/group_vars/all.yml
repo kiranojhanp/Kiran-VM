@@ -10,7 +10,7 @@ timezone: Asia/Kathmandu
 ssh_allow_port_22: false
 
 # ── Domain ──────────────────────────────────────────────
-domain: fewa.app
+domain: example.com
 komodo_subdomain: "komodo.{{ domain }}"
 
 # ── Komodo ──────────────────────────────────────────────

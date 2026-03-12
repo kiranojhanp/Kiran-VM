@@ -27,7 +27,7 @@ providers:
 certificatesResolvers:
   cloudflare:
     acme:
-      email: admin@fewa.app
+      email: __ACME_EMAIL__
       storage: /letsencrypt/acme.json
       dnsChallenge:
         provider: cloudflare
