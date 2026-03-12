@@ -2,7 +2,9 @@
 
 Docker Compose stacks managed by [Komodo](https://komo.do).
 
-This repo officially supports one managed stack: `caddy`.
+This repo officially curates one managed stack: `caddy`.
+
+Everything else should be added as your own Komodo-managed stacks.
 
 ## Supported stack
 

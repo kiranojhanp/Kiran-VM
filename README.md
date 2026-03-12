@@ -1,12 +1,17 @@
 # kiran-vm
 
-A practical, self-hosted VM setup on Oracle Cloud Always Free.
+A practical, minimal self-hosted VM baseline on Oracle Cloud Always Free.
 
 Core pipeline:
 
 ```
 Pulumi -> Provision -> Komodo -> stacks/caddy
 ```
+
+Scope by design:
+- Pulumi creates VM + network
+- Ansible hardens host + installs Docker + Komodo
+- This repo curates only `stacks/caddy`; other apps are user-managed via Docker/Komodo
 
 ## Portability contract
 
@@ -69,7 +74,7 @@ task hosts
 task bootstrap
 ```
 
-5. Add vault secrets and provision services:
+5. Add vault secrets and provision base services:
 
 ```bash
 ansible-vault edit provision/secrets.yml
@@ -113,5 +118,5 @@ Any push to `stacks/caddy/` triggers the caddy Komodo procedure.
 
 - `infra/README.md`: Pulumi stack config and OCI details
 - `provision/README.md`: server hardening/provisioning details
-- `stacks/README.md`: app stack layout and conventions
+- `stacks/README.md`: caddy stack layout and conventions
 - `llms.txt`: machine-oriented repo summary

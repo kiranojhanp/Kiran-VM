@@ -20,6 +20,8 @@ One ARM64 VM (`VM.Standard.A1.Flex`, 4 OCPU / 24 GB) running:
 
 This repo officially curates one stack in `stacks/`: `caddy`.
 
+Design intent: keep non-Docker host software minimal, with Docker handling runtime services.
+
 ## Repository layout
 
 ```

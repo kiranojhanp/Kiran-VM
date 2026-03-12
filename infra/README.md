@@ -2,6 +2,8 @@
 
 Pulumi (Python) program that provisions an Oracle Cloud Always Free ARM VM inside a dedicated compartment.
 
+This layer provisions infrastructure only. App/runtime stacks are managed separately via Docker and Komodo.
+
 ## What it creates
 
 | Resource         | Details                                                       |

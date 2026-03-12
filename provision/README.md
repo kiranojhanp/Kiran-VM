@@ -2,7 +2,7 @@
 
 Ansible playbooks for the production server running on Oracle Cloud (ARM64 Ubuntu).
 
-This layer handles OS hardening, Docker, shared infrastructure (Postgres + Redis), and Komodo installation. After initial provisioning, ongoing app deploys are handled by [Komodo](https://komo.do).
+This layer handles OS hardening, Docker, shared infrastructure (Postgres + Redis), and Komodo installation. After initial provisioning, ongoing stack deploys are handled by [Komodo](https://komo.do).
 
 ## Prerequisites
 
@@ -133,7 +133,7 @@ ansible-vault rekey secrets.yml
 
 ---
 
-## Adding a new app
+## Adding your own app stack (optional)
 
 1. Add a compose file in your own stack path (this repo only curates `stacks/caddy`)
 2. Add or update routing in `../stacks/caddy/Caddyfile`
@@ -152,7 +152,7 @@ Bootstrap has not run yet, or it did not complete both phases. Run `./bootstrap.
 Cloud-init may still be running right after `pulumi up`. Wait 60-90 seconds and retry `./bootstrap.sh`.
 
 **Caddy: certificate not issued**
-The Cloudflare API token needs `Zone → DNS → Edit` scope for the target zone. Check with `ansible-vault view secrets.yml`.
+The Cloudflare API token needs `Zone -> DNS -> Edit` scope for the target zone. Check Komodo Variables for `CLOUDFLARE_API_TOKEN`.
 
 **Komodo not reachable at its subdomain**
 Komodo binds to `127.0.0.1` and is only accessible via Caddy. Check that Caddy is running in Komodo and confirm there is a matching `komodo.<domain>` vhost in `stacks/caddy/Caddyfile`.
