@@ -13,6 +13,9 @@ Scope by design:
 - Ansible hardens host + installs Docker + Komodo
 - This repo curates only `stacks/traefik`; other apps are user-managed via Docker/Komodo
 
+Why Komodo is not in `stacks/`:
+- Komodo is part of base host provisioning (Ansible role) so control-plane boot always exists before stack deploy workflows run.
+
 ## Portability contract
 
 If you want to run this in another OCI account or region, start with the vars in `Taskfile.yml`.

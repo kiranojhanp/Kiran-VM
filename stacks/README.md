@@ -4,6 +4,8 @@ Docker Compose stacks managed by [Komodo](https://komo.do).
 
 This repo officially curates one managed stack: `traefik`.
 
+Komodo itself is provisioned by Ansible (`provision/roles/komodo`) as base control plane, not as a curated `stacks/` compose file.
+
 Everything else should be added as your own Komodo-managed stacks.
 
 ## Supported stack
