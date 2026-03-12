@@ -19,7 +19,7 @@ It also manages core Cloudflare DNS records for the primary domain so DNS follow
 | Compute Instance | `VM.Standard.A1.Flex` — 4 OCPU / 24 GB RAM / 200 GB boot volume (default) |
 | Cloudflare DNS   | `A` apex + `A` www + CNAMEs (`backup`, `git`, `komodo`, `n8n`, `sure`) |
 
-All constants (CIDRs, ports, image, shape) are defined in `../Taskfile.yml` vars and generated into `constants.py` by `task sync` or `task init`.
+All constants (CIDRs, ports, image, shape, domain, Cloudflare zone default) are defined in `../Taskfile.yml` vars and generated into `constants.py` by `task sync` or `task init`.
 
 ## Prerequisites
 
@@ -62,10 +62,6 @@ pulumi config set          oci:region       <your-region>   # e.g. ap-melbourne-
 # Project config
 pulumi config set kiran-vm-infra:projectName  <your-project-name>
 pulumi config set kiran-vm-infra:sshPublicKey "$(cat ~/.ssh/id_ed25519.pub)"
-pulumi config set kiran-vm-infra:cloudflareZoneId <your-cloudflare-zone-id>
-
-# Optional domain override (default: fewa.app)
-pulumi config set kiran-vm-infra:domainName fewa.app
 
 # Optional overrides (defaults shown)
 pulumi config set kiran-vm-infra:bootVolumeSizeGb 200   # default from Taskfile.yml -> constants.py
@@ -76,6 +72,12 @@ pulumi config set kiran-vm-infra:adIndex          0     # try 1 or 2 if AD is ou
 > - Tenancy OCID: OCI Console → top-right menu → Tenancy
 > - User OCID: OCI Console → top-right menu → My Profile
 > - API key + fingerprint: My Profile → API Keys → Add API Key
+
+Cloudflare/DNS source of truth:
+- Set `DOMAIN_NAME_DEFAULT` and `CLOUDFLARE_ZONE_ID_DEFAULT` in `Taskfile.yml`.
+- Set `DNS_SUBDOMAIN_LABELS` in `Taskfile.yml` for Pulumi-managed CNAMEs.
+- Run `task sync` before `task preview`/`task up`.
+- Optional: `pulumi config set kiran-vm-infra:cloudflareZoneId ...` overrides the Taskfile default for a specific stack.
 
 ## Usage
 
@@ -122,7 +124,7 @@ pulumi down
 cd ../provision
 ./inventory/generate.sh   # pull IP from Pulumi stack → writes hosts.ini
 ./bootstrap.sh            # first-run only: hardens sshd (22 → 2222)
-ansible-playbook site.yml # full provisioning
+ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" # full provisioning
 ```
 
 See `../provision/README.md` for the complete provisioning guide.

@@ -83,7 +83,13 @@ Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `services`
 
 `generate.sh` and `bootstrap.sh` read shared SSH ports from generated `../infra/constants.py` (from `../Taskfile.yml` vars), so Pulumi and Ansible stay aligned without duplicate hardcoded values.
 
-`task provision` also passes `shared_docker_network` from `Taskfile.yml` (`SHARED_DOCKER_NETWORK`, default `internal-network`).
+`task provision` passes runtime defaults from `Taskfile.yml`:
+
+- `shared_docker_network` from `SHARED_DOCKER_NETWORK`
+- `domain` from `DOMAIN_NAME_DEFAULT`
+- `komodo_subdomain` from `KOMODO_SUBDOMAIN_LABEL.DOMAIN_NAME_DEFAULT`
+
+Pulumi DNS subdomains are controlled separately by `DNS_SUBDOMAIN_LABELS` in `Taskfile.yml`.
 
 ---
 

@@ -25,8 +25,11 @@ Those vars are the source of truth for:
 - network CIDRs and open ports
 - bootstrap SSH port and hardened SSH port
 - Ubuntu image defaults
+- domain and DNS defaults (`DOMAIN_NAME_DEFAULT`, `CLOUDFLARE_ZONE_ID_DEFAULT`)
+- Traefik certificate/contact defaults (`ACME_EMAIL_DEFAULT`, `KOMODO_SUBDOMAIN_LABEL`)
+- Pulumi-managed DNS subdomains (`DNS_SUBDOMAIN_LABELS`)
 
-`task sync` and `task init` generate `infra/constants.py` from those vars, and `infra/__main__.py` consumes the generated values.
+`task sync` and `task init` generate `infra/constants.py` and Traefik stack files from those vars. `infra/__main__.py` and `stacks/traefik/*.yml` consume the generated values.
 
 ## Minimal setup (first run)
 
@@ -116,6 +119,14 @@ The available targets cover the full flow:
 4. Add GitHub Action secret `KOMODO_WEBHOOK_TRAEFIK`
 
 Any push to `stacks/traefik/` triggers the traefik Komodo procedure.
+
+Before deploying Traefik, set these in `Taskfile.yml` and run `task sync`:
+
+- `DOMAIN_NAME_DEFAULT`
+- `CLOUDFLARE_ZONE_ID_DEFAULT`
+- `ACME_EMAIL_DEFAULT`
+- `KOMODO_SUBDOMAIN_LABEL`
+- `DNS_SUBDOMAIN_LABELS`
 
 ## Docs map
 

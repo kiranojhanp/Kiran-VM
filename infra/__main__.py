@@ -6,6 +6,8 @@ import pulumi_oci as oci
 from constants import (
     PROJECT_NAME_DEFAULT,
     DOMAIN_NAME_DEFAULT,
+    CLOUDFLARE_ZONE_ID_DEFAULT,
+    DNS_SUBDOMAIN_LABELS,
     SUFFIX_COMPARTMENT,
     SUFFIX_VCN,
     SUFFIX_IGW,
@@ -42,7 +44,11 @@ cfg = pulumi.Config()
 project_name = (cfg.get("projectName") or PROJECT_NAME_DEFAULT).strip()
 ssh_public_key = cfg.require("sshPublicKey")
 domain_name = DOMAIN_NAME_DEFAULT.strip()
-cloudflare_zone_id = cfg.require("cloudflareZoneId")
+cloudflare_zone_id = (cfg.get("cloudflareZoneId") or CLOUDFLARE_ZONE_ID_DEFAULT).strip()
+if not cloudflare_zone_id:
+    raise Exception(
+        "Cloudflare zone id is empty. Set CLOUDFLARE_ZONE_ID_DEFAULT in Taskfile.yml."
+    )
 vcn_dns_label = (
     "".join(ch for ch in project_name.lower() if ch.isalnum())[:15] or "kiranvm"
 )
@@ -287,7 +293,7 @@ www_a_record = cloudflare.DnsRecord(
     proxied=False,
 )
 
-for subdomain in ["backup", "git", "komodo", "n8n", "sure"]:
+for subdomain in DNS_SUBDOMAIN_LABELS:
     cloudflare.DnsRecord(
         f"dns-{subdomain}",
         zone_id=cloudflare_zone_id,

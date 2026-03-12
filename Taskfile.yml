@@ -5,6 +5,10 @@ vars:
   TARGET_STACK: '{{default "kiran-prod" .STACK}}'
   PROJECT_NAME_DEFAULT: kiran-self-hosting
   DOMAIN_NAME_DEFAULT: fewa.app
+  ACME_EMAIL_DEFAULT: admin@fewa.app
+  KOMODO_SUBDOMAIN_LABEL: komodo
+  DNS_SUBDOMAIN_LABELS: backup,git,komodo,n8n,sure
+  CLOUDFLARE_ZONE_ID_DEFAULT: 58dce5945a8941e4c38a3611af123052
   SUFFIX_COMPARTMENT: -compartment
   SUFFIX_VCN: -vcn
   SUFFIX_IGW: -igw
@@ -69,10 +73,24 @@ tasks:
 
   _select:stack:
     internal: true
-    deps: [_check:infra, _sync:constants]
+    deps: [_check:infra, _sync:constants, _render:traefik]
     dir: '{{.INFRA_DIR}}'
     cmds:
       - pulumi stack select {{.TARGET_STACK}} || pulumi stack init {{.TARGET_STACK}}
+
+  _render:traefik:
+    internal: true
+    run: once
+    preconditions:
+      - sh: command -v python3 >/dev/null 2>&1
+        msg: python3 is required
+    env:
+      DOMAIN_NAME_DEFAULT: '{{.DOMAIN_NAME_DEFAULT}}'
+      ACME_EMAIL_DEFAULT: '{{.ACME_EMAIL_DEFAULT}}'
+      KOMODO_SUBDOMAIN_LABEL: '{{.KOMODO_SUBDOMAIN_LABEL}}'
+      SHARED_DOCKER_NETWORK: '{{.SHARED_DOCKER_NETWORK}}'
+    cmds:
+      - python3 stacks/traefik/render.py
 
   _sync:constants:
     internal: true
@@ -83,6 +101,8 @@ tasks:
     env:
       PROJECT_NAME_DEFAULT: '{{.PROJECT_NAME_DEFAULT}}'
       DOMAIN_NAME_DEFAULT: '{{.DOMAIN_NAME_DEFAULT}}'
+      DNS_SUBDOMAIN_LABELS: '{{.DNS_SUBDOMAIN_LABELS}}'
+      CLOUDFLARE_ZONE_ID_DEFAULT: '{{.CLOUDFLARE_ZONE_ID_DEFAULT}}'
       SUFFIX_COMPARTMENT: '{{.SUFFIX_COMPARTMENT}}'
       SUFFIX_VCN: '{{.SUFFIX_VCN}}'
       SUFFIX_IGW: '{{.SUFFIX_IGW}}'
@@ -117,7 +137,7 @@ tasks:
   sync:
     desc: Install infra dependencies (uv sync)
     aliases: [deps]
-    deps: [_check:infra, _sync:constants]
+    deps: [_check:infra, _sync:constants, _render:traefik]
     dir: '{{.INFRA_DIR}}'
     cmds:
       - uv sync
@@ -189,7 +209,7 @@ tasks:
       - sh: test -f "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}"
         msg: vault password file not found (set ANSIBLE_VAULT_PASSWORD_FILE or create ~/.vault_pass)
     cmds:
-      - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" --extra-vars "@provision/secrets.yml" --extra-vars "shared_docker_network={{.SHARED_DOCKER_NETWORK}}"
+      - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" --extra-vars "@provision/secrets.yml" --extra-vars "shared_docker_network={{.SHARED_DOCKER_NETWORK}} domain={{.DOMAIN_NAME_DEFAULT}} komodo_subdomain={{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}"
 
   komodo:trigger:
     desc: Trigger a Komodo webhook for a stack

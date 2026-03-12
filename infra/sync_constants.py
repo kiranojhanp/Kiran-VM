@@ -13,6 +13,11 @@ def env_str(name: str) -> str:
     return os.environ[name]
 
 
+def env_csv(name: str) -> list[str]:
+    raw = os.environ[name]
+    return [part.strip() for part in raw.split(",") if part.strip()]
+
+
 CONSTANTS_FILE = Path(__file__).with_name("constants.py")
 
 
@@ -23,6 +28,8 @@ def render() -> str:
 # -- Project Defaults ---------------------------------------------------------
 PROJECT_NAME_DEFAULT = {project_name_default!r}
 DOMAIN_NAME_DEFAULT = {domain_name_default!r}
+CLOUDFLARE_ZONE_ID_DEFAULT = {cloudflare_zone_id_default!r}
+DNS_SUBDOMAIN_LABELS = {dns_subdomain_labels!r}
 
 # -- Resource Name Suffixes ---------------------------------------------------
 SUFFIX_COMPARTMENT = {suffix_compartment!r}
@@ -72,6 +79,8 @@ AD_INDEX_DEFAULT = {ad_index_default!r}
 """.format(
         project_name_default=env_str("PROJECT_NAME_DEFAULT"),
         domain_name_default=env_str("DOMAIN_NAME_DEFAULT"),
+        dns_subdomain_labels=env_csv("DNS_SUBDOMAIN_LABELS"),
+        cloudflare_zone_id_default=env_str("CLOUDFLARE_ZONE_ID_DEFAULT"),
         suffix_compartment=env_str("SUFFIX_COMPARTMENT"),
         suffix_vcn=env_str("SUFFIX_VCN"),
         suffix_igw=env_str("SUFFIX_IGW"),
