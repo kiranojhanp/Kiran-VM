@@ -1,9 +1,11 @@
 import base64
 import pulumi
+import pulumi_cloudflare as cloudflare
 import pulumi_oci as oci
 
 from constants import (
     PROJECT_NAME_DEFAULT,
+    DOMAIN_NAME_DEFAULT,
     SUFFIX_COMPARTMENT,
     SUFFIX_VCN,
     SUFFIX_IGW,
@@ -39,6 +41,11 @@ cfg = pulumi.Config()
 
 project_name = (cfg.get("projectName") or PROJECT_NAME_DEFAULT).strip()
 ssh_public_key = cfg.require("sshPublicKey")
+domain_name = DOMAIN_NAME_DEFAULT.strip()
+cloudflare_zone_id = cfg.require("cloudflareZoneId")
+vcn_dns_label = (
+    "".join(ch for ch in project_name.lower() if ch.isalnum())[:15] or "kiranvm"
+)
 
 # bootVolumeSizeGb — configurable; default 100 GB leaves headroom for AMD Micro instances
 # (Oracle Always Free gives 200 GB total block storage across all instances)
@@ -67,7 +74,7 @@ vcn = oci.core.Vcn(
     compartment_id=compartment_id,
     cidr_block=VCN_CIDR,
     display_name=f"{project_name}{SUFFIX_VCN}",
-    dns_label=project_name.replace("-", ""),
+    dns_label=vcn_dns_label,
 )
 
 # ── Internet Gateway ──────────────────────────────────────────────────────────
@@ -259,10 +266,45 @@ instance = oci.core.Instance(
     },
 )
 
+# ── Cloudflare DNS records ────────────────────────────────────────────────────
+apex_a_record = cloudflare.DnsRecord(
+    "dns-apex",
+    zone_id=cloudflare_zone_id,
+    name=domain_name,
+    type="A",
+    content=instance.public_ip,
+    ttl=1,
+    proxied=False,
+)
+
+www_a_record = cloudflare.DnsRecord(
+    "dns-www",
+    zone_id=cloudflare_zone_id,
+    name=f"www.{domain_name}",
+    type="A",
+    content=instance.public_ip,
+    ttl=1,
+    proxied=False,
+)
+
+for subdomain in ["backup", "git", "komodo", "n8n", "sure"]:
+    cloudflare.DnsRecord(
+        f"dns-{subdomain}",
+        zone_id=cloudflare_zone_id,
+        name=f"{subdomain}.{domain_name}",
+        type="CNAME",
+        content=domain_name,
+        ttl=1,
+        proxied=False,
+    )
+
 # ── Outputs ───────────────────────────────────────────────────────────────────
 pulumi.export("publicIp", instance.public_ip)
 pulumi.export("privateIp", instance.private_ip)
 pulumi.export("instanceId", instance.id)
+pulumi.export("domainName", domain_name)
+pulumi.export("apexDnsRecordId", apex_a_record.id)
+pulumi.export("wwwDnsRecordId", www_a_record.id)
 pulumi.export(
     "sshCommand",
     pulumi.Output.concat(f"ssh -p {SSH_PORT_HARDENED} deploy@", instance.public_ip),

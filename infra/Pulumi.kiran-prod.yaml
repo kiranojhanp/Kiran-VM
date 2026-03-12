@@ -10,3 +10,5 @@ config:
   oci:privateKeyPath:
     secure: v1:Skihl9yUqyNWkmyd:7TtLVKD8ZcC8FfhY8YCBzrOJF8Yu9ZzOSAFYtIa/lWmlG/TpcaINGsj2hlHNmU68CHjwIjc=
   kiran-vm-infra:sshPublicKey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFGpdJoSwTfZGU5Yb5bsGEFSOnBFeWj7QGS0qWhgv7uR kiranojha1226@gmail.com
+  kiran-vm-infra:projectName: kiran-self-hosting
+  kiran-vm-infra:cloudflareZoneId: 58dce5945a8941e4c38a3611af123052

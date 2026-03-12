@@ -22,6 +22,7 @@ def render() -> str:
 
 # -- Project Defaults ---------------------------------------------------------
 PROJECT_NAME_DEFAULT = {project_name_default!r}
+DOMAIN_NAME_DEFAULT = {domain_name_default!r}
 
 # -- Resource Name Suffixes ---------------------------------------------------
 SUFFIX_COMPARTMENT = {suffix_compartment!r}
@@ -70,6 +71,7 @@ BOOT_VOLUME_GB_DEFAULT = {boot_volume_gb_default!r}
 AD_INDEX_DEFAULT = {ad_index_default!r}
 """.format(
         project_name_default=env_str("PROJECT_NAME_DEFAULT"),
+        domain_name_default=env_str("DOMAIN_NAME_DEFAULT"),
         suffix_compartment=env_str("SUFFIX_COMPARTMENT"),
         suffix_vcn=env_str("SUFFIX_VCN"),
         suffix_igw=env_str("SUFFIX_IGW"),

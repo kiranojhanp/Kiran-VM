@@ -3,7 +3,8 @@ version: '3'
 vars:
   INFRA_DIR: infra
   TARGET_STACK: '{{default "kiran-prod" .STACK}}'
-  PROJECT_NAME_DEFAULT: kiran-vm
+  PROJECT_NAME_DEFAULT: kiran-self-hosting
+  DOMAIN_NAME_DEFAULT: fewa.app
   SUFFIX_COMPARTMENT: -compartment
   SUFFIX_VCN: -vcn
   SUFFIX_IGW: -igw
@@ -81,6 +82,7 @@ tasks:
         msg: python3 is required
     env:
       PROJECT_NAME_DEFAULT: '{{.PROJECT_NAME_DEFAULT}}'
+      DOMAIN_NAME_DEFAULT: '{{.DOMAIN_NAME_DEFAULT}}'
       SUFFIX_COMPARTMENT: '{{.SUFFIX_COMPARTMENT}}'
       SUFFIX_VCN: '{{.SUFFIX_VCN}}'
       SUFFIX_IGW: '{{.SUFFIX_IGW}}'
@@ -133,16 +135,22 @@ tasks:
     aliases: [plan]
     deps: [_select:stack]
     dir: '{{.INFRA_DIR}}'
+    preconditions:
+      - sh: test -n "${CLOUDFLARE_API_TOKEN:-}" || test -f "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}"
+        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
     cmds:
-      - pulumi preview
+      - CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-$(cat "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}")}" pulumi preview
 
   up:
     desc: Provision or update VM
     aliases: [apply]
     deps: [_select:stack]
     dir: '{{.INFRA_DIR}}'
+    preconditions:
+      - sh: test -n "${CLOUDFLARE_API_TOKEN:-}" || test -f "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}"
+        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
     cmds:
-      - pulumi up
+      - CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-$(cat "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}")}" pulumi up
 
   destroy:
     desc: Destroy VM and network

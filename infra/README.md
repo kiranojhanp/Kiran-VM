@@ -4,6 +4,8 @@ Pulumi (Python) program that provisions an Oracle Cloud Always Free ARM VM insid
 
 This layer provisions infrastructure only. App/runtime stacks are managed separately via Docker and Komodo.
 
+It also manages core Cloudflare DNS records for the primary domain so DNS follows VM replacements automatically.
+
 ## What it creates
 
 | Resource         | Details                                                       |
@@ -15,6 +17,7 @@ This layer provisions infrastructure only. App/runtime stacks are managed separa
 | Security List    | SSH 22/2222, HTTP 80, HTTPS 443, ICMP                        |
 | Public Subnet    | `10.0.0.0/24`                                                 |
 | Compute Instance | `VM.Standard.A1.Flex` — 4 OCPU / 24 GB RAM / 200 GB boot volume (default) |
+| Cloudflare DNS   | `A` apex + `A` www + CNAMEs (`backup`, `git`, `komodo`, `n8n`, `sure`) |
 
 All constants (CIDRs, ports, image, shape) are defined in `../Taskfile.yml` vars and generated into `constants.py` by `task sync` or `task init`.
 
@@ -59,6 +62,10 @@ pulumi config set          oci:region       <your-region>   # e.g. ap-melbourne-
 # Project config
 pulumi config set kiran-vm-infra:projectName  <your-project-name>
 pulumi config set kiran-vm-infra:sshPublicKey "$(cat ~/.ssh/id_ed25519.pub)"
+pulumi config set kiran-vm-infra:cloudflareZoneId <your-cloudflare-zone-id>
+
+# Optional domain override (default: fewa.app)
+pulumi config set kiran-vm-infra:domainName fewa.app
 
 # Optional overrides (defaults shown)
 pulumi config set kiran-vm-infra:bootVolumeSizeGb 200   # default from Taskfile.yml -> constants.py
@@ -100,6 +107,9 @@ pulumi down
 | `publicIp`           | Instance public IP                        |
 | `privateIp`          | Instance private IP                       |
 | `instanceId`         | OCI OCID of the compute instance          |
+| `domainName`         | DNS zone domain managed in Cloudflare     |
+| `apexDnsRecordId`    | Cloudflare record ID for apex `A` record  |
+| `wwwDnsRecordId`     | Cloudflare record ID for `www` `A` record |
 | `compartmentId`      | OCI OCID of the dedicated compartment     |
 | `vcnId`              | OCI OCID of the VCN                       |
 | `subnetId`           | OCI OCID of the subnet                    |
@@ -116,6 +126,20 @@ ansible-playbook site.yml # full provisioning
 ```
 
 See `../provision/README.md` for the complete provisioning guide.
+
+## Cloudflare token file
+
+`task preview` and `task up` read Cloudflare token from one of:
+
+1. `CLOUDFLARE_API_TOKEN` environment variable
+2. `CLOUDFLARE_API_TOKEN_FILE` path (defaults to `~/.cloudflare_pass`)
+
+Create default token file:
+
+```bash
+echo '<cloudflare-api-token>' > ~/.cloudflare_pass
+chmod 600 ~/.cloudflare_pass
+```
 
 ## Always Free limits
 
