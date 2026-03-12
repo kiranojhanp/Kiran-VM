@@ -178,8 +178,10 @@ tasks:
     preconditions:
       - sh: test -f provision/secrets.yml
         msg: provision/secrets.yml is required
+      - sh: test -f "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}"
+        msg: vault password file not found (set ANSIBLE_VAULT_PASSWORD_FILE or create ~/.vault_pass)
     cmds:
-      - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --extra-vars "@provision/secrets.yml" --extra-vars "shared_docker_network={{.SHARED_DOCKER_NETWORK}}"
+      - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" --extra-vars "@provision/secrets.yml" --extra-vars "shared_docker_network={{.SHARED_DOCKER_NETWORK}}"
 
   komodo:trigger:
     desc: Trigger a Komodo webhook for a stack
