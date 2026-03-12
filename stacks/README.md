@@ -45,7 +45,7 @@ Required for traefik:
 
 ## Routing updates
 
-Edit `Taskfile.yml` defaults for domain/cert settings, then run `task sync` to regenerate Traefik configs. For structural routing changes, update `stacks/traefik/dynamic.tmpl.yml`.
+Edit `Taskfile.yml` defaults for domain/cert settings, then run `task sync` to regenerate Traefik configs. For structural routing changes, update `stacks/traefik/dynamic.tmpl.yml` and run `task sync`.
 
 For this repo's default routes (derived from Taskfile vars):
 

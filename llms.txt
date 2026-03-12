@@ -30,11 +30,22 @@ provision/    Ansible roles for hardening + base services
 stacks/       Komodo-managed stacks (traefik only in-repo)
 ```
 
+## Source of truth
+
+`Taskfile.yml` is the source of truth for defaults used across infra, provisioning, and Traefik generation:
+
+- domain and DNS defaults (`DOMAIN_NAME_DEFAULT`, `CLOUDFLARE_ZONE_ID_DEFAULT`)
+- Traefik certificate/contact defaults (`ACME_EMAIL_DEFAULT`, `KOMODO_SUBDOMAIN_LABEL`)
+- Pulumi-managed DNS subdomain labels (`DNS_SUBDOMAIN_LABELS`)
+- shared docker network (`SHARED_DOCKER_NETWORK`)
+
+`task sync` regenerates `infra/constants.py` and `stacks/traefik/{compose.yaml,traefik.yml,dynamic.yml}` from Taskfile values.
+
 ## Deployment flow
 
 1. `task sync && task init STACK=<stack> && task up STACK=<stack>`
 2. `task hosts && task bootstrap && task provision`
-3. Point DNS to the VM public IP
+3. Run `task sync` whenever Taskfile defaults change
 4. In Komodo, configure server + variables + traefik stack/procedure
 5. Push `stacks/traefik/**` changes to trigger traefik redeploy
 

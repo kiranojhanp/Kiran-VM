@@ -154,7 +154,7 @@ ansible-vault rekey secrets.yml
 
 1. Add a compose file in your own stack path (this repo only curates `stacks/traefik`)
 2. Add your app stack to the shared `shared_docker_network` (default: `internal-network`) and set a stable service alias
-3. Add or update routing in `../stacks/traefik/dynamic.yml`
+3. Add or update routing in `../stacks/traefik/dynamic.tmpl.yml`, then run `task sync`
 4. Add app secrets in Komodo Variables
 5. If needed, add bootstrap SQL in `roles/infra/templates/init.sql.j2`
 6. Deploy the app stack from Komodo
@@ -173,4 +173,4 @@ Cloud-init may still be running right after `pulumi up`. Wait 60-90 seconds and 
 The Cloudflare API token needs `Zone -> DNS -> Edit` scope for the target zone. Check Komodo Variables for `CLOUDFLARE_API_TOKEN`.
 
 **Komodo not reachable at its subdomain**
-Check that the Traefik stack is running in Komodo, the Komodo stack is attached to `shared_docker_network` (default: `internal-network`) with alias `komodo`, and there is a matching route in `stacks/traefik/dynamic.yml`.
+Check that the Traefik stack is running in Komodo, the Komodo stack is attached to `shared_docker_network` (default: `internal-network`) with alias `komodo`, and there is a matching route in generated `stacks/traefik/dynamic.yml` (source template: `stacks/traefik/dynamic.tmpl.yml`).

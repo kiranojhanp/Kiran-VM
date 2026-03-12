@@ -17,7 +17,7 @@ It also manages core Cloudflare DNS records for the primary domain so DNS follow
 | Security List    | SSH 22/2222, HTTP 80, HTTPS 443, ICMP                        |
 | Public Subnet    | `10.0.0.0/24`                                                 |
 | Compute Instance | `VM.Standard.A1.Flex` — 4 OCPU / 24 GB RAM / 200 GB boot volume (default) |
-| Cloudflare DNS   | `A` apex + `A` www + CNAMEs (`backup`, `git`, `komodo`, `n8n`, `sure`) |
+| Cloudflare DNS   | `A` apex + `A` www + CNAMEs for labels from `DNS_SUBDOMAIN_LABELS` |
 
 All constants (CIDRs, ports, image, shape, domain, Cloudflare zone default) are defined in `../Taskfile.yml` vars and generated into `constants.py` by `task sync` or `task init`.
 
@@ -109,7 +109,7 @@ pulumi down
 | `publicIp`           | Instance public IP                        |
 | `privateIp`          | Instance private IP                       |
 | `instanceId`         | OCI OCID of the compute instance          |
-| `domainName`         | DNS zone domain managed in Cloudflare     |
+| `domainName`         | DNS domain managed in Cloudflare           |
 | `apexDnsRecordId`    | Cloudflare record ID for apex `A` record  |
 | `wwwDnsRecordId`     | Cloudflare record ID for `www` `A` record |
 | `compartmentId`      | OCI OCID of the dedicated compartment     |
