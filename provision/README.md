@@ -1,198 +1,37 @@
-# ansible — server provisioning
+# provision
 
-Ansible playbooks for the production server running on Oracle Cloud (ARM64 Ubuntu).
+Ansible layer for hardening + Docker + shared services + Komodo + Traefik.
 
-This layer handles OS hardening, Docker, shared infrastructure (Postgres + Redis), Komodo installation, and Traefik ingress deployment.
+## Quickstart
 
-## Prerequisites
+From repo root:
 
 ```bash
-pip install ansible
-ansible-galaxy collection install -r requirements.yml
+task secrets:init   # first time only
+task secrets:edit   # fill all values
+task push
 ```
 
-Ensure `~/.vault_pass` exists — see [Vault](#vault).
+That is the normal path. `task push` handles bootstrap + provisioning + verify.
 
----
-
-## First-time setup (fresh VM)
-
-Run these steps **once** in order after `task prepare` in repo root.
-
-### 1. Generate inventory
+## Common commands
 
 ```bash
-task provision:inventory
-```
-
-Reads the public IP from the live Pulumi stack and writes `inventory/hosts.ini`. Re-run whenever the VM is replaced.
-
-### 2. Bootstrap (initial SSH port → hardened SSH port)
-
-A fresh VM starts on the initial SSH port from generated `../infra/constants.py` (sourced from `../Taskfile.yml`, default `22`). The `common` role then moves sshd to the hardened port from that same generated constants file (default `2222`). Bootstrap keeps the initial port open during the transition, confirms the hardened port is reachable, and then closes the initial port.
-
-```bash
-task provision:bootstrap
-```
-
-### 3. Full provisioning
-
-```bash
-task provision
-```
-
-Equivalent direct commands:
-
-```bash
-./inventory/generate.sh
-./bootstrap.sh
-ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml"
-```
-
----
-
-## Day-to-day usage
-
-Recommended (from repo root):
-
-```bash
-task provision:inventory
 task update
+task verify
+task provision:inventory
+task provision:bootstrap   # only if you need to rerun first-boot SSH hardening
 ```
 
-Direct Ansible usage (from `provision/`):
+## Secrets
 
-```bash
-# Full playbook
-ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml"
+- Source of truth: `provision/secrets.yml` (encrypted)
+- Template: `provision/secrets.example.yml`
+- Edit with: `task secrets:edit`
 
-# Dry run — shows what would change without applying it
-ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" --check --diff
+Required keys live in the template. Keep `cloudflare_api_token` up to date there.
 
-# Single role
-ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" --tags docker
+## If something breaks
 
-# Service roles
-ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" --tags services
-
-# Skip a role
-ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" --skip-tags infra
-```
-
-Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `traefik`, `services`
-
-Canonical Task commands from repo root:
-
-- `prepare` (sync + stack init/select)
-- `doctor` (preflight validation before deploy)
-- `push` (infra + bootstrap + provision + verify)
-- `update` (re-provision + verify)
-- `verify` (health checks only)
-- `destroy` (infra teardown)
-
-Use `STACK=<name>` only when targeting a non-default stack.
-
-`generate.sh` and `bootstrap.sh` read shared SSH ports from generated `../infra/constants.py` (from `../Taskfile.yml` vars), so Pulumi and Ansible stay aligned without duplicate hardcoded values.
-
-`task provision` passes runtime defaults from `Taskfile.yml`:
-
-- `shared_docker_network` from `SHARED_DOCKER_NETWORK`
-- `domain` from `DOMAIN_NAME_DEFAULT`
-- `komodo_subdomain` from `KOMODO_SUBDOMAIN_LABEL.DOMAIN_NAME_DEFAULT`
-- `acme_email` from `ACME_EMAIL_DEFAULT`
-
-Pulumi DNS subdomains are controlled separately by `DNS_SUBDOMAIN_LABELS` in `Taskfile.yml`.
-
----
-
-## Vault
-
-Secrets are stored in `secrets.yml`, encrypted with [ansible-vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html). The vault password lives at `~/.vault_pass` (outside the repo, never committed), and `ansible.cfg` reads it automatically.
-
-### Setup on a new machine
-
-Get the vault password from your password manager, then:
-
-```bash
-echo 'your-vault-password' > ~/.vault_pass
-chmod 600 ~/.vault_pass
-```
-
-Initialize encrypted secrets from template (repo root):
-
-```bash
-task secrets:init
-task secrets:edit
-```
-
-### View / edit secrets
-
-```bash
-ansible-vault view secrets.yml
-ansible-vault edit secrets.yml
-```
-
-### Rotate the vault password
-
-```bash
-ansible-vault rekey secrets.yml
-# update ~/.vault_pass with the new value
-```
-
-`secrets.yml` is the source of truth for required secrets. Use `ansible-vault view secrets.yml` to inspect current keys and `ansible-vault edit secrets.yml` to add or update values.
-
-Template path: `provision/secrets.example.yml`.
-
----
-
-## Key files
-
-| File                       | Purpose                                              |
-| -------------------------- | ---------------------------------------------------- |
-| `site.yml`                 | Main playbook — runs all roles in order              |
-| `bootstrap.sh`             | One-time first-run script (port 22 → 2222)           |
-| `inventory/generate.sh`    | Writes `hosts.ini` from live Pulumi stack output     |
-| `inventory/hosts.ini`      | Active inventory (gitignored, generated)             |
-| `group_vars/all.yml`       | Non-secret config (ports, image tags, paths, domain) |
-| `secrets.yml`              | Vault-encrypted secrets (passwords, API tokens)      |
-| `requirements.yml`         | Ansible collection dependencies                      |
-| `ansible.cfg`              | Ansible defaults (inventory, SSH, vault)             |
-
----
-
-## Roles
-
-| Role        | Tags                    | What it does                                                            |
-| ----------- | ----------------------- | ----------------------------------------------------------------------- |
-| `common`    | `common`, `hardening`   | OS hardening: sshd, iptables, fail2ban, sysctl, swap, auditd, AppArmor |
-| `docker`    | `docker`                | Docker CE + Compose plugin; daemon config                               |
-| `infra`     | `infra`, `services`     | Shared Postgres 17 + Redis; `init.sql` is an optional bootstrap hook |
-| `komodo`    | `komodo`, `services`    | Komodo + FerretDB stack; ongoing stack lifecycle managed in Komodo |
-| `traefik`   | `traefik`, `services`   | Traefik + TLS ingress for root domain and Komodo subdomain |
-
----
-
-## Adding your own app stack (optional)
-
-1. Add a compose file in your own stack path (this repo only curates `stacks/traefik`)
-2. Add your app stack to the shared `shared_docker_network` (default: `internal-network`) and set a stable service alias
-3. Add or update routing in `../stacks/traefik/dynamic.tmpl.yml`, then run `task sync`
-4. Add app secrets in Komodo Variables
-5. If needed, add bootstrap SQL in `roles/infra/templates/init.sql.j2`
-6. Deploy the app stack from Komodo
-
----
-
-## Troubleshooting
-
-**Connection refused on the hardened SSH port**
-Bootstrap has not run yet, or it did not complete both phases. Run `./bootstrap.sh` again.
-
-**Connection refused on the initial SSH port**
-Cloud-init may still be running right after `pulumi up`. Wait 60-90 seconds and retry `./bootstrap.sh`.
-
-**Traefik: certificate not issued**
-The Cloudflare API token needs `Zone -> DNS -> Edit` scope for the target zone. Set `cloudflare_api_token` in `secrets.yml` and run `task update`.
-
-**Komodo not reachable at its subdomain**
-Check that the `traefik` role ran successfully (`--tags traefik`), Traefik container is running on the server, the Komodo stack is attached to `shared_docker_network` (default: `internal-network`) with alias `komodo`, and the generated route points to `http://komodo:9120`.
+- Cert issue: update `cloudflare_api_token` in secrets, then run `task update`.
+- Komodo unreachable: run `task verify`, then check `task update` output.

@@ -1,78 +1,48 @@
 # kiran-vm
 
-Infrastructure and provisioning for a self-hosted VM on Oracle Cloud Always Free.
+## quickstart
 
-## Stack
+Default stack: `kiran-self-hosting`
 
-| Layer | Tool | Purpose |
-| --- | --- | --- |
-| Infra | Pulumi | Provisions VM, VCN, subnet, and security rules |
-| Provisioning | Ansible | Hardening, Docker, shared infra, Komodo, Traefik |
-| Deployments | Komodo | Manages Docker Compose stacks |
-
-## Architecture
-
-One ARM64 VM (`VM.Standard.A1.Flex`, 4 OCPU / 24 GB) running:
-
-- Shared infra: Postgres 17 + Redis
-- Komodo: stack orchestration UI backed by FerretDB
-- Traefik: reverse proxy with Cloudflare DNS-01 TLS
-
-This repo officially curates ingress/routing stack definitions in `stacks/` (`traefik`). Traefik runtime deployment is handled by Ansible.
-
-Design intent: keep non-Docker host software minimal, with Docker handling runtime services.
-
-## Repository layout
-
-```
-infra/        Pulumi program (Python) for VM provisioning
-provision/    Ansible roles for hardening + base services
-stacks/       Komodo-managed stacks (traefik only in-repo)
-taskfiles/    Modular task definitions (core, infra, server, integrations)
+```bash
+task secrets:init
+task secrets:edit
+task push
 ```
 
-## Source of truth
+Daily:
 
-`Taskfile.yml` is the source of truth for defaults used across infra, provisioning, and Traefik generation:
+```bash
+task update
+task verify
+```
 
-- domain and DNS defaults (`DOMAIN_NAME_DEFAULT`, `CLOUDFLARE_ZONE_ID_DEFAULT`)
-- Traefik certificate/contact defaults (`ACME_EMAIL_DEFAULT`, `KOMODO_SUBDOMAIN_LABEL`)
-- Pulumi-managed DNS subdomain labels (`DNS_SUBDOMAIN_LABELS`)
-- shared docker network (`SHARED_DOCKER_NETWORK`)
+Destroy:
 
-`task sync` regenerates `infra/constants.py` and `stacks/traefik/{compose.yaml,traefik.yml,dynamic.yml}` from Taskfile values.
+```bash
+task destroy CONFIRM=yes
+```
 
-## Deployment flow
+## stack model
 
-Canonical commands:
+- Infra: Pulumi (`infra/`)
+- Provisioning: Ansible (`provision/`)
+- Runtime app orchestration: Komodo
+- Ingress: Traefik templates in `stacks/traefik/`
 
-1. `task secrets:init` (one-time encrypted secrets bootstrap)
-2. `task secrets:edit` (edit encrypted secrets)
-3. `task prepare` (sync + init/select)
-4. `task doctor` (preflight checks)
-5. `task push` (full deploy)
-6. `task update` (re-provision + verify)
-7. `task verify` (health checks)
-8. `task destroy CONFIRM=yes` (teardown)
+## task entrypoints
 
-One-command new environment flow:
+- `secrets:init` bootstrap encrypted secrets from template
+- `secrets:edit` edit encrypted secrets
+- `prepare` sync + stack init/select
+- `doctor` preflight checks
+- `push` full deploy (infra + bootstrap + provision + verify)
+- `update` re-run provisioning + verify
+- `verify` health checks
+- `destroy CONFIRM=yes` teardown
 
-- `STACK=<new-stack> BASE_STACK=kiran-self-hosting task push`
+## source of truth
 
-Default stack is `kiran-self-hosting`; use `STACK=<name>` only when targeting a non-default stack.
-
-## Secrets
-
-- Infrastructure/provisioning secrets: `provision/secrets.yml` (ansible-vault)
-- Runtime stack secrets: Komodo Variables
-- Required for Traefik TLS and Pulumi DNS updates: `cloudflare_api_token` in `provision/secrets.yml`
-
-## Networking
-
-- Komodo should be attached to the shared `shared_docker_network` (default: `internal-network`) and exposed via Traefik
-- Public inbound ports are SSH (`22` first-run optional + hardened SSH), `80`, `443`
-- Apps should join `shared_docker_network` (default: `internal-network`) and be proxied by Traefik using service-name routing
-
-## Extending beyond traefik
-
-You can add your own Komodo-managed stacks, but they are intentionally out of scope for this boilerplate.
+- Defaults and generated constants: `Taskfile.yml`
+- Encrypted secrets: `provision/secrets.yml`
+- Required Cloudflare token key: `cloudflare_api_token`
