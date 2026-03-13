@@ -1,0 +1,95 @@
+version: '3'
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # Top-level helpers
+  # ---------------------------------------------------------------------------
+  default:
+    desc: List available tasks
+    cmds:
+      - task help
+
+  help:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  _check:infra:
+    internal: true
+    run: once
+    preconditions:
+      - sh: command -v uv >/dev/null 2>&1
+        msg: uv is required
+      - sh: command -v pulumi >/dev/null 2>&1
+        msg: pulumi is required
+    cmds:
+      - "true"
+
+  _check:provision:
+    internal: true
+    run: once
+    preconditions:
+      - sh: command -v ansible-playbook >/dev/null 2>&1
+        msg: ansible-playbook is required
+      - sh: command -v ansible >/dev/null 2>&1
+        msg: ansible is required
+      - sh: command -v curl >/dev/null 2>&1
+        msg: curl is required
+    cmds:
+      - "true"
+
+  _render:traefik:
+    internal: true
+    run: once
+    preconditions:
+      - sh: command -v python3 >/dev/null 2>&1
+        msg: python3 is required
+    env:
+      DOMAIN_NAME_DEFAULT: '{{.DOMAIN_NAME_DEFAULT}}'
+      ACME_EMAIL_DEFAULT: '{{.ACME_EMAIL_DEFAULT}}'
+      KOMODO_SUBDOMAIN_LABEL: '{{.KOMODO_SUBDOMAIN_LABEL}}'
+      SHARED_DOCKER_NETWORK: '{{.SHARED_DOCKER_NETWORK}}'
+    cmds:
+      - python3 stacks/traefik/render.py
+
+  _sync:constants:
+    internal: true
+    run: once
+    preconditions:
+      - sh: command -v python3 >/dev/null 2>&1
+        msg: python3 is required
+    env:
+      PROJECT_NAME_DEFAULT: '{{.PROJECT_NAME_DEFAULT}}'
+      DOMAIN_NAME_DEFAULT: '{{.DOMAIN_NAME_DEFAULT}}'
+      DNS_SUBDOMAIN_LABELS: '{{.DNS_SUBDOMAIN_LABELS}}'
+      CLOUDFLARE_ZONE_ID_DEFAULT: '{{.CLOUDFLARE_ZONE_ID_DEFAULT}}'
+      SUFFIX_COMPARTMENT: '{{.SUFFIX_COMPARTMENT}}'
+      SUFFIX_VCN: '{{.SUFFIX_VCN}}'
+      SUFFIX_IGW: '{{.SUFFIX_IGW}}'
+      SUFFIX_RT: '{{.SUFFIX_RT}}'
+      SUFFIX_SL: '{{.SUFFIX_SL}}'
+      SUFFIX_SUBNET: '{{.SUFFIX_SUBNET}}'
+      SUFFIX_VM: '{{.SUFFIX_VM}}'
+      SUFFIX_VNIC: '{{.SUFFIX_VNIC}}'
+      ANYWHERE: '{{.ANYWHERE}}'
+      VCN_CIDR: '{{.VCN_CIDR}}'
+      SUBNET_CIDR: '{{.SUBNET_CIDR}}'
+      SUBNET_DNS_LABEL: '{{.SUBNET_DNS_LABEL}}'
+      PORT_HTTP: '{{.PORT_HTTP}}'
+      PORT_HTTPS: '{{.PORT_HTTPS}}'
+      SSH_PORT_INITIAL: '{{.SSH_PORT_INITIAL}}'
+      SSH_PORT_HARDENED: '{{.SSH_PORT_HARDENED}}'
+      PROTO_TCP: '{{.PROTO_TCP}}'
+      PROTO_ICMP: '{{.PROTO_ICMP}}'
+      ICMP_TYPE_PATH_MTU: '{{.ICMP_TYPE_PATH_MTU}}'
+      ICMP_CODE_PATH_MTU: '{{.ICMP_CODE_PATH_MTU}}'
+      ICMP_TYPE_PING: '{{.ICMP_TYPE_PING}}'
+      INSTANCE_SHAPE: '{{.INSTANCE_SHAPE}}'
+      INSTANCE_OCPUS: '{{.INSTANCE_OCPUS}}'
+      INSTANCE_MEM_GB: '{{.INSTANCE_MEM_GB}}'
+      IMAGE_OS: '{{.IMAGE_OS}}'
+      IMAGE_OS_VERSION: '{{.IMAGE_OS_VERSION}}'
+      BOOT_VOLUME_GB_DEFAULT: '{{.BOOT_VOLUME_GB_DEFAULT}}'
+      AD_INDEX_DEFAULT: '{{.AD_INDEX_DEFAULT}}'
+    cmds:
+      - python3 infra/sync_constants.py

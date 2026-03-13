@@ -1,0 +1,82 @@
+version: '3'
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # Infra lifecycle
+  # ---------------------------------------------------------------------------
+  _select:stack:
+    internal: true
+    run: once
+    deps: [_check:infra, _sync:constants, _render:traefik]
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - '{{.STACK_ENSURE_CMD}}'
+
+  sync:
+    desc: Install infra dependencies (uv sync)
+    deps: [_check:infra, _sync:constants, _render:traefik]
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - uv sync
+
+  init:
+    desc: Initialize or select Pulumi stack (default kiran-self-hosting)
+    deps: [_select:stack]
+    cmds:
+      - "true"
+
+  preview:
+    desc: Preview infra changes
+    deps: [_select:stack]
+    dir: '{{.INFRA_DIR}}'
+    preconditions:
+      - sh: '{{.CLOUDFLARE_TOKEN_CHECK}}'
+        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
+    cmds:
+      - '{{.CLOUDFLARE_TOKEN_EXPORT}} pulumi preview'
+
+  up:
+    desc: Provision or update VM
+    deps: [_select:stack]
+    dir: '{{.INFRA_DIR}}'
+    preconditions:
+      - sh: '{{.CLOUDFLARE_TOKEN_CHECK}}'
+        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
+    cmds:
+      - '{{.CLOUDFLARE_TOKEN_EXPORT}} pulumi up --yes'
+
+  destroy:
+    desc: Destroy VM and network with retry safety
+    deps: [_select:stack]
+    dir: '{{.INFRA_DIR}}'
+    requires:
+      vars: [CONFIRM]
+    preconditions:
+      - sh: test "{{.CONFIRM}}" = "yes"
+        msg: set CONFIRM=yes to run destroy
+      - sh: '{{.CLOUDFLARE_TOKEN_CHECK}}'
+        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
+    cmds:
+      - >-
+        {{.CLOUDFLARE_TOKEN_EXPORT}} bash -lc '
+        attempt=1;
+        while [ "$attempt" -le {{.DESTROY_RETRIES}} ]; do
+          echo "[destroy] attempt ${attempt}/{{.DESTROY_RETRIES}}";
+          if pulumi down --yes; then
+            echo "[destroy] completed";
+            exit 0;
+          fi;
+          if [ "$attempt" -eq {{.DESTROY_RETRIES}} ]; then
+            echo "[destroy] failed after {{.DESTROY_RETRIES}} attempts";
+            exit 1;
+          fi;
+          echo "[destroy] waiting {{.DESTROY_WAIT_SECONDS}}s before retry";
+          sleep {{.DESTROY_WAIT_SECONDS}};
+          attempt=$((attempt + 1));
+        done'
+
+  prepare:
+    desc: Prepare stack and generated config
+    cmds:
+      - task sync
+      - task init

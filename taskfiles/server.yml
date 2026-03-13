@@ -1,0 +1,92 @@
+version: '3'
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # Server lifecycle
+  # ---------------------------------------------------------------------------
+  doctor:
+    desc: Preflight checks before push/update
+    deps: [_select:stack, _check:provision]
+    dir: '{{.INFRA_DIR}}'
+    preconditions:
+      - sh: command -v openssl >/dev/null 2>&1
+        msg: openssl is required
+      - sh: '{{.CLOUDFLARE_TOKEN_CHECK}}'
+        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
+      - sh: test -f ../provision/secrets.yml
+        msg: provision/secrets.yml is required
+      - sh: test -f "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}"
+        msg: vault password file not found (set ANSIBLE_VAULT_PASSWORD_FILE or create ~/.vault_pass)
+      - sh: pulumi config get oci:tenancyOcid >/dev/null
+        msg: missing Pulumi config key oci:tenancyOcid for selected stack
+      - sh: pulumi config get oci:userOcid >/dev/null
+        msg: missing Pulumi config key oci:userOcid for selected stack
+      - sh: pulumi config get oci:fingerprint >/dev/null
+        msg: missing Pulumi config key oci:fingerprint for selected stack
+      - sh: pulumi config get oci:privateKeyPath >/dev/null
+        msg: missing Pulumi config key oci:privateKeyPath for selected stack
+      - sh: pulumi config get oci:region >/dev/null
+        msg: missing Pulumi config key oci:region for selected stack
+      - sh: pulumi config get kiran-vm-infra:sshPublicKey >/dev/null
+        msg: missing Pulumi config key kiran-vm-infra:sshPublicKey for selected stack
+    cmds:
+      - "true"
+
+  push:
+    desc: Full deploy (infra + bootstrap + provision + verify)
+    deps: [_check:provision]
+    cmds:
+      - task doctor
+      - task prepare
+      - task up
+      - task provision:bootstrap
+      - task update
+
+  update:
+    desc: Re-apply provisioning and verify
+    deps: [_check:provision]
+    cmds:
+      - task doctor
+      - task provision
+      - task verify
+
+  provision:inventory:
+    desc: Generate provision inventory from Pulumi output
+    deps: [_select:stack]
+    cmds:
+      - ./provision/inventory/generate.sh
+
+  provision:bootstrap:
+    desc: First-run SSH hardening bootstrap
+    deps: [_select:stack, _check:provision]
+    cmds:
+      - ./provision/bootstrap.sh
+
+  provision:
+    desc: Run full server provisioning
+    deps: [_check:provision, provision:inventory]
+    preconditions:
+      - sh: test -f provision/secrets.yml
+        msg: provision/secrets.yml is required
+      - sh: test -f "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}"
+        msg: vault password file not found (set ANSIBLE_VAULT_PASSWORD_FILE or create ~/.vault_pass)
+    cmds:
+      - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" --extra-vars "@provision/secrets.yml" --extra-vars "{{.PROVISION_EXTRA_VARS}}"
+
+  verify:
+    desc: Verify SSH, containers, and Komodo endpoint
+    deps: [_check:provision, provision:inventory]
+    preconditions:
+      - sh: command -v curl >/dev/null 2>&1
+        msg: curl is required
+      - sh: command -v openssl >/dev/null 2>&1
+        msg: openssl is required
+    cmds:
+      - ansible -i provision/inventory/hosts.ini all -m ping
+      - ansible -i provision/inventory/hosts.ini all -m shell -a "docker ps --format '{{`{{.Names}}`}}\t{{`{{.Status}}`}}'; docker ps -a --filter health=unhealthy -q | grep -q . && exit 1 || exit 0"
+      - curl --fail --silent --show-error --location --max-redirs 3 "{{.KOMODO_HTTP_URL}}" >/dev/null
+      - curl --fail --silent --show-error "{{.KOMODO_URL}}" >/dev/null
+      - >-
+        openssl s_client -connect {{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}:443
+        -servername {{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}} < /dev/null 2>/dev/null
+        | openssl x509 -noout -issuer -subject >/dev/null

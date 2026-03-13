@@ -1,0 +1,18 @@
+version: '3'
+
+tasks:
+  komodo:trigger:
+    desc: Trigger a Komodo webhook for a stack
+    preconditions:
+      - sh: command -v curl >/dev/null 2>&1
+        msg: curl is required
+    requires:
+      vars: [STACK, WEBHOOK_URL, WEBHOOK_SECRET]
+    cmds:
+      - >-
+        curl --fail --silent --show-error
+        -X POST
+        -H "Content-Type: application/json"
+        -H "X-Webhook-Secret: {{.WEBHOOK_SECRET}}"
+        -d '{"stack":"{{.STACK}}","event":"{{default "push" .GITHUB_EVENT_NAME}}","repository":"{{.GITHUB_REPOSITORY}}","commit":"{{.GITHUB_SHA}}","ref":"{{.GITHUB_REF}}","workflow":"{{.GITHUB_WORKFLOW}}"}'
+        "{{.WEBHOOK_URL}}"

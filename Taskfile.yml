@@ -1,15 +1,25 @@
 version: '3'
 
 vars:
+  # Stack targeting
   INFRA_DIR: infra
   STACK_NAME: '{{default "kiran-self-hosting" .STACK}}'
   BASE_STACK: '{{default "kiran-self-hosting" .BASE_STACK}}'
+
+  # Reusable command fragments (keep infra tasks DRY)
+  STACK_ENSURE_CMD: 'pulumi stack select {{.STACK_NAME}} || pulumi stack init {{.STACK_NAME}} --copy-config-from {{.BASE_STACK}} || pulumi stack init {{.STACK_NAME}}'
+  CLOUDFLARE_TOKEN_CHECK: 'test -n "${CLOUDFLARE_API_TOKEN:-}" || test -f "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}"'
+  CLOUDFLARE_TOKEN_EXPORT: 'CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-$(cat "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}")}"'
+
+  # Naming / domain defaults
   PROJECT_NAME_DEFAULT: kiran-self-hosting
   DOMAIN_NAME_DEFAULT: fewa.app
   ACME_EMAIL_DEFAULT: admin@fewa.app
   KOMODO_SUBDOMAIN_LABEL: komodo
   DNS_SUBDOMAIN_LABELS: backup,git,komodo,n8n,sure
   CLOUDFLARE_ZONE_ID_DEFAULT: 58dce5945a8941e4c38a3611af123052
+
+  # OCI naming suffixes
   SUFFIX_COMPARTMENT: -compartment
   SUFFIX_VCN: -vcn
   SUFFIX_IGW: -igw
@@ -18,6 +28,8 @@ vars:
   SUFFIX_SUBNET: -subnet
   SUFFIX_VM: -vm
   SUFFIX_VNIC: -vnic
+
+  # Networking
   ANYWHERE: 0.0.0.0/0
   VCN_CIDR: 10.0.0.0/16
   SUBNET_CIDR: 10.0.0.0/24
@@ -27,11 +39,15 @@ vars:
   SSH_PORT_INITIAL: 22
   SSH_PORT_HARDENED: 2222
   SHARED_DOCKER_NETWORK: internal-network
+
+  # OCI protocol constants
   PROTO_TCP: '6'
   PROTO_ICMP: '1'
   ICMP_TYPE_PATH_MTU: 3
   ICMP_CODE_PATH_MTU: 4
   ICMP_TYPE_PING: 8
+
+  # Compute defaults
   INSTANCE_SHAPE: VM.Standard.A1.Flex
   INSTANCE_OCPUS: 4
   INSTANCE_MEM_GB: 24
@@ -40,216 +56,23 @@ vars:
   BOOT_VOLUME_GB_DEFAULT: '200'
   AD_INDEX_DEFAULT: '0'
 
-tasks:
-  default:
-    desc: List available tasks
-    cmds:
-      - task --list
+  # Provision/verify helpers
+  KOMODO_URL: 'https://{{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}'
+  KOMODO_HTTP_URL: 'http://{{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}'
+  PROVISION_EXTRA_VARS: 'shared_docker_network={{.SHARED_DOCKER_NETWORK}} domain={{.DOMAIN_NAME_DEFAULT}} komodo_subdomain={{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}} acme_email={{.ACME_EMAIL_DEFAULT}}'
+  DESTROY_RETRIES: '{{default "10" .DESTROY_RETRIES}}'
+  DESTROY_WAIT_SECONDS: '{{default "30" .DESTROY_WAIT_SECONDS}}'
 
-  help:
-    desc: List available tasks
-    cmds:
-      - task --list
-
-  _check:infra:
-    internal: true
-    run: once
-    preconditions:
-      - sh: command -v uv >/dev/null 2>&1
-        msg: uv is required
-      - sh: command -v pulumi >/dev/null 2>&1
-        msg: pulumi is required
-    cmds:
-      - "true"
-
-  _check:provision:
-    internal: true
-    run: once
-    preconditions:
-      - sh: command -v ansible-playbook >/dev/null 2>&1
-        msg: ansible-playbook is required
-    cmds:
-      - "true"
-
-  _select:stack:
-    internal: true
-    deps: [_check:infra, _sync:constants, _render:traefik]
-    dir: '{{.INFRA_DIR}}'
-    cmds:
-      - pulumi stack select {{.STACK_NAME}} || pulumi stack init {{.STACK_NAME}} --copy-config-from {{.BASE_STACK}} || pulumi stack init {{.STACK_NAME}}
-
-  _render:traefik:
-    internal: true
-    run: once
-    preconditions:
-      - sh: command -v python3 >/dev/null 2>&1
-        msg: python3 is required
-    env:
-      DOMAIN_NAME_DEFAULT: '{{.DOMAIN_NAME_DEFAULT}}'
-      ACME_EMAIL_DEFAULT: '{{.ACME_EMAIL_DEFAULT}}'
-      KOMODO_SUBDOMAIN_LABEL: '{{.KOMODO_SUBDOMAIN_LABEL}}'
-      SHARED_DOCKER_NETWORK: '{{.SHARED_DOCKER_NETWORK}}'
-    cmds:
-      - python3 stacks/traefik/render.py
-
-  _sync:constants:
-    internal: true
-    run: once
-    preconditions:
-      - sh: command -v python3 >/dev/null 2>&1
-        msg: python3 is required
-    env:
-      PROJECT_NAME_DEFAULT: '{{.PROJECT_NAME_DEFAULT}}'
-      DOMAIN_NAME_DEFAULT: '{{.DOMAIN_NAME_DEFAULT}}'
-      DNS_SUBDOMAIN_LABELS: '{{.DNS_SUBDOMAIN_LABELS}}'
-      CLOUDFLARE_ZONE_ID_DEFAULT: '{{.CLOUDFLARE_ZONE_ID_DEFAULT}}'
-      SUFFIX_COMPARTMENT: '{{.SUFFIX_COMPARTMENT}}'
-      SUFFIX_VCN: '{{.SUFFIX_VCN}}'
-      SUFFIX_IGW: '{{.SUFFIX_IGW}}'
-      SUFFIX_RT: '{{.SUFFIX_RT}}'
-      SUFFIX_SL: '{{.SUFFIX_SL}}'
-      SUFFIX_SUBNET: '{{.SUFFIX_SUBNET}}'
-      SUFFIX_VM: '{{.SUFFIX_VM}}'
-      SUFFIX_VNIC: '{{.SUFFIX_VNIC}}'
-      ANYWHERE: '{{.ANYWHERE}}'
-      VCN_CIDR: '{{.VCN_CIDR}}'
-      SUBNET_CIDR: '{{.SUBNET_CIDR}}'
-      SUBNET_DNS_LABEL: '{{.SUBNET_DNS_LABEL}}'
-      PORT_HTTP: '{{.PORT_HTTP}}'
-      PORT_HTTPS: '{{.PORT_HTTPS}}'
-      SSH_PORT_INITIAL: '{{.SSH_PORT_INITIAL}}'
-      SSH_PORT_HARDENED: '{{.SSH_PORT_HARDENED}}'
-      PROTO_TCP: '{{.PROTO_TCP}}'
-      PROTO_ICMP: '{{.PROTO_ICMP}}'
-      ICMP_TYPE_PATH_MTU: '{{.ICMP_TYPE_PATH_MTU}}'
-      ICMP_CODE_PATH_MTU: '{{.ICMP_CODE_PATH_MTU}}'
-      ICMP_TYPE_PING: '{{.ICMP_TYPE_PING}}'
-      INSTANCE_SHAPE: '{{.INSTANCE_SHAPE}}'
-      INSTANCE_OCPUS: '{{.INSTANCE_OCPUS}}'
-      INSTANCE_MEM_GB: '{{.INSTANCE_MEM_GB}}'
-      IMAGE_OS: '{{.IMAGE_OS}}'
-      IMAGE_OS_VERSION: '{{.IMAGE_OS_VERSION}}'
-      BOOT_VOLUME_GB_DEFAULT: '{{.BOOT_VOLUME_GB_DEFAULT}}'
-      AD_INDEX_DEFAULT: '{{.AD_INDEX_DEFAULT}}'
-    cmds:
-      - python3 infra/sync_constants.py
-
-  sync:
-    desc: Install infra dependencies (uv sync)
-    deps: [_check:infra, _sync:constants, _render:traefik]
-    dir: '{{.INFRA_DIR}}'
-    cmds:
-      - uv sync
-
-  init:
-    desc: Initialize or select Pulumi stack (default kiran-self-hosting)
-    deps: [_check:infra, _sync:constants]
-    dir: '{{.INFRA_DIR}}'
-    cmds:
-      - pulumi stack select {{.STACK_NAME}} || pulumi stack init {{.STACK_NAME}} --copy-config-from {{.BASE_STACK}} || pulumi stack init {{.STACK_NAME}}
-
-  preview:
-    desc: Preview infra changes
-    deps: [_select:stack]
-    dir: '{{.INFRA_DIR}}'
-    preconditions:
-      - sh: test -n "${CLOUDFLARE_API_TOKEN:-}" || test -f "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}"
-        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
-    cmds:
-      - CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-$(cat "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}")}" pulumi preview
-
-  up:
-    desc: Provision or update VM
-    deps: [_select:stack]
-    dir: '{{.INFRA_DIR}}'
-    preconditions:
-      - sh: test -n "${CLOUDFLARE_API_TOKEN:-}" || test -f "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}"
-        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
-    cmds:
-      - CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-$(cat "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}")}" pulumi up --yes
-
-  destroy:
-    desc: Destroy VM and network
-    deps: [_select:stack]
-    dir: '{{.INFRA_DIR}}'
-    requires:
-      vars: [CONFIRM]
-    preconditions:
-      - sh: test "{{.CONFIRM}}" = "yes"
-        msg: set CONFIRM=yes to run destroy
-      - sh: test -n "${CLOUDFLARE_API_TOKEN:-}" || test -f "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}"
-        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
-    cmds:
-      - CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-$(cat "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}")}" pulumi down --yes
-
-  prepare:
-    desc: Prepare stack and generated config
-    cmds:
-      - task sync
-      - task init STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
-
-  push:
-    desc: Full deploy (infra + bootstrap + provision + verify)
-    deps: [_check:provision]
-    cmds:
-      - task prepare STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
-      - task up STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
-      - task provision:bootstrap STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
-      - task update STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
-
-  update:
-    desc: Re-apply provisioning and verify
-    deps: [_check:provision]
-    cmds:
-      - task provision STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
-      - task verify STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
-
-  provision:inventory:
-    desc: Generate provision inventory from Pulumi output
-    deps: [_select:stack]
-    cmds:
-      - ./provision/inventory/generate.sh
-
-  provision:bootstrap:
-    desc: First-run SSH hardening bootstrap
-    deps: [_select:stack, _check:provision]
-    cmds:
-      - ./provision/bootstrap.sh
-
-  provision:
-    desc: Run full server provisioning
-    deps: [_check:provision, provision:inventory]
-    preconditions:
-      - sh: test -f provision/secrets.yml
-        msg: provision/secrets.yml is required
-      - sh: test -f "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}"
-        msg: vault password file not found (set ANSIBLE_VAULT_PASSWORD_FILE or create ~/.vault_pass)
-    cmds:
-      - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" --extra-vars "@provision/secrets.yml" --extra-vars "shared_docker_network={{.SHARED_DOCKER_NETWORK}} domain={{.DOMAIN_NAME_DEFAULT}} komodo_subdomain={{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}} acme_email={{.ACME_EMAIL_DEFAULT}}"
-
-  verify:
-    desc: Verify SSH, containers, and Komodo endpoint
-    deps: [_check:provision, provision:inventory]
-    preconditions:
-      - sh: command -v curl >/dev/null 2>&1
-        msg: curl is required
-    cmds:
-      - ansible -i provision/inventory/hosts.ini all -m ping
-      - ansible -i provision/inventory/hosts.ini all -m shell -a "docker ps --format '{{`{{.Names}}`}}\t{{`{{.Status}}`}}'"
-      - curl --fail --silent --show-error "https://{{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}" >/dev/null
-
-  komodo:trigger:
-    desc: Trigger a Komodo webhook for a stack
-    preconditions:
-      - sh: command -v curl >/dev/null 2>&1
-        msg: curl is required
-    requires:
-      vars: [STACK, WEBHOOK_URL, WEBHOOK_SECRET]
-    cmds:
-      - >-
-        curl --fail --silent --show-error
-        -X POST
-        -H "Content-Type: application/json"
-        -H "X-Webhook-Secret: {{.WEBHOOK_SECRET}}"
-        -d '{"stack":"{{.STACK}}","event":"{{default "push" .GITHUB_EVENT_NAME}}","repository":"{{.GITHUB_REPOSITORY}}","commit":"{{.GITHUB_SHA}}","ref":"{{.GITHUB_REF}}","workflow":"{{.GITHUB_WORKFLOW}}"}'
-        "{{.WEBHOOK_URL}}"
+includes:
+  core:
+    taskfile: ./taskfiles/core.yml
+    flatten: true
+  infra:
+    taskfile: ./taskfiles/infra.yml
+    flatten: true
+  server:
+    taskfile: ./taskfiles/server.yml
+    flatten: true
+  integrations:
+    taskfile: ./taskfiles/integrations.yml
+    flatten: true
