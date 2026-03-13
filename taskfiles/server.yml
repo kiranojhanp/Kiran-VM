@@ -12,7 +12,7 @@ tasks:
       - sh: command -v openssl >/dev/null 2>&1
         msg: openssl is required
       - sh: '{{.CLOUDFLARE_TOKEN_CHECK}}'
-        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
+        msg: Cloudflare token not found in provision/secrets.yml (cloudflare_api_token)
       - sh: test -f ../provision/secrets.yml
         msg: provision/secrets.yml is required
       - sh: test -f "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}"

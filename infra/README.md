@@ -130,18 +130,15 @@ ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" # f
 
 See `../provision/README.md` for the complete provisioning guide.
 
-## Cloudflare token file
+## Cloudflare token source
 
-`task preview`, `task up`, and `task destroy` read Cloudflare token from one of:
+`task preview`, `task up`, and `task destroy` read Cloudflare token from `provision/secrets.yml` (`cloudflare_api_token`) using ansible-vault.
 
-1. `CLOUDFLARE_API_TOKEN` environment variable
-2. `CLOUDFLARE_API_TOKEN_FILE` path (defaults to `~/.cloudflare_pass`)
-
-Create default token file:
+Before running infra tasks:
 
 ```bash
-echo '<cloudflare-api-token>' > ~/.cloudflare_pass
-chmod 600 ~/.cloudflare_pass
+ansible-vault edit provision/secrets.yml
+# ensure cloudflare_api_token is set
 ```
 
 ## Always Free limits

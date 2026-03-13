@@ -46,12 +46,14 @@ taskfiles/    Modular task definitions (core, infra, server, integrations)
 
 Canonical commands:
 
-1. `task prepare` (sync + init/select)
-2. `task doctor` (preflight checks)
-3. `task push` (full deploy)
-4. `task update` (re-provision + verify)
-5. `task verify` (health checks)
-6. `task destroy CONFIRM=yes` (teardown)
+1. `task secrets:init` (one-time encrypted secrets bootstrap)
+2. `task secrets:edit` (edit encrypted secrets)
+3. `task prepare` (sync + init/select)
+4. `task doctor` (preflight checks)
+5. `task push` (full deploy)
+6. `task update` (re-provision + verify)
+7. `task verify` (health checks)
+8. `task destroy CONFIRM=yes` (teardown)
 
 One-command new environment flow:
 
@@ -63,7 +65,7 @@ Default stack is `kiran-self-hosting`; use `STACK=<name>` only when targeting a 
 
 - Infrastructure/provisioning secrets: `provision/secrets.yml` (ansible-vault)
 - Runtime stack secrets: Komodo Variables
-- Required for traefik TLS: `cloudflare_api_token` in `provision/secrets.yml` (fallback: `CLOUDFLARE_API_TOKEN` env or `~/.cloudflare_pass`)
+- Required for Traefik TLS and Pulumi DNS updates: `cloudflare_api_token` in `provision/secrets.yml`
 
 ## Networking
 

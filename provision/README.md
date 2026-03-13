@@ -118,6 +118,13 @@ echo 'your-vault-password' > ~/.vault_pass
 chmod 600 ~/.vault_pass
 ```
 
+Initialize encrypted secrets from template (repo root):
+
+```bash
+task secrets:init
+task secrets:edit
+```
+
 ### View / edit secrets
 
 ```bash
@@ -133,6 +140,8 @@ ansible-vault rekey secrets.yml
 ```
 
 `secrets.yml` is the source of truth for required secrets. Use `ansible-vault view secrets.yml` to inspect current keys and `ansible-vault edit secrets.yml` to add or update values.
+
+Template path: `provision/secrets.example.yml`.
 
 ---
 
@@ -183,7 +192,7 @@ Bootstrap has not run yet, or it did not complete both phases. Run `./bootstrap.
 Cloud-init may still be running right after `pulumi up`. Wait 60-90 seconds and retry `./bootstrap.sh`.
 
 **Traefik: certificate not issued**
-The Cloudflare API token needs `Zone -> DNS -> Edit` scope for the target zone. Set `cloudflare_api_token` in `secrets.yml`, or export `CLOUDFLARE_API_TOKEN`, or place the token in `~/.cloudflare_pass` on the controller.
+The Cloudflare API token needs `Zone -> DNS -> Edit` scope for the target zone. Set `cloudflare_api_token` in `secrets.yml` and run `task update`.
 
 **Komodo not reachable at its subdomain**
 Check that the `traefik` role ran successfully (`--tags traefik`), Traefik container is running on the server, the Komodo stack is attached to `shared_docker_network` (default: `internal-network`) with alias `komodo`, and the generated route points to `http://komodo:9120`.

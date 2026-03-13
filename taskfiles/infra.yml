@@ -31,7 +31,7 @@ tasks:
     dir: '{{.INFRA_DIR}}'
     preconditions:
       - sh: '{{.CLOUDFLARE_TOKEN_CHECK}}'
-        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
+        msg: Cloudflare token not found in provision/secrets.yml (cloudflare_api_token)
     cmds:
       - '{{.CLOUDFLARE_TOKEN_EXPORT}} pulumi preview'
 
@@ -41,7 +41,7 @@ tasks:
     dir: '{{.INFRA_DIR}}'
     preconditions:
       - sh: '{{.CLOUDFLARE_TOKEN_CHECK}}'
-        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
+        msg: Cloudflare token not found in provision/secrets.yml (cloudflare_api_token)
     cmds:
       - '{{.CLOUDFLARE_TOKEN_EXPORT}} pulumi up --yes'
 
@@ -55,7 +55,7 @@ tasks:
       - sh: test "{{.CONFIRM}}" = "yes"
         msg: set CONFIRM=yes to run destroy
       - sh: '{{.CLOUDFLARE_TOKEN_CHECK}}'
-        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
+        msg: Cloudflare token not found in provision/secrets.yml (cloudflare_api_token)
     cmds:
       - >-
         {{.CLOUDFLARE_TOKEN_EXPORT}} bash -lc '

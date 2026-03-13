@@ -67,7 +67,8 @@ Use this if you want a single path from zero to running server.
 3. Run deploy flow from repo root:
 
 ```bash
-ansible-vault edit provision/secrets.yml
+task secrets:init   # one-time on a new machine
+task secrets:edit   # fill values (including cloudflare_api_token)
 task push
 ```
 
@@ -105,6 +106,8 @@ STACK=<new-stack> task push
 ```
 
 Canonical commands:
+- `secrets:init` -> create encrypted `provision/secrets.yml` from template
+- `secrets:edit` -> edit encrypted secrets file
 - `prepare` -> sync + stack init/select
 - `doctor` -> preflight checks (tools, secrets, Pulumi config)
 - `push` -> full deploy (infra + bootstrap + provision + verify)
@@ -124,11 +127,7 @@ Before provisioning, set these in `Taskfile.yml` and run `task sync`:
 - `KOMODO_SUBDOMAIN_LABEL`
 - `DNS_SUBDOMAIN_LABELS`
 
-For certificate issuance, provide a Cloudflare token through one of:
-
-- `cloudflare_api_token` in `provision/secrets.yml` (recommended)
-- `CLOUDFLARE_API_TOKEN` env var on your controller
-- `~/.cloudflare_pass` on your controller
+For certificate issuance and Pulumi DNS operations, set `cloudflare_api_token` in `provision/secrets.yml`.
 
 ## Docs map
 

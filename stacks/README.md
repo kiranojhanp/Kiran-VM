@@ -39,9 +39,7 @@ If you change `stacks/traefik/*.tmpl.yml|yaml`, run `task sync` and then `task u
 
 Required for Traefik certificate issuance:
 
-- `cloudflare_api_token` in `provision/secrets.yml` (recommended), or
-- `CLOUDFLARE_API_TOKEN` env var on the controller, or
-- `~/.cloudflare_pass` on the controller.
+- `cloudflare_api_token` in `provision/secrets.yml`.
 
 ## Routing updates
 

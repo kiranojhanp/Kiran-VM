@@ -14,6 +14,33 @@ tasks:
     cmds:
       - task --list
 
+  secrets:init:
+    desc: Create encrypted provision/secrets.yml from example template
+    preconditions:
+      - sh: command -v ansible-vault >/dev/null 2>&1
+        msg: ansible-vault is required
+      - sh: test -f "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}"
+        msg: vault password file not found (set ANSIBLE_VAULT_PASSWORD_FILE or create ~/.vault_pass)
+      - sh: test -f provision/secrets.example.yml
+        msg: provision/secrets.example.yml is missing
+      - sh: test ! -f provision/secrets.yml
+        msg: provision/secrets.yml already exists (use task secrets:edit)
+    cmds:
+      - cp provision/secrets.example.yml provision/secrets.yml
+      - ansible-vault encrypt --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" provision/secrets.yml
+
+  secrets:edit:
+    desc: Edit encrypted provision/secrets.yml
+    preconditions:
+      - sh: command -v ansible-vault >/dev/null 2>&1
+        msg: ansible-vault is required
+      - sh: test -f "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}"
+        msg: vault password file not found (set ANSIBLE_VAULT_PASSWORD_FILE or create ~/.vault_pass)
+      - sh: test -f provision/secrets.yml
+        msg: provision/secrets.yml is missing (run task secrets:init)
+    cmds:
+      - ansible-vault edit --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" provision/secrets.yml
+
   _check:infra:
     internal: true
     run: once
