@@ -1,0 +1,9 @@
+---
+- name: restart traefik stack
+  community.docker.docker_compose_v2:
+    project_name: "{{ traefik_compose_project }}"
+    project_src: "{{ traefik_dir }}"
+    files:
+      - compose.yaml
+    state: present
+    pull: missing

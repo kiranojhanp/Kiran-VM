@@ -29,3 +29,6 @@
 
     - role: komodo
       tags: [komodo, services]
+
+    - role: traefik
+      tags: [traefik, services]

@@ -1,0 +1,16 @@
+---
+traefik_dir: /opt/traefik
+traefik_compose_project: traefik
+traefik_acme_email: "{{ acme_email }}"
+traefik_domain: "{{ domain }}"
+traefik_komodo_subdomain: "{{ komodo_subdomain }}"
+traefik_cloudflare_api_token: >-
+  {{
+    (
+      cloudflare_api_token
+      | default(lookup('env', 'CLOUDFLARE_API_TOKEN'), true)
+      | default(lookup('file', lookup('env', 'HOME') ~ '/.cloudflare_pass', errors='ignore'), true)
+      | default('', true)
+    )
+    | trim
+  }}

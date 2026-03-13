@@ -1,8 +1,8 @@
 # stacks/
 
-Docker Compose stacks managed by [Komodo](https://komo.do).
+Compose definitions and templates for ingress/routing.
 
-This repo officially curates one managed stack: `traefik`.
+This repo officially curates one stack definition: `traefik`.
 
 Komodo itself is provisioned by Ansible (`provision/roles/komodo`) as base control plane, not as a curated `stacks/` compose file.
 
@@ -31,17 +31,17 @@ Any app stack you want to expose should join `SHARED_DOCKER_NETWORK` and provide
 
 ## Deploying traefik
 
-**Automatically** - push changes under `stacks/traefik/**` to `main`. GitHub Actions triggers the Komodo traefik procedure.
+Traefik is deployed automatically by Ansible during `task provision` (role `traefik`).
 
-**Manually** - Komodo UI -> Stacks -> traefik -> Deploy.
+If you change `stacks/traefik/*.tmpl.yml|yaml`, run `task sync` and then `task update` to apply updates.
 
 ## Secrets
 
-Runtime secrets live in Komodo (Settings -> Variables), referenced in compose as `[[SECRET_NAME]]`.
+Required for Traefik certificate issuance:
 
-Required for traefik:
-
-- `CLOUDFLARE_API_TOKEN` for DNS-01 certificate issuance.
+- `cloudflare_api_token` in `provision/secrets.yml` (recommended), or
+- `CLOUDFLARE_API_TOKEN` env var on the controller, or
+- `~/.cloudflare_pass` on the controller.
 
 ## Routing updates
 
@@ -60,4 +60,4 @@ Pulumi-managed DNS subdomains are controlled by `DNS_SUBDOMAIN_LABELS` in `Taskf
 
 **502 Bad Gateway** - upstream container is not running, not on `SHARED_DOCKER_NETWORK`, or missing the expected service alias.
 
-**Webhook not firing** - check GitHub Actions logs and verify `KOMODO_WEBHOOK_TRAEFIK` is set.
+**Role change not applied** - re-run `STACK=<your-stack> task update` or run `ansible-playbook ... --tags traefik`.

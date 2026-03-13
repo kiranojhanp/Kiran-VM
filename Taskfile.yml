@@ -2,7 +2,8 @@ version: '3'
 
 vars:
   INFRA_DIR: infra
-  TARGET_STACK: '{{default "kiran-prod" .STACK}}'
+  STACK_NAME: '{{default "kiran-self-hosting" .STACK}}'
+  BASE_STACK: '{{default "kiran-self-hosting" .BASE_STACK}}'
   PROJECT_NAME_DEFAULT: kiran-self-hosting
   DOMAIN_NAME_DEFAULT: fewa.app
   ACME_EMAIL_DEFAULT: admin@fewa.app
@@ -47,7 +48,6 @@ tasks:
 
   help:
     desc: List available tasks
-    aliases: [h, ls]
     cmds:
       - task --list
 
@@ -76,7 +76,7 @@ tasks:
     deps: [_check:infra, _sync:constants, _render:traefik]
     dir: '{{.INFRA_DIR}}'
     cmds:
-      - pulumi stack select {{.TARGET_STACK}} || pulumi stack init {{.TARGET_STACK}}
+      - pulumi stack select {{.STACK_NAME}} || pulumi stack init {{.STACK_NAME}} --copy-config-from {{.BASE_STACK}} || pulumi stack init {{.STACK_NAME}}
 
   _render:traefik:
     internal: true
@@ -136,23 +136,20 @@ tasks:
 
   sync:
     desc: Install infra dependencies (uv sync)
-    aliases: [deps]
     deps: [_check:infra, _sync:constants, _render:traefik]
     dir: '{{.INFRA_DIR}}'
     cmds:
       - uv sync
 
   init:
-    desc: Initialize or select Pulumi stack (default kiran-prod)
-    aliases: [new]
+    desc: Initialize or select Pulumi stack (default kiran-self-hosting)
     deps: [_check:infra, _sync:constants]
     dir: '{{.INFRA_DIR}}'
     cmds:
-      - pulumi stack select {{.TARGET_STACK}} || pulumi stack init {{.TARGET_STACK}}
+      - pulumi stack select {{.STACK_NAME}} || pulumi stack init {{.STACK_NAME}} --copy-config-from {{.BASE_STACK}} || pulumi stack init {{.STACK_NAME}}
 
   preview:
     desc: Preview infra changes
-    aliases: [plan]
     deps: [_select:stack]
     dir: '{{.INFRA_DIR}}'
     preconditions:
@@ -163,18 +160,16 @@ tasks:
 
   up:
     desc: Provision or update VM
-    aliases: [apply]
     deps: [_select:stack]
     dir: '{{.INFRA_DIR}}'
     preconditions:
       - sh: test -n "${CLOUDFLARE_API_TOKEN:-}" || test -f "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}"
         msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
     cmds:
-      - CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-$(cat "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}")}" pulumi up
+      - CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-$(cat "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}")}" pulumi up --yes
 
   destroy:
     desc: Destroy VM and network
-    aliases: [nuke]
     deps: [_select:stack]
     dir: '{{.INFRA_DIR}}'
     requires:
@@ -182,34 +177,66 @@ tasks:
     preconditions:
       - sh: test "{{.CONFIRM}}" = "yes"
         msg: set CONFIRM=yes to run destroy
+      - sh: test -n "${CLOUDFLARE_API_TOKEN:-}" || test -f "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}"
+        msg: Cloudflare token not found (set CLOUDFLARE_API_TOKEN or create ~/.cloudflare_pass)
     cmds:
-      - pulumi down --yes
+      - CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-$(cat "${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cloudflare_pass}")}" pulumi down --yes
 
-  hosts:
+  prepare:
+    desc: Prepare stack and generated config
+    cmds:
+      - task sync
+      - task init STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
+
+  push:
+    desc: Full deploy (infra + bootstrap + provision + verify)
+    deps: [_check:provision]
+    cmds:
+      - task prepare STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
+      - task up STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
+      - task provision:bootstrap STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
+      - task update STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
+
+  update:
+    desc: Re-apply provisioning and verify
+    deps: [_check:provision]
+    cmds:
+      - task provision STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
+      - task verify STACK={{.STACK_NAME}} BASE_STACK={{.BASE_STACK}}
+
+  provision:inventory:
     desc: Generate provision inventory from Pulumi output
-    aliases: [inventory]
     deps: [_select:stack]
     cmds:
       - ./provision/inventory/generate.sh
 
-  bootstrap:
+  provision:bootstrap:
     desc: First-run SSH hardening bootstrap
-    aliases: [harden]
     deps: [_select:stack, _check:provision]
     cmds:
       - ./provision/bootstrap.sh
 
   provision:
     desc: Run full server provisioning
-    aliases: [ans]
-    deps: [_check:provision, hosts]
+    deps: [_check:provision, provision:inventory]
     preconditions:
       - sh: test -f provision/secrets.yml
         msg: provision/secrets.yml is required
       - sh: test -f "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}"
         msg: vault password file not found (set ANSIBLE_VAULT_PASSWORD_FILE or create ~/.vault_pass)
     cmds:
-      - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" --extra-vars "@provision/secrets.yml" --extra-vars "shared_docker_network={{.SHARED_DOCKER_NETWORK}} domain={{.DOMAIN_NAME_DEFAULT}} komodo_subdomain={{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}"
+      - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" --extra-vars "@provision/secrets.yml" --extra-vars "shared_docker_network={{.SHARED_DOCKER_NETWORK}} domain={{.DOMAIN_NAME_DEFAULT}} komodo_subdomain={{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}} acme_email={{.ACME_EMAIL_DEFAULT}}"
+
+  verify:
+    desc: Verify SSH, containers, and Komodo endpoint
+    deps: [_check:provision, provision:inventory]
+    preconditions:
+      - sh: command -v curl >/dev/null 2>&1
+        msg: curl is required
+    cmds:
+      - ansible -i provision/inventory/hosts.ini all -m ping
+      - ansible -i provision/inventory/hosts.ini all -m shell -a "docker ps --format '{{`{{.Names}}`}}\t{{`{{.Status}}`}}'"
+      - curl --fail --silent --show-error "https://{{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}" >/dev/null
 
   komodo:trigger:
     desc: Trigger a Komodo webhook for a stack

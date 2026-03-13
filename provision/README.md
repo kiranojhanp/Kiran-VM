@@ -2,7 +2,7 @@
 
 Ansible playbooks for the production server running on Oracle Cloud (ARM64 Ubuntu).
 
-This layer handles OS hardening, Docker, shared infrastructure (Postgres + Redis), and Komodo installation. After initial provisioning, ongoing stack deploys are handled by [Komodo](https://komo.do).
+This layer handles OS hardening, Docker, shared infrastructure (Postgres + Redis), Komodo installation, and Traefik ingress deployment.
 
 ## Prerequisites
 
@@ -17,12 +17,12 @@ Ensure `~/.vault_pass` exists — see [Vault](#vault).
 
 ## First-time setup (fresh VM)
 
-Run these steps **once** in order after `pulumi up` in `../infra`.
+Run these steps **once** in order after `task prepare` in repo root.
 
 ### 1. Generate inventory
 
 ```bash
-task hosts
+task provision:inventory
 ```
 
 Reads the public IP from the live Pulumi stack and writes `inventory/hosts.ini`. Re-run whenever the VM is replaced.
@@ -32,7 +32,7 @@ Reads the public IP from the live Pulumi stack and writes `inventory/hosts.ini`.
 A fresh VM starts on the initial SSH port from generated `../infra/constants.py` (sourced from `../Taskfile.yml`, default `22`). The `common` role then moves sshd to the hardened port from that same generated constants file (default `2222`). Bootstrap keeps the initial port open during the transition, confirms the hardened port is reachable, and then closes the initial port.
 
 ```bash
-task bootstrap
+task provision:bootstrap
 ```
 
 ### 3. Full provisioning
@@ -56,8 +56,8 @@ ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml"
 Recommended (from repo root):
 
 ```bash
-task hosts
-task provision
+task provision:inventory
+task update
 ```
 
 Direct Ansible usage (from `provision/`):
@@ -79,7 +79,17 @@ ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" --t
 ansible-playbook -i inventory/hosts.ini site.yml --extra-vars "@secrets.yml" --skip-tags infra
 ```
 
-Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `services`
+Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `traefik`, `services`
+
+Canonical Task commands from repo root:
+
+- `prepare` (sync + stack init/select)
+- `push` (infra + bootstrap + provision + verify)
+- `update` (re-provision + verify)
+- `verify` (health checks only)
+- `destroy` (infra teardown)
+
+Use `STACK=<name>` only when targeting a non-default stack.
 
 `generate.sh` and `bootstrap.sh` read shared SSH ports from generated `../infra/constants.py` (from `../Taskfile.yml` vars), so Pulumi and Ansible stay aligned without duplicate hardcoded values.
 
@@ -88,6 +98,7 @@ Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `services`
 - `shared_docker_network` from `SHARED_DOCKER_NETWORK`
 - `domain` from `DOMAIN_NAME_DEFAULT`
 - `komodo_subdomain` from `KOMODO_SUBDOMAIN_LABEL.DOMAIN_NAME_DEFAULT`
+- `acme_email` from `ACME_EMAIL_DEFAULT`
 
 Pulumi DNS subdomains are controlled separately by `DNS_SUBDOMAIN_LABELS` in `Taskfile.yml`.
 
@@ -147,6 +158,7 @@ ansible-vault rekey secrets.yml
 | `docker`    | `docker`                | Docker CE + Compose plugin; daemon config                               |
 | `infra`     | `infra`, `services`     | Shared Postgres 17 + Redis; `init.sql` is an optional bootstrap hook |
 | `komodo`    | `komodo`, `services`    | Komodo + FerretDB stack; ongoing stack lifecycle managed in Komodo |
+| `traefik`   | `traefik`, `services`   | Traefik + TLS ingress for root domain and Komodo subdomain |
 
 ---
 
@@ -170,7 +182,7 @@ Bootstrap has not run yet, or it did not complete both phases. Run `./bootstrap.
 Cloud-init may still be running right after `pulumi up`. Wait 60-90 seconds and retry `./bootstrap.sh`.
 
 **Traefik: certificate not issued**
-The Cloudflare API token needs `Zone -> DNS -> Edit` scope for the target zone. Check Komodo Variables for `CLOUDFLARE_API_TOKEN`.
+The Cloudflare API token needs `Zone -> DNS -> Edit` scope for the target zone. Set `cloudflare_api_token` in `secrets.yml`, or export `CLOUDFLARE_API_TOKEN`, or place the token in `~/.cloudflare_pass` on the controller.
 
 **Komodo not reachable at its subdomain**
-Check that the Traefik stack is running in Komodo, the Komodo stack is attached to `shared_docker_network` (default: `internal-network`) with alias `komodo`, and there is a matching route in generated `stacks/traefik/dynamic.yml` (source template: `stacks/traefik/dynamic.tmpl.yml`).
+Check that the `traefik` role ran successfully (`--tags traefik`), Traefik container is running on the server, the Komodo stack is attached to `shared_docker_network` (default: `internal-network`) with alias `komodo`, and the generated route points to `http://komodo:9120`.

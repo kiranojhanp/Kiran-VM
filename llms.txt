@@ -7,7 +7,7 @@ Infrastructure and provisioning for a self-hosted VM on Oracle Cloud Always Free
 | Layer | Tool | Purpose |
 | --- | --- | --- |
 | Infra | Pulumi | Provisions VM, VCN, subnet, and security rules |
-| Provisioning | Ansible | Hardening, Docker, shared infra, Komodo install |
+| Provisioning | Ansible | Hardening, Docker, shared infra, Komodo, Traefik |
 | Deployments | Komodo | Manages Docker Compose stacks |
 
 ## Architecture
@@ -18,7 +18,7 @@ One ARM64 VM (`VM.Standard.A1.Flex`, 4 OCPU / 24 GB) running:
 - Komodo: stack orchestration UI backed by FerretDB
 - Traefik: reverse proxy with Cloudflare DNS-01 TLS
 
-This repo officially curates one stack in `stacks/`: `traefik`.
+This repo officially curates ingress/routing stack definitions in `stacks/` (`traefik`). Traefik runtime deployment is handled by Ansible.
 
 Design intent: keep non-Docker host software minimal, with Docker handling runtime services.
 
@@ -43,17 +43,25 @@ stacks/       Komodo-managed stacks (traefik only in-repo)
 
 ## Deployment flow
 
-1. `task sync && task init STACK=<stack> && task up STACK=<stack>`
-2. `task hosts && task bootstrap && task provision`
-3. Run `task sync` whenever Taskfile defaults change
-4. In Komodo, configure server + variables + traefik stack/procedure
-5. Push `stacks/traefik/**` changes to trigger traefik redeploy
+Canonical commands:
+
+1. `task prepare` (sync + init/select)
+2. `task push` (full deploy)
+3. `task update` (re-provision + verify)
+4. `task verify` (health checks)
+5. `task destroy CONFIRM=yes` (teardown)
+
+One-command new environment flow:
+
+- `STACK=<new-stack> BASE_STACK=kiran-self-hosting task push`
+
+Default stack is `kiran-self-hosting`; use `STACK=<name>` only when targeting a non-default stack.
 
 ## Secrets
 
 - Infrastructure/provisioning secrets: `provision/secrets.yml` (ansible-vault)
 - Runtime stack secrets: Komodo Variables
-- Required for traefik TLS: `CLOUDFLARE_API_TOKEN`
+- Required for traefik TLS: `cloudflare_api_token` in `provision/secrets.yml` (fallback: `CLOUDFLARE_API_TOKEN` env or `~/.cloudflare_pass`)
 
 ## Networking
 

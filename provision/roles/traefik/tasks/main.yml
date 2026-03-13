@@ -1,0 +1,52 @@
+---
+- name: Validate Traefik required variables
+  ansible.builtin.assert:
+    that:
+      - traefik_cloudflare_api_token | length > 0
+      - traefik_domain | length > 0
+      - traefik_komodo_subdomain | length > 0
+      - traefik_acme_email | length > 0
+      - shared_docker_network | length > 0
+    fail_msg: >-
+      Missing required Traefik config. Set cloudflare_api_token in provision/secrets.yml
+      (or CLOUDFLARE_API_TOKEN / ~/.cloudflare_pass on the controller) and ensure
+      domain, komodo_subdomain, acme_email, and shared_docker_network are defined.
+
+- name: Create Traefik stack directory
+  ansible.builtin.file:
+    path: "{{ traefik_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0750"
+
+- name: Write Traefik stack templates
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ traefik_dir }}/{{ item.dest }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { src: "compose.yaml.j2", dest: "compose.yaml", mode: "0644" }
+    - { src: "traefik.yml.j2", dest: "traefik.yml", mode: "0644" }
+    - { src: "dynamic.yml.j2", dest: "dynamic.yml", mode: "0644" }
+  notify: restart traefik stack
+
+- name: Write Traefik environment file
+  ansible.builtin.template:
+    src: traefik.env.j2
+    dest: "{{ traefik_dir }}/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  notify: restart traefik stack
+
+- name: Ensure Traefik stack is running
+  community.docker.docker_compose_v2:
+    project_name: "{{ traefik_compose_project }}"
+    project_src: "{{ traefik_dir }}"
+    files:
+      - compose.yaml
+    state: present
+    pull: missing

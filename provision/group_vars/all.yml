@@ -12,6 +12,7 @@ ssh_allow_port_22: false
 # ── Domain ──────────────────────────────────────────────
 domain: example.com
 komodo_subdomain: "komodo.{{ domain }}"
+acme_email: "admin@{{ domain }}"
 
 # ── Komodo ──────────────────────────────────────────────
 komodo_port: 9120

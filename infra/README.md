@@ -34,7 +34,7 @@ From the repo root:
 
 ```bash
 task sync
-task init STACK=kiran-prod
+task init STACK=kiran-self-hosting
 ```
 
 Equivalent direct commands:
@@ -46,7 +46,7 @@ cd infra
 uv sync
 
 # Create the stack
-pulumi stack init kiran-prod
+pulumi stack init kiran-self-hosting
 ```
 
 ## Config
@@ -84,9 +84,9 @@ Cloudflare/DNS source of truth:
 From the repo root:
 
 ```bash
-task preview STACK=kiran-prod
-task up STACK=kiran-prod
-task destroy STACK=kiran-prod CONFIRM=yes
+task preview STACK=kiran-self-hosting
+task up STACK=kiran-self-hosting
+task destroy STACK=kiran-self-hosting CONFIRM=yes
 ```
 
 Equivalent direct commands:

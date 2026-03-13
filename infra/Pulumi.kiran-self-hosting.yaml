@@ -1,0 +1,14 @@
+encryptionsalt: v1:mz9vIL6B1eo=:v1:eOtqTiJ06qyLvBPh:FZzjhTIz+7OF4OUlw8Yxwc8fTnIvFg==
+config:
+  kiran-vm-infra:cloudflareZoneId: 58dce5945a8941e4c38a3611af123052
+  kiran-vm-infra:projectName: kiran-self-hosting
+  kiran-vm-infra:sshPublicKey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFGpdJoSwTfZGU5Yb5bsGEFSOnBFeWj7QGS0qWhgv7uR kiranojha1226@gmail.com
+  oci:fingerprint:
+    secure: v1:81Dsr3eujMJ7l8d/:qxrUqzq7pq1+2nUcN3+TjGQ/9SmFKy7mXVTU0pUT4Xz0T/bXfM5d2v/m/3QRXNkvaaiEd7K29nSzzc2uDiZS
+  oci:privateKeyPath:
+    secure: v1:vN+HsSbpBQd8oUhy:n3vqfsnp+pm6octJLgbaX1fwLmexKXeXuBBu7izLGmWN1EH/cvwEkR1KzJR9zO+6ZVH1u34=
+  oci:region: ap-melbourne-1
+  oci:tenancyOcid:
+    secure: v1:pLZGpSJSR0JrPe/Z:ar0iOz+Z6uUZg7wr24e9AvLf+XQRbHN3SItRDyYHGAVCaBuJbUixrXpgvGmjgEM3mdG44EYXpZ17v11Md0BGdoNEMDxlXmpNCiG40LokI+GLi3QyLMXT0L2clt7JXeU=
+  oci:userOcid:
+    secure: v1:vqkgZQRcbhfbq6Up:r2iOw7Rs+7E1Vd+o9bGOJCUWTiw/xxF/vMw8VkbFPqcaOAVFlBjByShTKUTvj81Q0Q6zmh/JBonEIXQIFcnwj/sxdVBIEyc6NDUTv+SYtxEdGW3Ms4rB3IOTdHM=

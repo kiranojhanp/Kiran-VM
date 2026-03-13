@@ -1,0 +1,55 @@
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - --configFile=/etc/traefik/traefik.yml
+    restart: unless-stopped
+    init: true
+    environment:
+      CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+      CF_DNS_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - traefik_letsencrypt:/letsencrypt
+    networks:
+      - shared
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 512m
+
+  fewa-site:
+    image: hashicorp/http-echo:1.0.0
+    command:
+      - -listen
+      - :5678
+      - -text
+      - Welcome to {{ traefik_domain }}
+    restart: unless-stopped
+    init: true
+    networks:
+      - shared
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 64m
+
+networks:
+  shared:
+    name: {{ shared_docker_network }}
+    external: true
+
+volumes:
+  traefik_letsencrypt:
