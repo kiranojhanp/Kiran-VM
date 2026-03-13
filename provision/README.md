@@ -84,6 +84,7 @@ Available tags: `common`, `hardening`, `docker`, `infra`, `komodo`, `traefik`, `
 Canonical Task commands from repo root:
 
 - `prepare` (sync + stack init/select)
+- `doctor` (preflight validation before deploy)
 - `push` (infra + bootstrap + provision + verify)
 - `update` (re-provision + verify)
 - `verify` (health checks only)

@@ -33,7 +33,7 @@ Any app stack you want to expose should join `SHARED_DOCKER_NETWORK` and provide
 
 Traefik is deployed automatically by Ansible during `task provision` (role `traefik`).
 
-If you change `stacks/traefik/*.tmpl.yml|yaml`, run `task sync` and then `task update` to apply updates.
+If you change `stacks/traefik/*.tmpl.yml|yaml`, run `task sync` and then `task update` to apply updates. Run `task verify` afterward to confirm public routing and TLS health.
 
 ## Secrets
 

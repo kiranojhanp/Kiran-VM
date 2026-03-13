@@ -8,6 +8,8 @@ Core pipeline:
 Pulumi -> Provision (includes Traefik) -> Komodo app stacks
 ```
 
+Task commands are split into modular includes under `taskfiles/` for maintainability (`core.yml`, `infra.yml`, `server.yml`, `integrations.yml`).
+
 Scope by design:
 - Pulumi creates VM + network
 - Ansible hardens host + installs Docker + Komodo + Traefik ingress
@@ -46,6 +48,12 @@ task prepare
 
 ```bash
 task push
+```
+
+Optional preflight-only check:
+
+```bash
+task doctor
 ```
 
 After that, SSH moves to the hardened port from generated `infra/constants.py` (default `2222`).
@@ -98,6 +106,7 @@ STACK=<new-stack> task push
 
 Canonical commands:
 - `prepare` -> sync + stack init/select
+- `doctor` -> preflight checks (tools, secrets, Pulumi config)
 - `push` -> full deploy (infra + bootstrap + provision + verify)
 - `update` -> reprovision + verify
 - `verify` -> health checks only

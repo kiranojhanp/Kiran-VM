@@ -28,6 +28,7 @@ Design intent: keep non-Docker host software minimal, with Docker handling runti
 infra/        Pulumi program (Python) for VM provisioning
 provision/    Ansible roles for hardening + base services
 stacks/       Komodo-managed stacks (traefik only in-repo)
+taskfiles/    Modular task definitions (core, infra, server, integrations)
 ```
 
 ## Source of truth
@@ -46,10 +47,11 @@ stacks/       Komodo-managed stacks (traefik only in-repo)
 Canonical commands:
 
 1. `task prepare` (sync + init/select)
-2. `task push` (full deploy)
-3. `task update` (re-provision + verify)
-4. `task verify` (health checks)
-5. `task destroy CONFIRM=yes` (teardown)
+2. `task doctor` (preflight checks)
+3. `task push` (full deploy)
+4. `task update` (re-provision + verify)
+5. `task verify` (health checks)
+6. `task destroy CONFIRM=yes` (teardown)
 
 One-command new environment flow:
 

@@ -33,8 +33,7 @@ All constants (CIDRs, ports, image, shape, domain, Cloudflare zone default) are 
 From the repo root:
 
 ```bash
-task sync
-task init STACK=kiran-self-hosting
+task prepare
 ```
 
 Equivalent direct commands:
@@ -84,10 +83,12 @@ Cloudflare/DNS source of truth:
 From the repo root:
 
 ```bash
-task preview STACK=kiran-self-hosting
-task up STACK=kiran-self-hosting
-task destroy STACK=kiran-self-hosting CONFIRM=yes
+task preview
+task up
+task destroy CONFIRM=yes
 ```
+
+Use `STACK=<name>` only when targeting a non-default stack.
 
 Equivalent direct commands:
 
@@ -131,7 +132,7 @@ See `../provision/README.md` for the complete provisioning guide.
 
 ## Cloudflare token file
 
-`task preview` and `task up` read Cloudflare token from one of:
+`task preview`, `task up`, and `task destroy` read Cloudflare token from one of:
 
 1. `CLOUDFLARE_API_TOKEN` environment variable
 2. `CLOUDFLARE_API_TOKEN_FILE` path (defaults to `~/.cloudflare_pass`)
