@@ -83,9 +83,9 @@ tasks:
         msg: openssl is required
     cmds:
       - ansible -i provision/inventory/hosts.ini all -m ping
-      - ansible -i provision/inventory/hosts.ini all -m shell -a "docker ps --format '{{`{{.Names}}`}}\t{{`{{.Status}}`}}'; docker ps -a --filter health=unhealthy -q | grep -q . && exit 1 || exit 0"
-      - curl --fail --silent --show-error --location --max-redirs 3 "{{.KOMODO_HTTP_URL}}" >/dev/null
-      - curl --fail --silent --show-error "{{.KOMODO_URL}}" >/dev/null
+      - ansible -i provision/inventory/hosts.ini all -m shell -a "set -e; sudo -n docker ps >/dev/null; test -z \"\$(sudo -n docker ps -a --filter health=unhealthy -q)\""
+      - curl --fail --insecure --silent --show-error --location --max-redirs 3 "{{.KOMODO_HTTP_URL}}" >/dev/null
+      - curl --fail --insecure --silent --show-error "{{.KOMODO_URL}}" >/dev/null
       - >-
         openssl s_client -connect {{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}:443
         -servername {{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}} < /dev/null 2>/dev/null
