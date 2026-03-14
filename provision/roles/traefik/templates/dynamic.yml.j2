@@ -21,6 +21,25 @@ http:
       service: fewa-site
       tls:
         certResolver: cloudflare
+        domains:
+          - main: "{{ traefik_domain }}"
+            sans:
+              - "*.{{ traefik_domain }}"
+
+    actual:
+      rule: Host(`actual.{{ traefik_domain }}`)
+      entryPoints:
+        - websecure
+      middlewares:
+        - actual-security-headers
+        - compress
+      service: actual
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "{{ traefik_domain }}"
+            sans:
+              - "*.{{ traefik_domain }}"
 
   services:
     komodo:
@@ -32,6 +51,11 @@ http:
       loadBalancer:
         servers:
           - url: http://fewa-site:5678
+
+    actual:
+      loadBalancer:
+        servers:
+          - url: http://actual-server:5006
 
   middlewares:
     compress:
@@ -58,3 +82,14 @@ http:
         stsPreload: true
         customResponseHeaders:
           Content-Security-Policy: "default-src 'self'"
+
+    actual-security-headers:
+      headers:
+        customFrameOptionsValue: SAMEORIGIN
+        contentTypeNosniff: true
+        referrerPolicy: strict-origin-when-cross-origin
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        customResponseHeaders:
+          Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'"
