@@ -74,7 +74,7 @@ tasks:
       - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" --extra-vars "@provision/secrets.yml" --extra-vars "{{.PROVISION_EXTRA_VARS}}"
 
   verify:
-    desc: Verify SSH, containers, and Komodo endpoint
+    desc: Verify SSH, containers, and ingress endpoints
     deps: [_check:provision, provision:inventory]
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
@@ -92,7 +92,12 @@ tasks:
         "set -e; sudo -n docker ps --filter label=com.docker.compose.project=traefik --filter label=com.docker.compose.service=traefik --filter status=running --quiet | grep -q ."
       - curl --fail --silent --show-error --location --max-redirs 3 "{{.KOMODO_HTTP_URL}}" >/dev/null
       - curl --fail --silent --show-error "{{.KOMODO_URL}}" >/dev/null
+      - curl --fail --silent --show-error "https://actual.{{.DOMAIN_NAME_DEFAULT}}" >/dev/null
       - >-
         openssl s_client -connect {{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}:443
         -servername {{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}} < /dev/null 2>/dev/null
+        | openssl x509 -noout -issuer -subject >/dev/null
+      - >-
+        openssl s_client -connect actual.{{.DOMAIN_NAME_DEFAULT}}:443
+        -servername actual.{{.DOMAIN_NAME_DEFAULT}} < /dev/null 2>/dev/null
         | openssl x509 -noout -issuer -subject >/dev/null
