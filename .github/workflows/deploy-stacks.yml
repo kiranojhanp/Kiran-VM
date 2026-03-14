@@ -1,22 +1,22 @@
-name: Deploy traefik stack on change
+name: Deploy app stack on change
 
-# Triggered on pushes to main that touch stacks/traefik/**.
+# Triggered on pushes to main that touch app stacks managed by Komodo.
 
 on:
   push:
     branches: [main]
     paths:
-      - "stacks/traefik/**"
+      - "stacks/actual/**"
 
 concurrency:
-  group: deploy-traefik
+  group: deploy-actual
   cancel-in-progress: false
 
 # ── Jobs ──────────────────────────────────────────────────────────────────────
 
 jobs:
   deploy:
-    name: Deploy traefik
+    name: Deploy actual
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -27,17 +27,17 @@ jobs:
           task-version: 3.29.1
       - name: Validate webhook secrets
         run: |
-          test -n "${{ secrets.KOMODO_WEBHOOK_TRAEFIK }}"
+          test -n "${{ secrets.KOMODO_WEBHOOK_ACTUAL }}"
           test -n "${{ secrets.KOMODO_WEBHOOK_SECRET }}"
       - name: Trigger Komodo procedure
-        run: task komodo:trigger STACK="traefik" WEBHOOK_URL="${{ secrets.KOMODO_WEBHOOK_TRAEFIK }}" WEBHOOK_SECRET="${{ secrets.KOMODO_WEBHOOK_SECRET }}"
-      - name: Verify Komodo reachable after deploy
+        run: task komodo:trigger STACK="actual" WEBHOOK_URL="${{ secrets.KOMODO_WEBHOOK_ACTUAL }}" WEBHOOK_SECRET="${{ secrets.KOMODO_WEBHOOK_SECRET }}"
+      - name: Verify Actual reachable after deploy
         run: |
           for i in $(seq 1 30); do
-            if curl --fail --silent --show-error https://komodo.fewa.app >/dev/null; then
+            if curl --fail --silent --show-error https://actual.fewa.app >/dev/null; then
               exit 0
             fi
             sleep 10
           done
-          echo "Komodo did not recover within 5 minutes after Traefik deploy"
+          echo "Actual did not recover within 5 minutes after deploy"
           exit 1
