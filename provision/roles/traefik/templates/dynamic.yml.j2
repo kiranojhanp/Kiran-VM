@@ -35,11 +35,7 @@ http:
         - compress
       service: actual
       tls:
-        certResolver: cloudflare
-        domains:
-          - main: "{{ traefik_domain }}"
-            sans:
-              - "*.{{ traefik_domain }}"
+        certResolver: letsencrypt
 
   services:
     komodo:

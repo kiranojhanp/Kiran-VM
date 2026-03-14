@@ -38,6 +38,12 @@ certificatesResolvers:
         resolvers:
           - "1.1.1.1:53"
           - "8.8.8.8:53"
+  letsencrypt:
+    acme:
+      email: {{ traefik_acme_email }}
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
 
 log:
   level: INFO

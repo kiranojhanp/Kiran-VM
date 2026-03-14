@@ -20,7 +20,7 @@ services:
       traefik.http.routers.actual.rule: Host(`${ACTUAL_HOST:-actual.fewa.app}`)
       traefik.http.routers.actual.entrypoints: websecure
       traefik.http.routers.actual.tls: "true"
-      traefik.http.routers.actual.tls.certresolver: cloudflare
+      traefik.http.routers.actual.tls.certresolver: letsencrypt
       traefik.http.routers.actual.middlewares: actual-security-headers,compress
       traefik.http.middlewares.actual-security-headers.headers.customFrameOptionsValue: SAMEORIGIN
       traefik.http.middlewares.actual-security-headers.headers.contentTypeNosniff: "true"
