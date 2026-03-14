@@ -86,7 +86,7 @@ tasks:
       - ansible -i provision/inventory/hosts.ini all -m shell -a "set -e; sudo -n docker ps >/dev/null; test -z \"\$(sudo -n docker ps -a --filter health=unhealthy -q)\""
       - >-
         ansible -i provision/inventory/hosts.ini all -m shell -a
-        "set -e; base=/opt/komodo/periphery/repos/KiranVM/stacks/traefik; test -f \"\$base/compose.yaml\"; if test -f \"\$base/config/traefik.yml\" && test -f \"\$base/config/dynamic.yml\"; then :; elif test -f \"\$base/traefik.yml\" && test -f \"\$base/dynamic.yml\"; then :; else echo 'Missing Traefik config files in expected paths' >&2; exit 1; fi; sudo -n docker compose -f \"\$base/compose.yaml\" config >/dev/null"
+        "set -e; base=/opt/traefik; test -f \"\$base/compose.yaml\"; test -f \"\$base/traefik.yml\"; test -f \"\$base/dynamic.yml\"; sudo -n docker compose -f \"\$base/compose.yaml\" config >/dev/null"
       - >-
         ansible -i provision/inventory/hosts.ini all -m shell -a
         "set -e; sudo -n docker ps --filter label=com.docker.compose.project=traefik --filter label=com.docker.compose.service=traefik --filter status=running --quiet | grep -q ."

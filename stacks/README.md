@@ -1,13 +1,12 @@
 # stacks
 
-Traefik templates and generated files live here.
+Application stacks managed by Komodo live here.
 
 ## Quickstart
 
-If you change routing or domain defaults:
+If you change an app stack:
 
 ```bash
-task sync
 task update
 task verify
 ```
@@ -16,12 +15,13 @@ That is all most users need.
 
 ## What is managed here
 
-- `stacks/traefik/*.tmpl.yml` - templates
-- `stacks/traefik/compose.yaml` - generated
-- `stacks/traefik/traefik.yml` - generated
-- `stacks/traefik/dynamic.yml` - generated
+- `stacks/actual/compose.yaml` - Actual Budget stack
 
-Traefik is deployed by Ansible during `task push` / `task update`.
+Traefik is provisioned from `provision/roles/traefik/*` and is not deployed from a Komodo stack.
+
+Komodo-managed stacks should declare Traefik labels for routing and TLS.
+
+Application stacks are deployed through Komodo procedures/webhooks.
 
 ## Secret used here
 

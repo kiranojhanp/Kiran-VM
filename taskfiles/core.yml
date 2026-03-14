@@ -65,20 +65,6 @@ tasks:
     cmds:
       - "true"
 
-  _render:traefik:
-    internal: true
-    run: once
-    preconditions:
-      - sh: command -v python3 >/dev/null 2>&1
-        msg: python3 is required
-    env:
-      DOMAIN_NAME_DEFAULT: '{{.DOMAIN_NAME_DEFAULT}}'
-      ACME_EMAIL_DEFAULT: '{{.ACME_EMAIL_DEFAULT}}'
-      KOMODO_SUBDOMAIN_LABEL: '{{.KOMODO_SUBDOMAIN_LABEL}}'
-      SHARED_DOCKER_NETWORK: '{{.SHARED_DOCKER_NETWORK}}'
-    cmds:
-      - python3 stacks/traefik/render.py
-
   _sync:constants:
     internal: true
     run: once

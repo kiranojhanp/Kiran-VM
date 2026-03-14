@@ -7,14 +7,14 @@ tasks:
   _select:stack:
     internal: true
     run: once
-    deps: [_check:infra, _sync:constants, _render:traefik]
+    deps: [_check:infra, _sync:constants]
     dir: '{{.INFRA_DIR}}'
     cmds:
       - '{{.STACK_ENSURE_CMD}}'
 
   sync:
     desc: Install infra dependencies (uv sync)
-    deps: [_check:infra, _sync:constants, _render:traefik]
+    deps: [_check:infra, _sync:constants]
     dir: '{{.INFRA_DIR}}'
     cmds:
       - uv sync
