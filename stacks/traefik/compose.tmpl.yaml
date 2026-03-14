@@ -22,10 +22,19 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    configs:
+      - source: traefik_static
+        target: /etc/traefik/traefik.yml
+      - source: traefik_dynamic
+        target: /etc/traefik/dynamic.yml
     volumes:
-      - ./traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
       - traefik_letsencrypt:/letsencrypt
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - shared
     security_opt:
@@ -64,3 +73,9 @@ networks:
 
 volumes:
   traefik_letsencrypt:
+
+configs:
+  traefik_static:
+    file: ./config/traefik.yml
+  traefik_dynamic:
+    file: ./config/dynamic.yml

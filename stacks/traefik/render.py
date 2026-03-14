@@ -6,6 +6,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
+CONFIG_DIR = ROOT / "config"
 
 
 def required(name: str) -> str:
@@ -36,15 +37,16 @@ def main() -> None:
         "__SHARED_NETWORK__": shared_network,
     }
 
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+
     files = [
-        ("compose.tmpl.yaml", "compose.yaml"),
-        ("traefik.tmpl.yml", "traefik.yml"),
-        ("dynamic.tmpl.yml", "dynamic.yml"),
+        ("compose.tmpl.yaml", ROOT / "compose.yaml"),
+        ("traefik.tmpl.yml", CONFIG_DIR / "traefik.yml"),
+        ("dynamic.tmpl.yml", CONFIG_DIR / "dynamic.yml"),
     ]
 
-    for src_name, dst_name in files:
+    for src_name, dst in files:
         src = ROOT / src_name
-        dst = ROOT / dst_name
         rendered = render_template(src, replacements)
         dst.write_text(rendered, encoding="utf-8")
 

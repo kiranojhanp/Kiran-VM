@@ -6,11 +6,19 @@ tasks:
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
         msg: curl is required
+      - sh: test -n "{{.WEBHOOK_URL}}"
+        msg: WEBHOOK_URL cannot be empty
+      - sh: test -n "{{.WEBHOOK_SECRET}}"
+        msg: WEBHOOK_SECRET cannot be empty
+      - sh: printf '%s' "{{.WEBHOOK_URL}}" | grep -Eq '^https://[^[:space:]]+$'
+        msg: WEBHOOK_URL must be a valid https URL
     requires:
       vars: [STACK, WEBHOOK_URL, WEBHOOK_SECRET]
     cmds:
       - >-
         curl --fail --silent --show-error
+        --retry 5 --retry-delay 2 --retry-all-errors
+        --connect-timeout 10 --max-time 30
         -X POST
         -H "Content-Type: application/json"
         -H "X-Webhook-Secret: {{.WEBHOOK_SECRET}}"

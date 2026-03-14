@@ -8,17 +8,36 @@ on:
     paths:
       - "stacks/traefik/**"
 
+concurrency:
+  group: deploy-traefik
+  cancel-in-progress: false
+
 # ── Jobs ──────────────────────────────────────────────────────────────────────
 
 jobs:
   deploy:
     name: Deploy traefik
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Setup go-task
         uses: pnorton5432/setup-task@v1
         with:
           task-version: 3.29.1
+      - name: Validate webhook secrets
+        run: |
+          test -n "${{ secrets.KOMODO_WEBHOOK_TRAEFIK }}"
+          test -n "${{ secrets.KOMODO_WEBHOOK_SECRET }}"
       - name: Trigger Komodo procedure
         run: task komodo:trigger STACK="traefik" WEBHOOK_URL="${{ secrets.KOMODO_WEBHOOK_TRAEFIK }}" WEBHOOK_SECRET="${{ secrets.KOMODO_WEBHOOK_SECRET }}"
+      - name: Verify Komodo reachable after deploy
+        run: |
+          for i in $(seq 1 30); do
+            if curl --fail --silent --show-error https://komodo.fewa.app >/dev/null; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Komodo did not recover within 5 minutes after Traefik deploy"
+          exit 1
