@@ -26,6 +26,7 @@ task push
 ```
 
 When it finishes, open `https://komodo.<your-domain>`.
+`task push` temporarily opens SSH 22 for first-boot bootstrap and then closes it.
 
 ## Daily use
 

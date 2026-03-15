@@ -1,0 +1,13 @@
+extends: default
+
+ignore: |
+  .venv/
+  provision/roles/**/templates/*.j2
+
+rules:
+  document-start: disable
+  line-length: disable
+  comments-indentation: disable
+  braces: disable
+  truthy:
+    check-keys: false

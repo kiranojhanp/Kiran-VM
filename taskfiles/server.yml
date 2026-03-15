@@ -38,9 +38,11 @@ tasks:
     cmds:
       - task doctor
       - task prepare
+      - task infra:ssh22:open
       - task up
       - task provision:bootstrap
       - task update
+      - task infra:ssh22:close
 
   update:
     desc: Re-apply provisioning and verify

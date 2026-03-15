@@ -1,5 +1,5 @@
 ---
-# deploy_ssh_public_key: the SSH public key content to add to authorized_keys.
+# common_deploy_ssh_public_key: the SSH public key content to add to authorized_keys.
 # Set this in secrets.yml or pass via --extra-vars.
-# Example: deploy_ssh_public_key: "ssh-ed25519 AAAA... user@host"
-deploy_ssh_public_key: ""
+# Example: common_deploy_ssh_public_key: "ssh-ed25519 AAAA... user@host"
+common_deploy_ssh_public_key: ""

@@ -1,9 +1,12 @@
-name: Validate Taskfile
+name: Validate Automation
 
 on:
   pull_request:
     paths:
       - Taskfile.yml
+      - taskfiles/**
+      - infra/**
+      - provision/**
       - README.md
       - infra/README.md
       - provision/README.md
@@ -12,19 +15,39 @@ on:
     branches: [main]
     paths:
       - Taskfile.yml
+      - taskfiles/**
+      - infra/**
+      - provision/**
       - README.md
       - infra/README.md
       - provision/README.md
       - .github/workflows/taskfile-ci.yml
 
 jobs:
-  validate-taskfile:
+  validate-automation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Setup go-task
         uses: pnorton5432/setup-task@v1
         with:
           task-version: 3.29.1
+      - name: Install lint dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ansible-core ansible-lint yamllint pyyaml
+          ansible-galaxy collection install -r provision/requirements.yml
+      - name: Create CI secrets file for static checks
+        run: cp provision/secrets.example.yml provision/secrets.yml
       - name: Validate task listing
         run: task --list
+      - name: Lint YAML
+        run: yamllint -c .yamllint Taskfile.yml taskfiles infra provision .github/workflows
+      - name: Lint Ansible playbook
+        run: ansible-lint provision/site.yml
+      - name: Syntax-check Ansible playbook
+        run: ansible-playbook --syntax-check -i "localhost," provision/site.yml --extra-vars "@provision/secrets.example.yml"

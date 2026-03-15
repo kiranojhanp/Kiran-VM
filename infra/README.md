@@ -32,3 +32,5 @@ task destroy CONFIRM=yes
 - Default stack is `kiran-self-hosting`.
 - Use `STACK=<name>` only when you want another stack.
 - Cloudflare token is managed in `provision/secrets.yml` (`cloudflare_api_token`) via ansible-vault.
+- SSH port 22 is disabled in OCI by default. `task push` opens it only for bootstrap and closes it again.
+- If you run infra/provision manually, run `task infra:ssh22:open` before first bootstrap and `task infra:ssh22:close` after.

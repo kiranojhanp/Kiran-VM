@@ -64,19 +64,23 @@
     name: "{{ deploy_user }}"
     password: "{{ deploy_password | password_hash('sha512') }}"
 
-- name: Assert deploy_ssh_public_key is set
+- name: Assert deploy SSH public key is set
+  vars:
+    common_deploy_ssh_public_key_value: "{{ common_deploy_ssh_public_key | default(deploy_ssh_public_key | default('')) }}"
   ansible.builtin.assert:
     that:
-      - deploy_ssh_public_key | length > 0
+      - common_deploy_ssh_public_key_value | length > 0
     fail_msg: >
-      deploy_ssh_public_key is empty. Set it in secrets.yml or pass via
-      --extra-vars 'deploy_ssh_public_key="ssh-ed25519 AAAA..."'.
+      common_deploy_ssh_public_key is empty. Set it in secrets.yml or pass via
+      --extra-vars 'common_deploy_ssh_public_key="ssh-ed25519 AAAA..."'.
 
 - name: Copy SSH authorized_keys to deploy user
-  ansible.builtin.authorized_key:
+  vars:
+    common_deploy_ssh_public_key_value: "{{ common_deploy_ssh_public_key | default(deploy_ssh_public_key | default('')) }}"
+  ansible.posix.authorized_key:
     user: "{{ deploy_user }}"
     state: present
-    key: "{{ deploy_ssh_public_key }}"
+    key: "{{ common_deploy_ssh_public_key_value }}"
 
 # ── Phase 2b: deploy user utilities ──────────────────────────────────────
 - name: Create ~/.local/bin for deploy user
@@ -192,8 +196,12 @@
   # Remount is handled by the next task.
 
 - name: Remount /dev/shm with hardened options
-  ansible.builtin.command: mount -o remount,noexec,nosuid,nodev /dev/shm
-  changed_when: true
+  ansible.posix.mount:
+    path: /dev/shm
+    src: tmpfs
+    fstype: tmpfs
+    opts: defaults,noexec,nosuid,nodev
+    state: remounted
 
 # ── Phase 9: Swap ─────────────────────────────────────────────────────────
 - name: Check if swapfile exists
@@ -204,6 +212,7 @@
 - name: Create 2 GB swapfile
   ansible.builtin.command: fallocate -l 2G /swapfile
   when: not swapfile_stat.stat.exists
+  changed_when: true
 
 - name: Set swapfile permissions
   ansible.builtin.file:
@@ -216,10 +225,12 @@
 - name: Format swapfile
   ansible.builtin.command: mkswap /swapfile
   when: not swapfile_stat.stat.exists
+  changed_when: true
 
 - name: Enable swapfile
   ansible.builtin.command: swapon /swapfile
   when: not swapfile_stat.stat.exists
+  changed_when: true
 
 - name: Add swapfile to fstab
   ansible.posix.mount:

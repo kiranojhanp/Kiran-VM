@@ -43,6 +43,9 @@ cfg = pulumi.Config()
 
 project_name = (cfg.get("projectName") or PROJECT_NAME_DEFAULT).strip()
 ssh_public_key = cfg.require("sshPublicKey")
+allow_ssh_bootstrap_port_22 = cfg.get_bool("allowSshBootstrapPort22")
+if allow_ssh_bootstrap_port_22 is None:
+    allow_ssh_bootstrap_port_22 = False
 domain_name = DOMAIN_NAME_DEFAULT.strip()
 cloudflare_zone_id = (cfg.get("cloudflareZoneId") or CLOUDFLARE_ZONE_ID_DEFAULT).strip()
 if not cloudflare_zone_id:
@@ -123,16 +126,6 @@ security_list = oci.core.SecurityList(
     ],
     # Ingress rules
     ingress_security_rules=[
-        # SSH port 22 — needed during initial bootstrap (cloud-init / first pyinfra run)
-        oci.core.SecurityListIngressSecurityRuleArgs(
-            protocol=PROTO_TCP,
-            source=ANYWHERE,
-            tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
-                min=SSH_PORT_INITIAL,
-                max=SSH_PORT_INITIAL,
-            ),
-            description="SSH port 22 (bootstrap)",
-        ),
         # SSH hardened port — pyinfra moves sshd here after common role runs
         oci.core.SecurityListIngressSecurityRuleArgs(
             protocol=PROTO_TCP,
@@ -182,7 +175,22 @@ security_list = oci.core.SecurityList(
             ),
             description="ICMP ping",
         ),
-    ],
+    ]
+    + (
+        [
+            oci.core.SecurityListIngressSecurityRuleArgs(
+                protocol=PROTO_TCP,
+                source=ANYWHERE,
+                tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
+                    min=SSH_PORT_INITIAL,
+                    max=SSH_PORT_INITIAL,
+                ),
+                description="SSH port 22 (bootstrap)",
+            )
+        ]
+        if allow_ssh_bootstrap_port_22
+        else []
+    ),
 )
 
 # ── Public Subnet ─────────────────────────────────────────────────────────────
@@ -319,5 +327,6 @@ pulumi.export(
     "sshCommandBootstrap",
     pulumi.Output.concat(f"ssh -p {SSH_PORT_INITIAL} deploy@", instance.public_ip),
 )
+pulumi.export("allowSshBootstrapPort22", allow_ssh_bootstrap_port_22)
 pulumi.export("vcnId", vcn.id)
 pulumi.export("subnetId", subnet.id)

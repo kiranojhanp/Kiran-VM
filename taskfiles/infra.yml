@@ -45,6 +45,21 @@ tasks:
     cmds:
       - '{{.CLOUDFLARE_TOKEN_EXPORT}} pulumi up --yes'
 
+  infra:ssh22:open:
+    desc: Enable temporary bootstrap access on SSH port 22
+    deps: [_select:stack]
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - pulumi config set kiran-vm-infra:allowSshBootstrapPort22 true
+
+  infra:ssh22:close:
+    desc: Disable bootstrap access on SSH port 22 and apply
+    deps: [_select:stack]
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - pulumi config set kiran-vm-infra:allowSshBootstrapPort22 false
+      - task up
+
   destroy:
     desc: Destroy VM and network with retry safety
     deps: [_select:stack]

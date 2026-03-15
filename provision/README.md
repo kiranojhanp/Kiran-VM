@@ -30,6 +30,7 @@ task provision:bootstrap   # only if you need to rerun first-boot SSH hardening
 - Edit with: `task secrets:edit`
 
 Required keys are listed in the template. Keep `cloudflare_api_token` current there.
+Use `common_deploy_ssh_public_key` for the deploy user's authorized key.
 
 ## If something breaks
 
