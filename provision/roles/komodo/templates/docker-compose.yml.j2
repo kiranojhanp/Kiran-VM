@@ -58,6 +58,23 @@ services:
       KOMODO_FIRST_SERVER: "http://periphery:8120"
     ports:
       - "127.0.0.1:{{ komodo_port }}:{{ komodo_port }}"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "{{ shared_docker_network }}"
+      traefik.http.routers.komodo.rule: "Host(`{{ komodo_subdomain }}`)"
+      traefik.http.routers.komodo.entrypoints: websecure
+      traefik.http.routers.komodo.tls: "true"
+      traefik.http.routers.komodo.tls.certresolver: cloudflare
+      traefik.http.routers.komodo.middlewares: security-headers,compress
+      traefik.http.middlewares.security-headers.headers.customFrameOptionsValue: SAMEORIGIN
+      traefik.http.middlewares.security-headers.headers.contentTypeNosniff: "true"
+      traefik.http.middlewares.security-headers.headers.referrerPolicy: strict-origin-when-cross-origin
+      traefik.http.middlewares.security-headers.headers.stsSeconds: "31536000"
+      traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains: "true"
+      traefik.http.middlewares.security-headers.headers.stsPreload: "true"
+      traefik.http.middlewares.security-headers.headers.customResponseHeaders.Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' wss:; frame-ancestors 'self'"
+      traefik.http.middlewares.compress.compress: "true"
+      traefik.http.services.komodo.loadbalancer.server.port: "{{ komodo_port }}"
     volumes:
       - "{{ komodo_dir }}/data:/etc/komodo"
     networks:
