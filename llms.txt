@@ -28,7 +28,7 @@ task destroy CONFIRM=yes
 - Infra: Pulumi (`infra/`)
 - Provisioning: Ansible (`provision/`)
 - Runtime app orchestration: Komodo
-- Ingress: Traefik templates in `stacks/traefik/`
+- Ingress: provisioned Traefik (`provision/roles/traefik/`)
 
 ## task entrypoints
 
@@ -46,3 +46,4 @@ task destroy CONFIRM=yes
 - Defaults and generated constants: `Taskfile.yml`
 - Encrypted secrets: `provision/secrets.yml`
 - Required Cloudflare token key: `cloudflare_api_token`
+- App stack definitions: `stacks/`

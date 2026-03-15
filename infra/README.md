@@ -1,6 +1,6 @@
 # infra
 
-Pulumi layer for VM + network + DNS.
+Pulumi layer for VM, network, and DNS.
 
 ## Quickstart
 
@@ -31,4 +31,4 @@ task destroy CONFIRM=yes
 
 - Default stack is `kiran-self-hosting`.
 - Use `STACK=<name>` only when you want another stack.
-- Cloudflare token is read from `provision/secrets.yml` (`cloudflare_api_token`) via ansible-vault.
+- Cloudflare token is managed in `provision/secrets.yml` (`cloudflare_api_token`) via ansible-vault.

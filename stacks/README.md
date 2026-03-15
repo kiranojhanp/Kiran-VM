@@ -1,6 +1,6 @@
 # stacks
 
-Application stacks managed by Komodo live here.
+This folder holds app stacks that Komodo deploys.
 
 ## Quickstart
 
@@ -11,17 +11,17 @@ task update
 task verify
 ```
 
-That is all most users need.
+That is enough for normal day-to-day use.
 
 ## What is managed here
 
 - `stacks/actual/compose.yaml` - Actual Budget stack
 
-Traefik is provisioned from `provision/roles/traefik/*` and is not deployed from a Komodo stack.
+Traefik is provisioned from `provision/roles/traefik/*`. It is not deployed from a Komodo stack.
 
-Komodo-managed stacks should declare Traefik labels for routing and TLS.
+Each Komodo stack should include Traefik labels for routing and TLS.
 
-Application stacks are deployed through Komodo procedures/webhooks.
+App stacks are deployed through Komodo procedures/webhooks.
 
 ## Secret used here
 

@@ -1,6 +1,6 @@
 # kiran-vm
 
-Config-driven self-hosting baseline on Oracle Cloud Always Free.
+Self-hosting baseline for Oracle Cloud Always Free.
 
 ## Quickstart
 
@@ -15,7 +15,7 @@ chmod 600 ~/.vault_pass
 task secrets:init
 task secrets:edit
 
-# 3) prepare stack + generated config files
+# 3) prepare stack and local constants
 task prepare
 
 # 4) set Pulumi config (one-time per stack)
@@ -45,9 +45,9 @@ STACK=<name> BASE_STACK=kiran-self-hosting task push
 
 ## What this repo manages
 
-- Pulumi: VM + network + DNS records
-- Ansible: hardening + Docker + Komodo + Traefik
-- Komodo: your app stacks (you manage these in Komodo)
+- Pulumi: VM, network, and DNS records
+- Ansible: hardening, Docker, Komodo, and Traefik
+- Komodo: app stacks you deploy with webhooks/procedures
 
 ## Docs
 

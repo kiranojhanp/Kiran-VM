@@ -1,6 +1,6 @@
 # provision
 
-Ansible layer for hardening + Docker + shared services + Komodo + Traefik.
+Ansible layer for hardening, Docker, shared services, Komodo, and Traefik.
 
 ## Quickstart
 
@@ -12,7 +12,7 @@ task secrets:edit   # fill all values
 task push
 ```
 
-That is the normal path. `task push` handles bootstrap + provisioning + verify.
+That is the normal path. `task push` handles bootstrap, provisioning, and verification.
 
 ## Common commands
 
@@ -29,7 +29,7 @@ task provision:bootstrap   # only if you need to rerun first-boot SSH hardening
 - Template: `provision/secrets.example.yml`
 - Edit with: `task secrets:edit`
 
-Required keys live in the template. Keep `cloudflare_api_token` up to date there.
+Required keys are listed in the template. Keep `cloudflare_api_token` current there.
 
 ## If something breaks
 
