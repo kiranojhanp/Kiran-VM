@@ -45,6 +45,22 @@ tasks:
     cmds:
       - '{{.CLOUDFLARE_TOKEN_EXPORT}} pulumi up --yes'
 
+  dns:plan:
+    aliases: [dns:cname:plan]
+    desc: Preview Cloudflare CNAME changes from Taskfile DNS labels
+    deps: [_check:infra, _sync:constants]
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - 'uv run python scripts/update_cloudflare_cnames.py --dry-run --delete-stale --ttl 60 {{.CLI_ARGS}}'
+
+  dns:sync:
+    aliases: [dns:cname:sync]
+    desc: Sync Cloudflare CNAME records from Taskfile DNS labels
+    deps: [_check:infra, _sync:constants]
+    dir: '{{.INFRA_DIR}}'
+    cmds:
+      - 'uv run python scripts/update_cloudflare_cnames.py --delete-stale --ttl 60 {{.CLI_ARGS}}'
+
   infra:ssh22:open:
     desc: Enable temporary bootstrap access on SSH port 22
     deps: [_select:stack]
