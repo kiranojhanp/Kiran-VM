@@ -29,7 +29,6 @@
   loop:
     - { src: "compose.yaml.j2", dest: "compose.yaml", mode: "0644" }
     - { src: "traefik.yml.j2", dest: "traefik.yml", mode: "0644" }
-    - { src: "dynamic.yml.j2", dest: "dynamic.yml", mode: "0644" }
   notify: restart traefik stack
 
 - name: Write Traefik environment file
