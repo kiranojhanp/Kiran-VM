@@ -3,5 +3,4 @@ traefik_dir: /opt/traefik
 traefik_compose_project: traefik
 traefik_acme_email: "{{ acme_email }}"
 traefik_domain: "{{ domain }}"
-traefik_komodo_subdomain: "{{ komodo_subdomain }}"
 traefik_cloudflare_api_token: "{{ cloudflare_api_token | default('', true) | trim | regex_replace('^Bearer\\s+', '') | regex_replace('^\"(.*)\"$', '\\1') | regex_replace(\"^'(.*)'$\", '\\1') | regex_replace('\\s+', '') }}"

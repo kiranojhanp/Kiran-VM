@@ -4,12 +4,11 @@
     that:
       - traefik_cloudflare_api_token | length > 0
       - traefik_domain | length > 0
-      - traefik_komodo_subdomain | length > 0
       - traefik_acme_email | length > 0
       - shared_docker_network | length > 0
     fail_msg: >-
       Missing required Traefik config. Set cloudflare_api_token in provision/secrets.yml
-      and ensure domain, komodo_subdomain, acme_email, and shared_docker_network are defined.
+      and ensure domain, acme_email, and shared_docker_network are defined.
 
 - name: Create Traefik stack directory
   ansible.builtin.file:

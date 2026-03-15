@@ -68,7 +68,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: "{{ shared_docker_network }}"
-      traefik.http.routers.komodo.rule: "Host(`{{ traefik_komodo_subdomain }}`)"
+      traefik.http.routers.komodo.rule: "Host(`{{ komodo_subdomain }}`)"
       traefik.http.routers.komodo.entrypoints: websecure
       traefik.http.routers.komodo.tls: "true"
       traefik.http.routers.komodo.tls.certresolver: cloudflare
