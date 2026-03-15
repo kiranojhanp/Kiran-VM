@@ -66,17 +66,21 @@
 
 - name: Assert deploy SSH public key is set
   vars:
-    common_deploy_ssh_public_key_value: "{{ common_deploy_ssh_public_key | default(deploy_ssh_public_key | default('')) }}"
+    common_deploy_ssh_public_key_primary: "{{ common_deploy_ssh_public_key | default('', true) | trim }}"
+    common_deploy_ssh_public_key_legacy: "{{ deploy_ssh_public_key | default('', true) | trim }}"
+    common_deploy_ssh_public_key_value: "{{ common_deploy_ssh_public_key_primary if (common_deploy_ssh_public_key_primary | length > 0) else common_deploy_ssh_public_key_legacy }}"
   ansible.builtin.assert:
     that:
       - common_deploy_ssh_public_key_value | length > 0
     fail_msg: >
-      common_deploy_ssh_public_key is empty. Set it in secrets.yml or pass via
-      --extra-vars 'common_deploy_ssh_public_key="ssh-ed25519 AAAA..."'.
+      Deploy SSH public key is empty. Set common_deploy_ssh_public_key (preferred)
+      or deploy_ssh_public_key in secrets.yml.
 
 - name: Copy SSH authorized_keys to deploy user
   vars:
-    common_deploy_ssh_public_key_value: "{{ common_deploy_ssh_public_key | default(deploy_ssh_public_key | default('')) }}"
+    common_deploy_ssh_public_key_primary: "{{ common_deploy_ssh_public_key | default('', true) | trim }}"
+    common_deploy_ssh_public_key_legacy: "{{ deploy_ssh_public_key | default('', true) | trim }}"
+    common_deploy_ssh_public_key_value: "{{ common_deploy_ssh_public_key_primary if (common_deploy_ssh_public_key_primary | length > 0) else common_deploy_ssh_public_key_legacy }}"
   ansible.posix.authorized_key:
     user: "{{ deploy_user }}"
     state: present

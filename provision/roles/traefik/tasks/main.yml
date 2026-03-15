@@ -28,7 +28,7 @@
   loop:
     - { src: "compose.yaml.j2", dest: "compose.yaml", mode: "0644" }
     - { src: "traefik.yml.j2", dest: "traefik.yml", mode: "0644" }
-  notify: restart traefik stack
+  notify: Restart traefik stack
 
 - name: Write Traefik environment file
   ansible.builtin.template:
@@ -37,7 +37,7 @@
     owner: "{{ deploy_user }}"
     group: "{{ deploy_user }}"
     mode: "0600"
-  notify: restart traefik stack
+  notify: Restart traefik stack
 
 - name: Ensure Traefik stack is running
   community.docker.docker_compose_v2:
