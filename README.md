@@ -53,5 +53,5 @@ STACK=<name> BASE_STACK=kiran-self-hosting task push
 
 - `infra/README.md` - Pulumi setup and required config keys
 - `provision/README.md` - provisioning and secrets workflow
-- `stacks/README.md` - Traefik templates and routing
+- `stacks/README.md` - Komodo-managed app stacks and Traefik label routing
 - `llms.txt` - concise machine-readable project map
