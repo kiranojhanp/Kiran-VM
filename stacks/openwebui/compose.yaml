@@ -1,0 +1,28 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    environment:
+      ENABLE_OLLAMA_API: "false"
+      OPENAI_API_BASE_URLS: ${OPENAI_API_BASE_URLS:-https://api.openai.com/v1}
+      OPENAI_API_KEYS: ${OPENAI_API_KEYS:-}
+    volumes:
+      - open_webui_data:/app/backend/data
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.openwebui.rule: Host(`${OPENWEBUI_HOST:-openwebui.fewa.app}`)
+      traefik.http.routers.openwebui.entrypoints: websecure
+      traefik.http.routers.openwebui.tls: "true"
+      traefik.http.routers.openwebui.tls.certresolver: letsencrypt
+      traefik.http.services.openwebui.loadbalancer.server.port: "8080"
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+
+volumes:
+  open_webui_data:
