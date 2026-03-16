@@ -1,6 +1,6 @@
 services:
   vaultwarden:
-    image: docker.io/vaultwarden/server:1.31.4
+    image: docker.io/vaultwarden/server:1.35.4
     restart: unless-stopped
     environment:
       WEBSOCKET_ENABLED: "true"
