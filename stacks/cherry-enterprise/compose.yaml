@@ -5,7 +5,7 @@ services:
     environment:
       API_PORT: "3670"
       ADMIN_PORT: "3680"
-      API_URL: ${CHERRY_ENTERPRISE_API_URL:-https://${CHERRY_ENTERPRISE_HOST:-cherry.fewa.app}}
+      API_URL: ${CHERRY_ENTERPRISE_API_URL:-https://${CHERRY_ENTERPRISE_HOST:-cherry.fewa.app}/api}
       ADMIN_APP_NAME: ${CHERRY_ENTERPRISE_APP_NAME:-Cherry Studio Enterprise}
       JWT_SECRET: ${CHERRY_ENTERPRISE_JWT_SECRET}
       DB_TYPE: postgres
@@ -31,10 +31,18 @@ services:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
       traefik.http.routers.cherry-enterprise.rule: Host(`${CHERRY_ENTERPRISE_HOST:-cherry.fewa.app}`)
+      traefik.http.routers.cherry-enterprise.priority: "100"
       traefik.http.routers.cherry-enterprise.entrypoints: websecure
       traefik.http.routers.cherry-enterprise.tls: "true"
       traefik.http.routers.cherry-enterprise.tls.certresolver: cloudflare
       traefik.http.services.cherry-enterprise.loadbalancer.server.port: "3680"
+      traefik.http.routers.cherry-enterprise-api.rule: Host(`${CHERRY_ENTERPRISE_HOST:-cherry.fewa.app}`) && PathPrefix(`/api`)
+      traefik.http.routers.cherry-enterprise-api.priority: "200"
+      traefik.http.routers.cherry-enterprise-api.entrypoints: websecure
+      traefik.http.routers.cherry-enterprise-api.tls: "true"
+      traefik.http.routers.cherry-enterprise-api.tls.certresolver: cloudflare
+      traefik.http.routers.cherry-enterprise-api.service: cherry-enterprise-api
+      traefik.http.services.cherry-enterprise-api.loadbalancer.server.port: "3670"
 
 networks:
   shared:
