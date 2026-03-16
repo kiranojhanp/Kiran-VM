@@ -1,0 +1,33 @@
+services:
+  mealie:
+    image: hkotel/mealie:latest
+    restart: unless-stopped
+    environment:
+      ALLOW_SIGNUP: "${MEALIE_ALLOW_SIGNUP:-true}"
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-UTC}
+      MAX_WORKERS: ${MEALIE_MAX_WORKERS:-1}
+      WEB_CONCURRENCY: ${MEALIE_WEB_CONCURRENCY:-1}
+      BASE_URL: https://${MEALIE_HOST:-mealie.fewa.app}
+    volumes:
+      - mealie_data:/app/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.mealie.rule: Host(`${MEALIE_HOST:-mealie.fewa.app}`)
+      traefik.http.routers.mealie.entrypoints: websecure
+      traefik.http.routers.mealie.tls: "true"
+      traefik.http.routers.mealie.tls.certresolver: letsencrypt
+      traefik.http.services.mealie.loadbalancer.server.port: "9000"
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+
+volumes:
+  mealie_data:
