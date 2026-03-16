@@ -30,7 +30,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.cherry-enterprise.rule: Host(`${CHERRY_ENTERPRISE_HOST:-cherry.fewa.app}`)
+      traefik.http.routers.cherry-enterprise.rule: Host(`${CHERRY_ENTERPRISE_HOST:-cherry.fewa.app}`) && !PathPrefix(`/api`)
       traefik.http.routers.cherry-enterprise.priority: "100"
       traefik.http.routers.cherry-enterprise.entrypoints: websecure
       traefik.http.routers.cherry-enterprise.tls: "true"
@@ -42,6 +42,8 @@ services:
       traefik.http.routers.cherry-enterprise-api.tls: "true"
       traefik.http.routers.cherry-enterprise-api.tls.certresolver: cloudflare
       traefik.http.routers.cherry-enterprise-api.service: cherry-enterprise-api
+      traefik.http.routers.cherry-enterprise-api.middlewares: cherry-enterprise-api-strip
+      traefik.http.middlewares.cherry-enterprise-api-strip.stripprefix.prefixes: /api
       traefik.http.services.cherry-enterprise-api.loadbalancer.server.port: "3670"
 
 networks:
