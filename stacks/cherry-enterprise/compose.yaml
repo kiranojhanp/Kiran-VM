@@ -1,0 +1,49 @@
+services:
+  cherry-enterprise:
+    image: docker.io/cherrystudio/cherry-studio-enterprise-api:latest
+    restart: unless-stopped
+    environment:
+      API_PORT: "3670"
+      ADMIN_PORT: "3680"
+      API_URL: ${CHERRY_ENTERPRISE_API_URL:-https://${CHERRY_ENTERPRISE_HOST:-cherry.fewa.app}}
+      ADMIN_APP_NAME: ${CHERRY_ENTERPRISE_APP_NAME:-Cherry Studio Enterprise}
+      JWT_SECRET: ${CHERRY_ENTERPRISE_JWT_SECRET}
+      DB_TYPE: postgres
+      DB_HOST: ${CHERRY_ENTERPRISE_DB_HOST:-infra-postgres-1}
+      DB_PORT: ${CHERRY_ENTERPRISE_DB_PORT:-5432}
+      DB_USERNAME: ${CHERRY_ENTERPRISE_DB_USERNAME}
+      DB_PASSWORD: ${CHERRY_ENTERPRISE_DB_PASSWORD}
+      DB_NAME: ${CHERRY_ENTERPRISE_DB_NAME}
+      DB_SSL: ${CHERRY_ENTERPRISE_DB_SSL:-false}
+    volumes:
+      - cherry_enterprise_data:/app/data
+      - cherry_enterprise_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3670/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - shared
+      - infra
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.cherry-enterprise.rule: Host(`${CHERRY_ENTERPRISE_HOST:-cherry.fewa.app}`)
+      traefik.http.routers.cherry-enterprise.entrypoints: websecure
+      traefik.http.routers.cherry-enterprise.tls: "true"
+      traefik.http.routers.cherry-enterprise.tls.certresolver: letsencrypt
+      traefik.http.services.cherry-enterprise.loadbalancer.server.port: "3680"
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+  infra:
+    name: infra_net
+    external: true
+
+volumes:
+  cherry_enterprise_data:
+  cherry_enterprise_logs:

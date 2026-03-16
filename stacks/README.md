@@ -17,6 +17,7 @@ Core verification checks infra, Traefik, and Komodo. App-specific health checks 
 ## What is managed here
 
 - `stacks/actual/compose.yaml` - Actual Budget stack
+- `stacks/cherry-enterprise/compose.yaml` - Cherry Studio Enterprise stack
 
 Traefik is provisioned from `provision/roles/traefik/*`. It is not deployed from a Komodo stack.
 
