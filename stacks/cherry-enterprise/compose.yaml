@@ -30,7 +30,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.cherry-enterprise.rule: Host(`${CHERRY_ENTERPRISE_HOST:-cherry.fewa.app}`) && !PathPrefix(`/api`)
+      traefik.http.routers.cherry-enterprise.rule: Host(`${CHERRY_ENTERPRISE_HOST:-cherry.fewa.app}`) && PathPrefix(`/`)
       traefik.http.routers.cherry-enterprise.priority: "100"
       traefik.http.routers.cherry-enterprise.entrypoints: websecure
       traefik.http.routers.cherry-enterprise.tls: "true"
