@@ -33,7 +33,7 @@ services:
       traefik.http.routers.cherry-enterprise.rule: Host(`${CHERRY_ENTERPRISE_HOST:-cherry.fewa.app}`)
       traefik.http.routers.cherry-enterprise.entrypoints: websecure
       traefik.http.routers.cherry-enterprise.tls: "true"
-      traefik.http.routers.cherry-enterprise.tls.certresolver: letsencrypt
+      traefik.http.routers.cherry-enterprise.tls.certresolver: cloudflare
       traefik.http.services.cherry-enterprise.loadbalancer.server.port: "3680"
 
 networks:
