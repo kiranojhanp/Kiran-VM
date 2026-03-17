@@ -1,8 +1,11 @@
 services:
   vikunja:
     image: vikunja/vikunja:2.1.0
+    user: "0:0"
     restart: unless-stopped
     environment:
+      HOME: /tmp
+      XDG_CACHE_HOME: /tmp/.cache
       VIKUNJA_SERVICE_PUBLICURL: https://${VIKUNJA_HOST:-vikunja.fewa.app}/
       VIKUNJA_SERVICE_JWTSECRET: ${VIKUNJA_JWT_SECRET:-change-me}
       VIKUNJA_DATABASE_HOST: ${SHARED_POSTGRES_HOST:-postgres}
