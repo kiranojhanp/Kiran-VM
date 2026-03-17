@@ -1,0 +1,56 @@
+services:
+  paperlessngx:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    restart: unless-stopped
+    depends_on:
+      - gotenberg
+      - tika
+    environment:
+      PAPERLESS_TIME_ZONE: ${TZ:-UTC}
+      PAPERLESS_URL: https://${PAPERLESS_HOST:-paperless.fewa.app}
+      PAPERLESS_REDIS: redis://${SHARED_REDIS_HOST:-redis}:6379
+      PAPERLESS_DBHOST: ${SHARED_POSTGRES_HOST:-postgres}
+      PAPERLESS_DBNAME: ${PAPERLESS_DB_NAME:-paperless}
+      PAPERLESS_DBUSER: ${PAPERLESS_DB_USER:-paperless}
+      PAPERLESS_DBPASS: ${PAPERLESS_DB_PASSWORD:-paperless}
+      PAPERLESS_TIKA_ENABLED: "1"
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+    volumes:
+      - paperless_data:/usr/src/paperless/data
+      - paperless_media:/usr/src/paperless/media
+      - paperless_export:/usr/src/paperless/export
+      - paperless_consume:/usr/src/paperless/consume
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.paperlessngx.rule: Host(`${PAPERLESS_HOST:-paperless.fewa.app}`)
+      traefik.http.routers.paperlessngx.entrypoints: websecure
+      traefik.http.routers.paperlessngx.tls: "true"
+      traefik.http.routers.paperlessngx.tls.certresolver: letsencrypt
+      traefik.http.services.paperlessngx.loadbalancer.server.port: "8000"
+
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:8
+    restart: unless-stopped
+    networks:
+      - shared
+
+  tika:
+    image: ghcr.io/paperless-ngx/tika:latest
+    restart: unless-stopped
+    networks:
+      - shared
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+
+volumes:
+  paperless_data:
+  paperless_media:
+  paperless_export:
+  paperless_consume:
