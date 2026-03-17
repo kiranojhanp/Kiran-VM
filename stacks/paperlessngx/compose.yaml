@@ -33,13 +33,13 @@ services:
       traefik.http.services.paperlessngx.loadbalancer.server.port: "8000"
 
   gotenberg:
-    image: docker.io/gotenberg/gotenberg:8
+    image: gotenberg/gotenberg:latest
     restart: unless-stopped
     networks:
       - shared
 
   tika:
-    image: ghcr.io/paperless-ngx/tika:latest
+    image: apache/tika:latest
     restart: unless-stopped
     networks:
       - shared
