@@ -17,7 +17,10 @@ Core verification checks infra, Traefik, and Komodo. App-specific health checks 
 ## What is managed here
 
 - `stacks/actual/compose.yaml` - Actual Budget stack
+- `stacks/mealie/compose.yaml` - Mealie stack
 - `stacks/openwebui/compose.yaml` - Open WebUI stack
+- `stacks/paperlessngx/compose.yaml` - Paperless-ngx stack
+- `stacks/vikunja/compose.yaml` - Vikunja stack
 - `stacks/vaultwarden/compose.yaml` - Vaultwarden stack
 
 Traefik is provisioned from `provision/roles/traefik/*`. It is not deployed from a Komodo stack.

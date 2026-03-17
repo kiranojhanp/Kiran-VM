@@ -1,0 +1,36 @@
+services:
+  vikunja:
+    image: vikunja/vikunja:2.1.0
+    restart: unless-stopped
+    environment:
+      VIKUNJA_SERVICE_PUBLICURL: https://${VIKUNJA_HOST:-vikunja.fewa.app}/
+      VIKUNJA_SERVICE_JWTSECRET: ${VIKUNJA_JWT_SECRET:-change-me}
+      VIKUNJA_DATABASE_HOST: ${SHARED_POSTGRES_HOST:-postgres}
+      VIKUNJA_DATABASE_PASSWORD: ${VIKUNJA_DB_PASSWORD:-vikunja}
+      VIKUNJA_DATABASE_TYPE: postgres
+      VIKUNJA_DATABASE_USER: ${VIKUNJA_DB_USER:-vikunja}
+      VIKUNJA_DATABASE_DATABASE: ${VIKUNJA_DB_NAME:-vikunja}
+    volumes:
+      - vikunja_files:/app/vikunja/files
+    networks:
+      - shared
+      - infra
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.vikunja.rule: Host(`${VIKUNJA_HOST:-vikunja.fewa.app}`)
+      traefik.http.routers.vikunja.entrypoints: websecure
+      traefik.http.routers.vikunja.tls: "true"
+      traefik.http.routers.vikunja.tls.certresolver: letsencrypt
+      traefik.http.services.vikunja.loadbalancer.server.port: "3456"
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+  infra:
+    name: ${SHARED_INFRA_NETWORK:-infra_net}
+    external: true
+
+volumes:
+  vikunja_files:
