@@ -23,6 +23,7 @@ services:
       - paperless_consume:/usr/src/paperless/consume
     networks:
       - shared
+      - infra
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
@@ -47,6 +48,9 @@ services:
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+  infra:
+    name: ${SHARED_INFRA_NETWORK:-infra_net}
     external: true
 
 volumes:

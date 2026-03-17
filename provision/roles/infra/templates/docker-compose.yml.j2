@@ -15,7 +15,9 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - infra_net
+      infra_net:
+        aliases:
+          - postgres
 
   redis:
     image: {{ redis_image }}
@@ -29,7 +31,9 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - infra_net
+      infra_net:
+        aliases:
+          - redis
 
 volumes:
   postgres-data:
