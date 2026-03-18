@@ -37,12 +37,11 @@ services:
       POLLING: ${PORTABASE_AGENT_POLLING:-5}
       APP_ENV: production
       DATA_PATH: /data
-      DATABASES_CONFIG_FILE: /config/config.json
       LOG: ${PORTABASE_AGENT_LOG:-info}
       EDGE_KEY: ${PORTABASE_AGENT_EDGE_KEY:-}
     volumes:
-      - ./agent/databases.json:/config/config.json
       - portabase_agent_data:/data
+      - ./agent/databases.json:/data/config.json
     depends_on:
       portabase:
         condition: service_started
