@@ -37,6 +37,7 @@ services:
       POLLING: ${PORTABASE_AGENT_POLLING:-5}
       APP_ENV: production
       DATA_PATH: /data
+      DATABASES_CONFIG_FILE: /config/config.json
       LOG: ${PORTABASE_AGENT_LOG:-info}
       EDGE_KEY: ${PORTABASE_AGENT_EDGE_KEY:-}
     volumes:
