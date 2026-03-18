@@ -16,7 +16,11 @@ Copy `stacks/portabase/.env.example` into your stack/environment secrets and set
 
 ## Agent database config
 
-The agent reads `stacks/portabase/agent/databases.json`.
+The agent reads config from `/data/config.json`.
+This stack binds `stacks/portabase/agent/databases.json` directly to that path.
+
+- Keep `stacks/portabase/agent/databases.json` as a regular file.
+- If the file is missing, deploy fails fast (`create_host_path: false`) instead of creating a bad directory mount.
 
 By default it starts empty:
 
