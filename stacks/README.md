@@ -1,49 +1,49 @@
 # stacks
 
-This directory holds app stacks you run from Komodo.
+This directory contains app stacks deployed from Komodo.
 
 ## What to do in Komodo
 
-You will do the same basic flow for each stack (`actual`, `mealie`, `openwebui`, `paperlessngx`, `portabase`, `vikunja`, `vaultwarden`):
+Use the same flow for every stack (`actual`, `mealie`, `openwebui`, `paperlessngx`, `portabase`, `vikunja`, `vaultwarden`):
 
-1. Open Komodo and create the stack (or open the existing one).
-2. Point it to the correct compose file (`stacks/<stack-name>/compose.yaml`).
-3. Set variables in that stack's Environment section.
+1. Create the stack in Komodo (or open the existing one).
+2. Set run directory to `stacks/<stack-name>`.
+3. Set variables in the stack Environment section.
 4. Deploy (or Redeploy).
-5. After any repo change, run `task verify` locally, then redeploy from Komodo.
+5. After repo changes, run `task verify` locally, then redeploy in Komodo.
 
-`task verify` checks infra, Traefik, and Komodo reachability. App-level checks stay with each stack.
+`task verify` checks infra, Traefik, and Komodo reachability.
 
 ## Where each variable belongs
 
-Use this split to avoid mixing concerns:
+Use this split:
 
-- Komodo stack environment: app runtime values used by `stacks/*/compose.yaml` (hostnames, app secrets, runtime settings).
+- Komodo stack environment: app runtime values used in `stacks/*/compose.yaml`.
 - `provision/secrets.yml` (ansible-vault): platform secrets (`cloudflare_api_token`, `komodo_*`, shared DB/Redis passwords).
 - Pulumi config (`infra` stack): OCI and infrastructure values (`oci:*`, `kiran-vm-infra:*`).
 
-Komodo platform variables are not set in each app stack. Provisioning renders them from `provision/secrets.yml` and `provision/group_vars/all.yml` into `/opt/komodo/.env` (for example: `KOMODO_PASSKEY`, `KOMODO_WEBHOOK_SECRET`, `KOMODO_JWT_SECRET`, `KOMODO_INIT_ADMIN_USERNAME`, `KOMODO_INIT_ADMIN_PASSWORD`).
+Komodo platform variables are not set per app stack. Provisioning renders them from `provision/secrets.yml` and `provision/group_vars/all.yml` into `/opt/komodo/.env` (for example: `KOMODO_PASSKEY`, `KOMODO_WEBHOOK_SECRET`, `KOMODO_JWT_SECRET`, `KOMODO_INIT_ADMIN_USERNAME`, `KOMODO_INIT_ADMIN_PASSWORD`).
 
-If a compose file references `${...}`, set it in that stack's Komodo Environment unless the stack README says otherwise.
+If a compose file references `${...}`, set it in that stack's Komodo Environment unless that stack README says otherwise.
 
 ## Shared variables used by multiple stacks
 
-- `SHARED_DOCKER_NETWORK` (default `internal-network`): network used by Traefik and app stacks.
+- `SHARED_DOCKER_NETWORK` (default `internal-network`): network for Traefik and app stacks.
 - `SHARED_INFRA_NETWORK` (default `infra_net`): only for stacks that need shared Postgres or Redis.
 - `TZ` (default `UTC`): timezone for stacks that expose timezone settings.
 - `PUID` / `PGID` (default `1000`): UID/GID mapping for containers that support it.
 
 ## Stack docs
 
-- `stacks/actual/README.md`
-- `stacks/mealie/README.md`
-- `stacks/openwebui/README.md`
-- `stacks/paperlessngx/README.md`
-- `stacks/portabase/README.md`
-- `stacks/vikunja/README.md`
-- `stacks/vaultwarden/README.md`
+- [Actual](actual/README.md)
+- [Mealie](mealie/README.md)
+- [Open WebUI](openwebui/README.md)
+- [Paperless-ngx](paperlessngx/README.md)
+- [Portabase](portabase/README.md)
+- [Vikunja](vikunja/README.md)
+- [Vaultwarden](vaultwarden/README.md)
 
-Traefik is provisioned from `provision/roles/traefik/*`; it is not an app stack in Komodo.
+Traefik is provisioned from `provision/roles/traefik/*`, not as a Komodo app stack.
 
 ## Required stack rules
 
@@ -51,4 +51,4 @@ Traefik is provisioned from `provision/roles/traefik/*`; it is not an app stack 
 - Keep HTTPS labels in place (`entrypoints=websecure`, `tls=true`, `tls.certresolver=letsencrypt`).
 - Avoid custom CSP labels unless an app strictly needs them.
 
-`task verify` fails if duplicate Traefik host routes are detected.
+`task verify` also fails if duplicate Traefik host routes are detected.
