@@ -1,45 +1,45 @@
-name: Deploy app stack on change
+# name: Deploy app stack on change
 
-# Triggered on pushes to main that touch app stacks managed by Komodo.
+# # Triggered on pushes to main that touch app stacks managed by Komodo.
 
-on:
-  push:
-    branches: [main]
-    paths:
-      - "stacks/actual/**"
+# on:
+#   push:
+#     branches: [main]
+#     paths:
+#       - "stacks/actual/**"
 
-concurrency:
-  group: deploy-actual
-  cancel-in-progress: false
+# concurrency:
+#   group: deploy-actual
+#   cancel-in-progress: false
 
-# ── Jobs ──────────────────────────────────────────────────────────────────────
+# # ── Jobs ──────────────────────────────────────────────────────────────────────
 
-jobs:
-  deploy:
-    name: Deploy actual
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup go-task
-        uses: pnorton5432/setup-task@v1
-        with:
-          task-version: 3.29.1
+# jobs:
+#   deploy:
+#     name: Deploy actual
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 10
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Setup go-task
+#         uses: pnorton5432/setup-task@v1
+#         with:
+#           task-version: 3.29.1
           
-      - name: Validate webhook secrets
-        run: |
-          test -n "${{ secrets.KOMODO_WEBHOOK_ACTUAL }}"
-          test -n "${{ secrets.KOMODO_WEBHOOK_SECRET }}"
+#       - name: Validate webhook secrets
+#         run: |
+#           test -n "${{ secrets.KOMODO_WEBHOOK_ACTUAL }}"
+#           test -n "${{ secrets.KOMODO_WEBHOOK_SECRET }}"
 
-      - name: Trigger Komodo procedure
-        run: task komodo:trigger STACK="actual" WEBHOOK_URL="${{ secrets.KOMODO_WEBHOOK_ACTUAL }}" WEBHOOK_SECRET="${{ secrets.KOMODO_WEBHOOK_SECRET }}"
-      - name: Verify Actual reachable after deploy
-        run: |
-          for i in $(seq 1 30); do
-            if curl --fail --silent --show-error https://actual.fewa.app >/dev/null; then
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "Actual did not recover within 5 minutes after deploy"
-          exit 1
+#       - name: Trigger Komodo procedure
+#         run: task komodo:trigger STACK="actual" WEBHOOK_URL="${{ secrets.KOMODO_WEBHOOK_ACTUAL }}" WEBHOOK_SECRET="${{ secrets.KOMODO_WEBHOOK_SECRET }}"
+#       - name: Verify Actual reachable after deploy
+#         run: |
+#           for i in $(seq 1 30); do
+#             if curl --fail --silent --show-error https://actual.fewa.app >/dev/null; then
+#               exit 0
+#             fi
+#             sleep 10
+#           done
+#           echo "Actual did not recover within 5 minutes after deploy"
+#           exit 1
