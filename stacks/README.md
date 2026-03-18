@@ -20,6 +20,7 @@ Core verification checks infra, Traefik, and Komodo. App-specific health checks 
 - `stacks/mealie/compose.yaml` - Mealie stack
 - `stacks/openwebui/compose.yaml` - Open WebUI stack
 - `stacks/paperlessngx/compose.yaml` - Paperless-ngx stack
+- `stacks/portabase/compose.yaml` - Portabase stack
 - `stacks/vikunja/compose.yaml` - Vikunja stack
 - `stacks/vaultwarden/compose.yaml` - Vaultwarden stack
 
