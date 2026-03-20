@@ -16,11 +16,15 @@ tasks:
       vars: [STACK, WEBHOOK_URL, WEBHOOK_SECRET]
     cmds:
       - >-
+        payload='{"stack":"{{.STACK}}","event":"{{default "push" .GITHUB_EVENT_NAME}}","repository":"{{.GITHUB_REPOSITORY}}","commit":"{{.GITHUB_SHA}}","ref":"{{.GITHUB_REF}}","workflow":"{{.GITHUB_WORKFLOW}}"}';
+        sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "{{.WEBHOOK_SECRET}}" -hex | sed 's/^.* //');
         curl --fail --silent --show-error
         --retry 5 --retry-delay 2 --retry-all-errors
         --connect-timeout 10 --max-time 30
         -X POST
         -H "Content-Type: application/json"
+        -H "X-GitHub-Event: {{default "push" .GITHUB_EVENT_NAME}}"
+        -H "X-Hub-Signature-256: sha256=$sig"
         -H "X-Webhook-Secret: {{.WEBHOOK_SECRET}}"
-        -d '{"stack":"{{.STACK}}","event":"{{default "push" .GITHUB_EVENT_NAME}}","repository":"{{.GITHUB_REPOSITORY}}","commit":"{{.GITHUB_SHA}}","ref":"{{.GITHUB_REF}}","workflow":"{{.GITHUB_WORKFLOW}}"}'
+        -d "$payload"
         "{{.WEBHOOK_URL}}"

@@ -115,7 +115,7 @@ tasks:
         "set -e; sudo -n bash -lc 'set -a; source /opt/backup/scripts/backup.env; set +a; restic snapshots --latest 1 >/dev/null; restic stats latest --mode raw-data >/dev/null'"
       - >-
         ansible -i provision/inventory/hosts.ini all -m shell -a
-        "set -e; sudo -n docker ps --filter name=backrest-backrest-1 --filter status=running --quiet | grep -q ."
+        "set -e; sudo -n docker ps --filter ancestor=ghcr.io/garethgeorge/backrest:latest --filter status=running --quiet | grep -q ."
       - curl --fail --silent --show-error "{{.BACKREST_URL}}" >/dev/null
 
   backrest:migrate:manual-down:
