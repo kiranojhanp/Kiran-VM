@@ -19,3 +19,15 @@ Compose file: `stacks/mealie/compose.yaml`
 - `MEALIE_MAX_WORKERS` (optional): worker count. Default: `1`.
 - `MEALIE_WEB_CONCURRENCY` (optional): web concurrency. Default: `1`.
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
+- `SHARED_INFRA_NETWORK` (optional): shared infra network for Postgres. Default: `infra_net`.
+- `SHARED_POSTGRES_HOST` (optional): shared Postgres host on infra network. Default: `postgres`.
+- `SHARED_POSTGRES_PORT` (optional): shared Postgres port. Default: `5432`.
+- `MEALIE_DB_NAME` (optional): database name. Default: `mealie`.
+- `MEALIE_DB_USER` (optional): database user. Default: `mealie`.
+- `MEALIE_DB_PASSWORD` (required): database password for `MEALIE_DB_USER`.
+
+## One-time migration note
+
+This stack now uses shared Postgres (`DB_ENGINE=postgres`) instead of SQLite-only mode.
+Before switching production, create database and credentials in shared Postgres, then run
+Mealie with the Postgres variables above.

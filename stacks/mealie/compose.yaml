@@ -10,11 +10,18 @@ services:
       MAX_WORKERS: ${MEALIE_MAX_WORKERS:-1}
       WEB_CONCURRENCY: ${MEALIE_WEB_CONCURRENCY:-1}
       BASE_URL: https://${MEALIE_HOST:-mealie.fewa.app}
+      DB_ENGINE: postgres
+      POSTGRES_SERVER: ${SHARED_POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${SHARED_POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${MEALIE_DB_NAME:-mealie}
+      POSTGRES_USER: ${MEALIE_DB_USER:-mealie}
+      POSTGRES_PASSWORD: ${MEALIE_DB_PASSWORD:-mealie}
     volumes:
       - mealie_data:/app/data
       - /etc/localtime:/etc/localtime:ro
     networks:
       - shared
+      - infra
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
@@ -27,6 +34,9 @@ services:
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+  infra:
+    name: ${SHARED_INFRA_NETWORK:-infra_net}
     external: true
 
 volumes:
