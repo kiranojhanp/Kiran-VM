@@ -11,7 +11,7 @@ vars:
   SECRETS_FILE_INFRA: '../provision/secrets.yml'
   VAULT_PASSWORD_FILE: '${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}'
   CLOUDFLARE_TOKEN_FROM_VAULT: >-
-    ansible-vault view {{.SECRETS_FILE_INFRA}} --vault-password-file "{{.VAULT_PASSWORD_FILE}}" | python3 -c "import sys,yaml; data=yaml.safe_load(sys.stdin.read()) or {}; token=data.get('cloudflare_api_token',''); print(token if isinstance(token,str) else '')"
+    ansible-vault view {{.SECRETS_FILE_INFRA}} --vault-password-file "{{.VAULT_PASSWORD_FILE}}" | python3 -c "import re,sys; content=sys.stdin.read(); match=re.search(r'(?m)^cloudflare_api_token:\\s*(.+?)\\s*$', content); token=match.group(1) if match else ''; token=token.strip(); token=token[1:-1] if len(token)>=2 and token[0]==token[-1] and token[0] in ('\"', \"'\") else token; print(token)"
   CLOUDFLARE_TOKEN_CHECK: 'test -f "{{.SECRETS_FILE_INFRA}}" && test -f "{{.VAULT_PASSWORD_FILE}}" && command -v ansible-vault >/dev/null 2>&1 && test -n "$( {{.CLOUDFLARE_TOKEN_FROM_VAULT}} )"'
   CLOUDFLARE_TOKEN_EXPORT: 'CLOUDFLARE_API_TOKEN="$( {{.CLOUDFLARE_TOKEN_FROM_VAULT}} )"'
 
