@@ -38,3 +38,31 @@ postgres_image: "postgres:17"
 redis_image: "redis:7.4.8"
 infra_dir: /opt/infra
 komodo_dir: /opt/komodo
+
+# Backup (lean mode: pg_dump + restic + rclone backend)
+backup_enabled: true
+backup_dir: /opt/backup
+backup_postgres_dump_dir: /var/backups/postgres/shared
+backup_rclone_config_dir: /root/.config/rclone
+backup_logs_dir: /var/log/kiran-backup
+backup_shared_postgres_container: infra-postgres-1
+backup_shared_postgres_user: postgres
+backup_shared_postgres_databases:
+  - paperless
+  - vikunja
+backup_restic_on_calendar: "*-*-* 02:00:00"
+backup_prune_on_calendar: "Sun *-*-* 03:00:00"
+backup_check_on_calendar: "*-*-01 04:00:00"
+backup_retention_keep_daily: 7
+backup_retention_keep_weekly: 4
+backup_retention_keep_monthly: 12
+backup_docker_volume_paths:
+  - /var/lib/docker/volumes/actual_actual_data/_data
+  - /var/lib/docker/volumes/mealie_mealie_data/_data
+  - /var/lib/docker/volumes/openwebui_open_webui_data/_data
+  - /var/lib/docker/volumes/vaultwarden_vaultwarden_data/_data
+  - /var/lib/docker/volumes/paperless_paperless_data/_data
+  - /var/lib/docker/volumes/paperless_paperless_media/_data
+  - /var/lib/docker/volumes/paperless_paperless_export/_data
+  - /var/lib/docker/volumes/paperless_paperless_consume/_data
+  - /var/lib/docker/volumes/vikunja_vikunja_files/_data

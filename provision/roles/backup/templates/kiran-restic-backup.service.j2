@@ -1,0 +1,7 @@
+[Unit]
+Description=Kiran VM restic backup
+
+[Service]
+Type=oneshot
+ExecStartPre={{ backup_dir }}/scripts/pre-backup-pgdump.sh
+ExecStart={{ backup_dir }}/scripts/restic-backup.sh

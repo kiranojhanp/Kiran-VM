@@ -1,0 +1,6 @@
+[Unit]
+Description=Kiran VM restic retention prune
+
+[Service]
+Type=oneshot
+ExecStart={{ backup_dir }}/scripts/restic-prune.sh

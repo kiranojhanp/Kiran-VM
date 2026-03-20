@@ -1,0 +1,9 @@
+[Unit]
+Description=Run Kiran VM restic backup daily
+
+[Timer]
+OnCalendar={{ backup_restic_on_calendar }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

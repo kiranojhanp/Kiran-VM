@@ -30,5 +30,8 @@
     - role: komodo
       tags: [komodo, services]
 
+    - role: backup
+      tags: [backup, services]
+
     - role: traefik
       tags: [traefik, services]
