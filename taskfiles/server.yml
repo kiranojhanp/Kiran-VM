@@ -101,7 +101,7 @@ tasks:
         | openssl x509 -noout -issuer -subject >/dev/null
 
   backup:health:
-    desc: Verify backup timers, restic snapshots, and Backrest reachability
+    desc: Verify Backrest-owned backup runtime and repository health
     deps: [_check:provision, provision:inventory]
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
@@ -109,7 +109,7 @@ tasks:
     cmds:
       - >-
         ansible -i provision/inventory/hosts.ini all -m shell -a
-        "set -e; sudo -n systemctl is-active kiran-restic-backup.timer kiran-restic-prune.timer kiran-restic-check.timer >/dev/null"
+        "set -e; ! sudo -n systemctl is-active kiran-restic-backup.timer >/dev/null 2>&1; ! sudo -n systemctl is-active kiran-restic-prune.timer >/dev/null 2>&1; ! sudo -n systemctl is-active kiran-restic-check.timer >/dev/null 2>&1"
       - >-
         ansible -i provision/inventory/hosts.ini all -m shell -a
         "set -e; sudo -n bash -lc 'set -a; source /opt/backup/scripts/backup.env; set +a; restic snapshots --latest 1 >/dev/null; restic stats latest --mode raw-data >/dev/null'"
