@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+{% raw %}
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/wal-g.env"
+
+POSTGRES_CONTAINER="infra-postgres-1"
+
+log() { echo "[$(date -Iseconds)] $*"; }
+log_section() { echo ""; echo "========== $(date -Iseconds) WAL-G BASE BACKUP =========="; }
+
+section() {
+  log_section
+  log "Starting WAL-G base backup via ${POSTGRES_CONTAINER}"
+  log "Target: ${WALG_S3_PREFIX}"
+}
+
+section
+
+log "Verifying container is running"
+if ! docker ps --format '{{.Names}}' | grep -q "^${POSTGRES_CONTAINER}$"; then
+  log "ERROR: Container ${POSTGRES_CONTAINER} is not running" >&2
+  exit 1
+fi
+
+log "Verifying WAL-G is available in container"
+if ! docker exec "${POSTGRES_CONTAINER}" wal-g --version 2>/dev/null; then
+  log "ERROR: wal-g not found in ${POSTGRES_CONTAINER}" >&2
+  exit 1
+fi
+
+log "Verifying R2 connectivity"
+docker exec "${POSTGRES_CONTAINER}" wal-g backup-list 2>/dev/null | head -3
+
+log "Running WAL-G backup-push from inside container"
+if ! docker exec "${POSTGRES_CONTAINER}" env \
+  PGUSER=postgres \
+  PGPASSWORD="${POSTGRES_PASSWORD}" \
+  PGHOST=localhost \
+  WALG_S3_PREFIX="${WALG_S3_PREFIX}" \
+  WALG_PASSWORD="${WALG_PASSWORD}" \
+  AWS_ENDPOINT="${AWS_ENDPOINT}" \
+  AWS_S3_FORCE_PATH_STYLE="${AWS_S3_FORCE_PATH_STYLE:-true}" \
+  AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+  AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+  AWS_REGION="${AWS_REGION}" \
+  WALG_S3_STORAGE_CLASS=STANDARD \
+  WALG_COMPRESSION_METHOD="${WALG_COMPRESSION_METHOD:-lz4}" \
+  WALG_DELTA_MAX_STEPS="${WALG_DELTA_MAX_STEPS:-6}" \
+  wal-g backup-push /var/lib/postgresql/data; then
+  log "ERROR: WAL-G backup-push failed" >&2
+  exit 1
+fi
+
+log "Listing available backups"
+docker exec "${POSTGRES_CONTAINER}" env \
+  WALG_S3_PREFIX="${WALG_S3_PREFIX}" \
+  WALG_PASSWORD="${WALG_PASSWORD}" \
+  AWS_ENDPOINT="${AWS_ENDPOINT}" \
+  AWS_S3_FORCE_PATH_STYLE="${AWS_S3_FORCE_PATH_STYLE:-true}" \
+  AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+  AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+  AWS_REGION="${AWS_REGION}" \
+  wal-g backup-list
+
+log "Base backup completed successfully"
+{% endraw %}

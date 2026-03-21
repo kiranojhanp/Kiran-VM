@@ -1,0 +1,14 @@
+[Unit]
+Description=WAL-G base backup for Postgres
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+EnvironmentFile=/opt/backup/scripts/wal-g.env
+ExecStart=/opt/backup/scripts/wal-g-backup.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wal-g-backup
+TimeoutStopSec=3600

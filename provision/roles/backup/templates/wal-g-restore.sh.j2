@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+{% raw %}
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/wal-g.env"
+
+POSTGRES_CONTAINER="infra-postgres-1"
+
+log() { echo "[$(date -Iseconds)] $*"; }
+log_section() { echo ""; echo "========== $(date -Iseconds) WAL-G RESTORE =========="; }
+
+show_usage() {
+  cat <<EOF
+Usage: $0 [OPTIONS]
+
+Options:
+  --target-dir <dir>    Directory to restore to. Must be under /tmp or /backups
+                        (paths accessible from inside the container).
+                        Default: /tmp/wal-g-restore.
+  --backup <name>       Backup name (e.g. base_000000020250321_123456).
+                        Default: latest.
+  --pitr <timestamp>    Point-in-time restore (e.g. '2025-01-15 14:30:00').
+  --purge-wal           Purge WAL files after restore.
+  -h, --help            Show this help.
+
+Examples:
+  $0 --target-dir /tmp/restore
+  $0 --target-dir /tmp/restore --backup base_000000020250321_123456
+  $0 --target-dir /tmp/restore --pitr '2025-01-15 14:30:00'
+EOF
+}
+
+TARGET_DIR="/tmp/wal-g-restore"
+BACKUP_NAME="LATEST"
+PITR_TIME=""
+PURGE_WAL=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --target-dir) TARGET_DIR="$2"; shift 2 ;;
+    --backup) BACKUP_NAME="$2"; shift 2 ;;
+    --pitr) PITR_TIME="$2"; shift 2 ;;
+    --purge-wal) PURGE_WAL=1; shift ;;
+    -h|--help) show_usage; exit 0 ;;
+    *) echo "Unknown option: $1"; show_usage; exit 1 ;;
+  esac
+done
+
+log_section
+log "Starting WAL-G restore"
+
+if [[ -z "${TARGET_DIR}" ]]; then
+  log "ERROR: --target-dir is required" >&2
+  show_usage
+  exit 1
+fi
+
+log "Verifying container is running"
+if ! docker ps --format '{{.Names}}' | grep -q "^${POSTGRES_CONTAINER}$"; then
+  log "ERROR: Container ${POSTGRES_CONTAINER} is not running" >&2
+  exit 1
+fi
+
+log "Listing available backups"
+docker exec "${POSTGRES_CONTAINER}" env \
+  WALG_S3_PREFIX="${WALG_S3_PREFIX}" \
+  WALG_PASSWORD="${WALG_PASSWORD}" \
+  AWS_ENDPOINT="${AWS_ENDPOINT}" \
+  AWS_S3_FORCE_PATH_STYLE="${AWS_S3_FORCE_PATH_STYLE:-true}" \
+  AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+  AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+  AWS_REGION="${AWS_REGION}" \
+  WALG_S3_STORAGE_CLASS=STANDARD \
+  wal-g backup-list
+
+log "Creating target directory"
+docker exec "${POSTGRES_CONTAINER}" mkdir -p "${TARGET_DIR}"
+
+if [[ -n "${PITR_TIME}" ]]; then
+  log "Point-in-time restore to ${PITR_TIME}"
+  docker exec "${POSTGRES_CONTAINER}" env \
+    WALG_S3_PREFIX="${WALG_S3_PREFIX}" \
+    WALG_PASSWORD="${WALG_PASSWORD}" \
+    AWS_ENDPOINT="${AWS_ENDPOINT}" \
+    AWS_S3_FORCE_PATH_STYLE="${AWS_S3_FORCE_PATH_STYLE:-true}" \
+    AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+    AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+    AWS_REGION="${AWS_REGION}" \
+    WALG_S3_STORAGE_CLASS=STANDARD \
+    wal-g backup-fetch "${TARGET_DIR}" "${BACKUP_NAME}" --wal-br-path "${PITR_TIME}"
+else
+  log "Restoring '${BACKUP_NAME}' to ${TARGET_DIR}"
+  docker exec "${POSTGRES_CONTAINER}" env \
+    WALG_S3_PREFIX="${WALG_S3_PREFIX}" \
+    WALG_PASSWORD="${WALG_PASSWORD}" \
+    AWS_ENDPOINT="${AWS_ENDPOINT}" \
+    AWS_S3_FORCE_PATH_STYLE="${AWS_S3_FORCE_PATH_STYLE:-true}" \
+    AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+    AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+    AWS_REGION="${AWS_REGION}" \
+    WALG_S3_STORAGE_CLASS=STANDARD \
+    wal-g backup-fetch "${TARGET_DIR}" "${BACKUP_NAME}"
+fi
+
+if [[ -n "${PURGE_WAL}" ]]; then
+  log "Purging WAL files"
+  docker exec "${POSTGRES_CONTAINER}" sh -c "rm -rf '${TARGET_DIR}/wal' '${TARGET_DIR}/pg_wal' 2>/dev/null || true"
+fi
+
+log "Restore completed: ${TARGET_DIR}"
+log ""
+log "To copy restore to host: docker cp ${POSTGRES_CONTAINER}:${TARGET_DIR}/. /tmp/walg-restore/"
+{% endraw %}

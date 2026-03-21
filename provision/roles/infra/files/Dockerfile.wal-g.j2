@@ -1,0 +1,20 @@
+FROM postgres:17 AS base
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    WALG_VERSION={{ wal_g_version | default('3.0.1') }}
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        wget \
+        ca-certificates \
+        tzdata \
+    && arch="$(dpkg --print-architecture)" \
+    && if [ "$arch" = "arm64" ]; then arch="aarch64"; fi \
+    && wget -q "https://github.com/wal-g/wal-g/releases/download/v${WALG_VERSION}/wal-g-pg-ubuntu20.04-${arch}" -O /usr/local/bin/wal-g \
+    && chmod +x /usr/local/bin/wal-g \
+    && apt-get remove -y wget \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM base
+ENV PGDATA=/var/lib/postgresql/data

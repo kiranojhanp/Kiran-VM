@@ -11,6 +11,22 @@
     group: "{{ deploy_user }}"
     mode: "0755"
 
+- name: Deploy infra files directory
+  ansible.builtin.file:
+    path: "{{ infra_dir }}/files"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Deploy WAL-G Dockerfile
+  ansible.builtin.template:
+    src: files/Dockerfile.wal-g.j2
+    dest: "{{ infra_dir }}/files/Dockerfile.wal-g"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+
 - name: Deploy infra docker-compose.yml
   ansible.builtin.template:
     src: docker-compose.yml.j2
@@ -37,10 +53,14 @@
     group: "{{ deploy_user }}"
     mode: "0640"
 
-- name: Pull infra images
-  community.docker.docker_compose_v2_pull:
-    project_src: "{{ infra_dir }}"
-    project_name: infra
+- name: Build infra Postgres image with WAL-G
+  ansible.builtin.shell:
+    cmd: docker compose -f docker-compose.yml build --pull postgres
+    chdir: "{{ infra_dir }}"
+  register: pg_build
+  failed_when: pg_build.rc != 0
+  changed_when: true
+  notify: Restart infra
 
 - name: Start infra stack
   community.docker.docker_compose_v2:

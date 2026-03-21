@@ -40,6 +40,7 @@ If a compose file references `${...}`, set it in that stack's Komodo Environment
 - [Mealie](mealie/README.md)
 - [Open WebUI](openwebui/README.md)
 - [Paperless-ngx](paperlessngx/README.md)
+
 - [Vikunja](vikunja/README.md)
 - [Vaultwarden](vaultwarden/README.md)
 - [Vaultwarden Backup](vaultwarden-backup/README.md)

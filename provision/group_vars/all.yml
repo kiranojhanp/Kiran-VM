@@ -30,6 +30,37 @@ komodo_resource_poll_interval: "1-hr"
 ferretdb_image: "ghcr.io/ferretdb/ferretdb:2.7.0"
 ferretdb_pg_image: "ghcr.io/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7.0"
 
+# ── WAL-G Backup ────────────────────────────────────────
+# Postgres WAL archiving + base backups to R2 via WAL-G.
+# WAL archival is continuous (via archive_command in Postgres container).
+# Base backups run via systemd timer below.
+#
+# Non-secret config (secrets go in secrets.yml):
+#   backup_wal_g_s3_endpoint, backup_wal_g_s3_bucket, backup_wal_g_s3_prefix
+#   backup_wal_g_aws_access_key_id, backup_wal_g_aws_secret_access_key
+#   backup_wal_g_password, backup_wal_g_postgres_password
+
+wal_g_version: "3.0.1"
+wal_g_delta_max_steps: 6
+wal_g_max_wal_senders: 3
+wal_g_wal_keep_size: "1GB"
+wal_g_archive_timeout: 300
+
+# WAL-G host-side timers (base backups, prune, integrity check)
+backup_walg_backup_on_calendar: "*-*-01,15 03:00:00"
+backup_walg_prune_on_calendar: "*-*-01 04:00:00"
+backup_walg_check_on_calendar: "*-*-07 05:00:00"
+backup_walg_retention_full: 4
+backup_walg_retention_keep_weekly: 4
+backup_walg_retention_keep_monthly: 6
+backup_walg_retention_keep_yearly: 1
+
+# Postgres connection for host-side WAL-G operations
+# The infra_net bridge gateway IP — verify with: docker network inspect infra_net
+backup_postgres_host: "172.19.0.1"
+backup_postgres_port: 5432
+backup_wal_g_postgres_user: wal_g
+
 # ── Shared Infra ────────────────────────────────────────
 # Shared Postgres + Redis for self-hosted app stacks.
 # Note: Komodo/FerretDB uses its own separate postgres-documentdb image.

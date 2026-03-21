@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-set -a
-source "{{ backup_dir }}/scripts/backup.env"
-set +a
-
-restic check >> "{{ backup_logs_dir }}/restic-check.log" 2>&1

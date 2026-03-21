@@ -1,0 +1,14 @@
+[Unit]
+Description=WAL-G retention prune for Postgres backups
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+EnvironmentFile=/opt/backup/scripts/wal-g.env
+ExecStart=/opt/backup/scripts/wal-g-prune.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wal-g-prune
+TimeoutStopSec=1800

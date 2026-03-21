@@ -1,11 +1,38 @@
 services:
   postgres:
-    image: {{ postgres_image }}
+    build:
+      context: files
+      dockerfile: Dockerfile.wal-g
+    image: infra-postgres:local
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
+      WALG_S3_PREFIX: ${WALG_S3_PREFIX:-s3://${WALG_S3_BUCKET}/wal-g}
+      AWS_ENDPOINT: ${AWS_ENDPOINT:-}
+      AWS_S3_FORCE_PATH_STYLE: ${AWS_S3_FORCE_PATH_STYLE:-true}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-auto}
+      WALG_COMPRESSION_METHOD: ${WALG_COMPRESSION_METHOD:-lz4}
+      WALG_DELTA_MAX_STEPS: "{{ wal_g_delta_max_steps | default(6) }}"
+      WALG_S3_STORAGE_CLASS: STANDARD
+      WALG_PASSWORD: ${WALG_PASSWORD:-}
+    command:
+      - postgres
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=wal-g wal-push %p
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders={{ wal_g_max_wal_senders | default(3) }}
+      - -c
+      - wal_keep_size={{ wal_g_wal_keep_size | default('1GB') }}
+      - -c
+      - archive_timeout={{ wal_g_archive_timeout | default(300) }}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - {{ infra_dir }}/init.sql:/docker-entrypoint-initdb.d/init.sql:ro

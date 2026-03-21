@@ -1,3 +1,22 @@
--- Shared Postgres init script
--- Runs once on first container start (only when data volume is empty).
--- Keep this file as the extension point for optional app bootstrap SQL.
+{% if postgres_replication_user is defined and postgres_replication_user %}
+CREATE USER {{ postgres_replication_user }} WITH REPLICATION ENCRYPTED PASSWORD '{{ postgres_replication_password }}';
+{% endif %}
+
+{% if postgres_extensions is defined %}
+{% for ext in postgres_extensions %}
+CREATE EXTENSION IF NOT EXISTS {{ ext }};
+{% endfor %}
+{% endif %}
+
+{% if postgres_users is defined %}
+{% for user in postgres_users %}
+CREATE USER {{ user.name }} WITH ENCRYPTED PASSWORD '{{ user.password }}'{% if user.superuser | default(false) %} SUPERUSER{% endif %};
+GRANT ALL PRIVILEGES ON DATABASE {{ user.database | default('postgres') }} TO {{ user.name }};
+{% endfor %}
+{% endif %}
+
+{% if postgres_databases is defined %}
+{% for db in postgres_databases %}
+CREATE DATABASE {{ db.name }}{% if db.owner %} WITH OWNER {{ db.owner }}{% endif %};
+{% endfor %}
+{% endif %}

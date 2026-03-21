@@ -1,0 +1,14 @@
+[Unit]
+Description=WAL-G backup integrity check
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+EnvironmentFile=/opt/backup/scripts/wal-g.env
+ExecStart=/opt/backup/scripts/wal-g-check.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wal-g-check
+TimeoutStopSec=600

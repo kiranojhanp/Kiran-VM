@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+{% raw %}
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/wal-g.env"
+
+POSTGRES_CONTAINER="infra-postgres-1"
+
+log() { echo "[$(date -Iseconds)] $*"; }
+log_section() { echo ""; echo "========== $(date -Iseconds) WAL-G INTEGRITY CHECK =========="; }
+
+section() {
+  log_section
+  log "Running WAL-G backup integrity check via ${POSTGRES_CONTAINER}"
+}
+
+section
+
+log "Verifying R2 connectivity and listing backups"
+docker exec "${POSTGRES_CONTAINER}" env \
+  PGUSER=postgres \
+  PGPASSWORD="${POSTGRES_PASSWORD}" \
+  PGHOST=localhost \
+  WALG_S3_PREFIX="${WALG_S3_PREFIX}" \
+  WALG_PASSWORD="${WALG_PASSWORD}" \
+  AWS_ENDPOINT="${AWS_ENDPOINT}" \
+  AWS_S3_FORCE_PATH_STYLE="${AWS_S3_FORCE_PATH_STYLE:-true}" \
+  AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+  AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+  AWS_REGION="${AWS_REGION}" \
+  WALG_S3_STORAGE_CLASS=STANDARD \
+  wal-g backup-list
+
+log "Running backup-check"
+if ! docker exec "${POSTGRES_CONTAINER}" env \
+  PGUSER=postgres \
+  PGPASSWORD="${POSTGRES_PASSWORD}" \
+  PGHOST=localhost \
+  WALG_S3_PREFIX="${WALG_S3_PREFIX}" \
+  WALG_PASSWORD="${WALG_PASSWORD}" \
+  AWS_ENDPOINT="${AWS_ENDPOINT}" \
+  AWS_S3_FORCE_PATH_STYLE="${AWS_S3_FORCE_PATH_STYLE:-true}" \
+  AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+  AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+  AWS_REGION="${AWS_REGION}" \
+  WALG_S3_STORAGE_CLASS=STANDARD \
+  wal-g backup-check; then
+  log "ERROR: WAL-G backup-check failed" >&2
+  exit 1
+fi
+
+log "Integrity check passed"
+{% endraw %}

@@ -1,92 +1,78 @@
 ---
-- name: Configure lean backups (pg_dump + restic)
+- name: Configure WAL-G backups
   when: backup_enabled | bool
   block:
-    - name: Assert required backup secrets are set
+    - name: Assert required WAL-G backup secrets are set
       ansible.builtin.assert:
         that:
-          - backup_restic_repository | default('') | length > 0
-          - backup_restic_password | default('') | length > 0
-          - backup_shared_postgres_password | default('') | length > 0
-          - backup_shared_postgres_databases | length > 0
+          - wal_g_version | default('3.0.1') | length > 0
+          - backup_wal_g_s3_bucket | default('') | length > 0
+          - backup_wal_g_s3_prefix | default('') | length > 0
+          - backup_wal_g_password | default('') | length > 0
+          - backup_wal_g_aws_access_key_id | default('') | length > 0
+          - backup_wal_g_aws_secret_access_key | default('') | length > 0
+          - backup_wal_g_postgres_password | default('') | length > 0
         fail_msg: >-
-          Backup is enabled but required backup_* secrets/variables are missing.
+          Backup is enabled but required WAL-G backup_* secrets are missing.
           Fill provision/secrets.yml and provision/group_vars/all.yml.
-
-    - name: Install backup packages
-      ansible.builtin.apt:
-        name:
-          - restic
-          - rclone
-        state: present
-        update_cache: true
 
     - name: Create backup directories
       ansible.builtin.file:
         path: "{{ item.path }}"
         state: directory
-        owner: "{{ item.owner | default('root') }}"
-        group: "{{ item.group | default('root') }}"
+        owner: root
+        group: root
         mode: "{{ item.mode }}"
       loop:
         - { path: "{{ backup_dir }}", mode: "0750" }
         - { path: "{{ backup_dir }}/scripts", mode: "0700" }
-        - { path: "{{ backup_postgres_dump_dir }}", mode: "0700" }
         - { path: "{{ backup_logs_dir }}", mode: "0750" }
-        - { path: "{{ backup_rclone_config_dir }}", mode: "0700" }
 
-    - name: Deploy rclone config from secrets when provided
-      ansible.builtin.copy:
-        content: "{{ backup_rclone_config }}"
-        dest: "{{ backup_rclone_config_dir }}/rclone.conf"
+    - name: Detect host architecture for WAL-G binary
+      ansible.builtin.command: uname -m
+      register: host_arch_raw
+      changed_when: false
+
+    - name: Set WAL-G binary name based on architecture
+      ansible.builtin.set_fact:
+        wal_g_binary_name: >-
+          {{
+            'wal-g-pg-ubuntu20.04-aarch64'
+              if (host_arch_raw.stdout | trim) == 'aarch64'
+              else 'wal-g-pg-ubuntu-20.04-amd64'
+          }}
+
+    - name: Download WAL-G binary for host operations
+      ansible.builtin.get_url:
+        url: "https://github.com/wal-g/wal-g/releases/download/v{{ wal_g_version }}/{{ wal_g_binary_name }}"
+        dest: /usr/local/bin/wal-g
+        mode: "0755"
+        force: true
+
+    - name: Deploy WAL-G env file
+      ansible.builtin.template:
+        src: wal-g.env.j2
+        dest: "{{ backup_dir }}/scripts/wal-g.env"
         owner: root
         group: root
         mode: "0600"
-      when:
-        - backup_rclone_config is defined
-        - backup_rclone_config | length > 0
+      register: wal_g_env_deployed
 
-    - name: Check rclone config file exists when repository uses rclone backend
-      ansible.builtin.stat:
-        path: "{{ backup_rclone_config_dir }}/rclone.conf"
-      register: backup_rclone_config_stat
-      when: backup_restic_repository is match('^rclone:')
-
-    - name: Assert rclone config file is present for rclone backend
-      ansible.builtin.assert:
-        that:
-          - backup_rclone_config_stat.stat.exists
-        fail_msg: >-
-          Missing {{ backup_rclone_config_dir }}/rclone.conf.
-          Either set `backup_rclone_config` in provision/secrets.yml
-          or run `rclone config` on the host before enabling backups.
-      when: backup_restic_repository is match('^rclone:')
-
-    - name: Deploy backup files
+    - name: Deploy WAL-G scripts
       ansible.builtin.template:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
-        owner: "{{ item.owner | default('root') }}"
-        group: "{{ item.group | default('root') }}"
-        mode: "{{ item.mode }}"
+        owner: root
+        group: root
+        mode: "0700"
       loop:
-        - src: backup.env.j2
-          dest: "{{ backup_dir }}/scripts/backup.env"
-          mode: "0600"
-        - src: pre-backup-pgdump.sh.j2
-          dest: "{{ backup_dir }}/scripts/pre-backup-pgdump.sh"
-          mode: "0700"
-        - src: restic-backup.sh.j2
-          dest: "{{ backup_dir }}/scripts/restic-backup.sh"
-          mode: "0700"
-        - src: restic-prune.sh.j2
-          dest: "{{ backup_dir }}/scripts/restic-prune.sh"
-          mode: "0700"
-        - src: restic-check.sh.j2
-          dest: "{{ backup_dir }}/scripts/restic-check.sh"
-          mode: "0700"
+        - { src: wal-g-backup.sh.j2, dest: "{{ backup_dir }}/scripts/wal-g-backup.sh" }
+        - { src: wal-g-prune.sh.j2, dest: "{{ backup_dir }}/scripts/wal-g-prune.sh" }
+        - { src: wal-g-check.sh.j2, dest: "{{ backup_dir }}/scripts/wal-g-check.sh" }
+        - { src: wal-g-restore.sh.j2, dest: "{{ backup_dir }}/scripts/wal-g-restore.sh" }
+      register: wal_g_scripts_deployed
 
-    - name: Deploy backup systemd units
+    - name: Deploy WAL-G systemd units
       ansible.builtin.template:
         src: "{{ item.src }}"
         dest: "/etc/systemd/system/{{ item.dest }}"
@@ -94,25 +80,25 @@
         group: root
         mode: "0644"
       loop:
-        - { src: kiran-restic-backup.service.j2, dest: kiran-restic-backup.service }
-        - { src: kiran-restic-backup.timer.j2, dest: kiran-restic-backup.timer }
-        - { src: kiran-restic-prune.service.j2, dest: kiran-restic-prune.service }
-        - { src: kiran-restic-prune.timer.j2, dest: kiran-restic-prune.timer }
-        - { src: kiran-restic-check.service.j2, dest: kiran-restic-check.service }
-        - { src: kiran-restic-check.timer.j2, dest: kiran-restic-check.timer }
-      register: backup_systemd_units
+        - { src: kiran-walg-backup.service.j2, dest: kiran-walg-backup.service }
+        - { src: kiran-walg-backup.timer.j2, dest: kiran-walg-backup.timer }
+        - { src: kiran-walg-prune.service.j2, dest: kiran-walg-prune.service }
+        - { src: kiran-walg-prune.timer.j2, dest: kiran-walg-prune.timer }
+        - { src: kiran-walg-check.service.j2, dest: kiran-walg-check.service }
+        - { src: kiran-walg-check.timer.j2, dest: kiran-walg-check.timer }
+      register: wal_g_systemd_units
 
     - name: Reload systemd daemon
       ansible.builtin.systemd:
         daemon_reload: true
-      when: backup_systemd_units.changed
+      when: wal_g_systemd_units.changed or wal_g_env_deployed.changed or wal_g_scripts_deployed.changed
 
-    - name: Enable and start backup timers
+    - name: Enable and start WAL-G timers
       ansible.builtin.systemd:
         name: "{{ item }}"
         enabled: true
         state: started
       loop:
-        - kiran-restic-backup.timer
-        - kiran-restic-prune.timer
-        - kiran-restic-check.timer
+        - kiran-walg-backup.timer
+        - kiran-walg-prune.timer
+        - kiran-walg-check.timer

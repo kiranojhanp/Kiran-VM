@@ -1,0 +1,11 @@
+[Unit]
+Description=Run WAL-G integrity check weekly
+Requires=kiran-walg-check.service
+
+[Timer]
+OnCalendar={{ backup_walg_check_on_calendar | default('*-*-07 05:00:00') }}
+Persistent=true
+RandomizedDelaySec=3600
+
+[Install]
+WantedBy=timers.target
