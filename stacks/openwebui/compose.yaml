@@ -6,10 +6,15 @@ services:
       ENABLE_OLLAMA_API: "false"
       OPENAI_API_BASE_URLS: ${OPENAI_API_BASE_URLS:-https://api.openai.com/v1}
       OPENAI_API_KEYS: ${OPENAI_API_KEYS:-}
+      DATABASE_URL: ${DATABASE_URL:-}
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:-}
+      WEBUI_URL: ${WEBUI_URL:-}
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-}
     volumes:
       - open_webui_data:/app/backend/data
     networks:
       - shared
+      - infra
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
@@ -22,6 +27,9 @@ services:
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+  infra:
+    name: ${INFRA_DOCKER_NETWORK:-infra_net}
     external: true
 
 volumes:
