@@ -4,7 +4,7 @@ This directory contains app stacks deployed from Komodo.
 
 ## What to do in Komodo
 
-Use the same flow for every stack (`actual`, `backrest`, `mealie`, `openwebui`, `paperlessngx`, `portabase`, `vikunja`, `vaultwarden`, `vaultwarden-backup`):
+Use the same flow for every stack (`actual`, `backrest`, `mealie`, `openwebui`, `paperlessngx`, `vikunja`, `vaultwarden`, `vaultwarden-backup`):
 
 1. Create the stack in Komodo (or open the existing one).
 2. Set run directory to `stacks/<stack-name>`.
@@ -40,7 +40,6 @@ If a compose file references `${...}`, set it in that stack's Komodo Environment
 - [Mealie](mealie/README.md)
 - [Open WebUI](openwebui/README.md)
 - [Paperless-ngx](paperlessngx/README.md)
-- [Portabase](portabase/README.md)
 - [Vikunja](vikunja/README.md)
 - [Vaultwarden](vaultwarden/README.md)
 - [Vaultwarden Backup](vaultwarden-backup/README.md)
