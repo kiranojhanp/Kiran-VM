@@ -100,57 +100,6 @@ tasks:
         -servername {{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}} < /dev/null 2>/dev/null
         | openssl x509 -noout -issuer -subject >/dev/null
 
-  backup:health:
-    desc: Verify Backrest-owned backup runtime and repository health
-    deps: [_check:provision, provision:inventory]
-    preconditions:
-      - sh: command -v curl >/dev/null 2>&1
-        msg: curl is required
-    cmds:
-      - >-
-        ansible -i provision/inventory/hosts.ini all -m shell -a
-        "set -e; ! sudo -n systemctl is-active kiran-restic-backup.timer >/dev/null 2>&1; ! sudo -n systemctl is-active kiran-restic-prune.timer >/dev/null 2>&1; ! sudo -n systemctl is-active kiran-restic-check.timer >/dev/null 2>&1"
-      - >-
-        ansible -i provision/inventory/hosts.ini all -m shell -a
-        "set -e; sudo -n bash -lc 'set -a; source /opt/backup/scripts/backup.env; set +a; restic snapshots --latest 1 >/dev/null; restic stats latest --mode raw-data >/dev/null'"
-      - >-
-        ansible -i provision/inventory/hosts.ini all -m shell -a
-        "set -e; sudo -n docker ps --filter ancestor=ghcr.io/garethgeorge/backrest:latest --filter status=running --quiet | grep -q ."
-      - curl --fail --silent --show-error "{{.BACKREST_URL}}" >/dev/null
-
-  backrest:migrate:manual-down:
-    desc: Stop legacy /opt/backrest compose deployment on server
-    deps: [_check:provision, provision:inventory]
-    cmds:
-      - >-
-        ansible -i provision/inventory/hosts.ini all -m shell -a
-        "set -e; if [ -f /opt/backrest/compose.yaml ]; then cd /opt/backrest && docker compose --env-file .env down; fi"
-
-  backrest:migrate:manual-clean:
-    desc: Remove legacy /opt/backrest directory after Komodo deploy validation
-    deps: [_check:provision, provision:inventory]
-    preconditions:
-      - sh: test "{{.CONFIRM}}" = "yes"
-        msg: "Set CONFIRM=yes to remove /opt/backrest"
-    cmds:
-      - >-
-        ansible -i provision/inventory/hosts.ini all -m shell -a
-        "set -e; sudo -n rm -rf /opt/backrest"
-
-  backrest:komodo:deploy:
-    desc: Trigger Backrest stack deploy webhook in Komodo
-    preconditions:
-      - sh: test -n "{{.WEBHOOK_URL}}"
-        msg: WEBHOOK_URL is required
-      - sh: test -n "{{.WEBHOOK_SECRET}}"
-        msg: WEBHOOK_SECRET is required
-    cmds:
-      - task: komodo:trigger
-        vars:
-          STACK: backrest
-          WEBHOOK_URL: "{{.WEBHOOK_URL}}"
-          WEBHOOK_SECRET: "{{.WEBHOOK_SECRET}}"
-
   # ---------------------------------------------------------------------------
   # WAL-G Postgres backup (runs inside infra-postgres-1 container)
   # ---------------------------------------------------------------------------

@@ -2,6 +2,27 @@
 - name: Configure WAL-G backups
   when: backup_enabled | bool
   block:
+    - name: Remove old restic scripts and systemd units
+      ansible.builtin.shell:
+        cmd: |
+          set -e
+          rm -f "{{ backup_dir }}/scripts/restic-backup.sh" \
+                "{{ backup_dir }}/scripts/restic-prune.sh" \
+                "{{ backup_dir }}/scripts/restic-check.sh" \
+                "{{ backup_dir }}/scripts/pre-backup-pgdump.sh" \
+                "{{ backup_dir }}/scripts/backup.env" \
+                "{{ backup_dir }}/scripts/restic.env" \
+                2>/dev/null || true
+          rm -f /etc/systemd/system/kiran-restic-backup.service \
+                /etc/systemd/system/kiran-restic-backup.timer \
+                /etc/systemd/system/kiran-restic-prune.service \
+                /etc/systemd/system/kiran-restic-prune.timer \
+                /etc/systemd/system/kiran-restic-check.service \
+                /etc/systemd/system/kiran-restic-check.timer \
+                2>/dev/null || true
+          systemctl daemon-reload
+        removes: "{{ backup_dir }}/scripts/restic-backup.sh"
+
     - name: Assert required WAL-G backup secrets are set
       ansible.builtin.assert:
         that:

@@ -20,8 +20,7 @@ vars:
   DOMAIN_NAME_DEFAULT: fewa.app
   ACME_EMAIL_DEFAULT: admin@fewa.app
   KOMODO_SUBDOMAIN_LABEL: komodo
-  BACKREST_SUBDOMAIN_LABEL: backrest
-  DNS_SUBDOMAIN_LABELS: actual,komodo,openwebui,vaultwarden,mealie,paperless,vikunja,backrest
+  DNS_SUBDOMAIN_LABELS: actual,komodo,openwebui,vaultwarden,mealie,paperless,vikunja
   CLOUDFLARE_ZONE_ID_DEFAULT: 58dce5945a8941e4c38a3611af123052
 
   # OCI naming suffixes
@@ -64,7 +63,6 @@ vars:
   # Provision/verify helpers
   KOMODO_URL: 'https://{{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}'
   KOMODO_HTTP_URL: 'http://{{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}'
-  BACKREST_URL: 'https://{{.BACKREST_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}}'
   PROVISION_EXTRA_VARS: 'shared_docker_network={{.SHARED_DOCKER_NETWORK}} domain={{.DOMAIN_NAME_DEFAULT}} komodo_subdomain={{.KOMODO_SUBDOMAIN_LABEL}}.{{.DOMAIN_NAME_DEFAULT}} acme_email={{.ACME_EMAIL_DEFAULT}}'
   DESTROY_RETRIES: '{{default "10" .DESTROY_RETRIES}}'
   DESTROY_WAIT_SECONDS: '{{default "30" .DESTROY_WAIT_SECONDS}}'

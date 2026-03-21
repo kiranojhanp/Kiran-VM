@@ -55,5 +55,5 @@ STACK=<name> BASE_STACK=kiran-self-hosting task push
 - `infra/README.md` - Pulumi setup and required config keys
 - `provision/README.md` - provisioning and secrets workflow
 - `stacks/README.md` - Komodo-managed app stacks and Traefik label routing
-- `docs/backup-and-restore.md` - lean pg_dump + restic + rclone backup and restore runbook
+ - `provision/README.md` - Postgres backup via WAL-G (see Backup section)
 - `llms.txt` - concise machine-readable project map
