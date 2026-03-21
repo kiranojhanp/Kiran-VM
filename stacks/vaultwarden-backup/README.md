@@ -10,7 +10,7 @@ This stack runs `ttionya/vaultwarden-backup` independently from the `vaultwarden
 2. Set run directory to `stacks/vaultwarden-backup`.
 3. Set compose path to `stacks/vaultwarden-backup/compose.yaml`.
 4. Add the variables below in the stack Environment.
-5. Add a ZIP password secret file path (`VW_BACKUP_ZIP_PASSWORD_FILE`) and ensure the file exists in the run directory.
+5. Add `VW_BACKUP_ZIP_PASSWORD` in Komodo as a secret variable.
 6. Deploy (or Redeploy).
 
 ## Configure rclone for R2
@@ -41,7 +41,7 @@ Example remote settings:
 - `VW_BACKUP_FILE_SUFFIX` (optional): unique suffix format. Default: `%Y%m%d-%H%M%S`.
 - `VW_BACKUP_KEEP_DAYS` (optional): retention days (`0` keeps all). Default: `30`.
 - `VW_BACKUP_PING_URL` (optional): success/failure monitor endpoint.
-- `VW_BACKUP_ZIP_PASSWORD_FILE` (optional): path to ZIP password secret file in run directory. Default: `./secrets/vaultwarden-backup-zip-password.txt`.
+- `VW_BACKUP_ZIP_PASSWORD` (recommended secret): ZIP archive password.
 - `VAULTWARDEN_DATA_VOLUME` (optional): source Vaultwarden data volume name. Default: `vaultwarden_vaultwarden_data`.
 - `TZ` (optional): timezone. Default: `UTC`.
 

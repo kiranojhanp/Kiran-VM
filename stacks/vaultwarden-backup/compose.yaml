@@ -13,19 +13,13 @@ services:
       BACKUP_KEEP_DAYS: ${VW_BACKUP_KEEP_DAYS:-30}
       PING_URL: ${VW_BACKUP_PING_URL:-}
       TIMEZONE: ${TZ:-UTC}
-      ZIP_PASSWORD_FILE: /run/secrets/vaultwarden_backup_zip_password
+      ZIP_PASSWORD: ${VW_BACKUP_ZIP_PASSWORD:-}
     volumes:
       - vaultwarden_data:/bitwarden/data:ro
       - vaultwarden_backup_rclone_data:/config
-    secrets:
-      - vaultwarden_backup_zip_password
 
 volumes:
   vaultwarden_data:
     external: true
     name: ${VAULTWARDEN_DATA_VOLUME:-vaultwarden_vaultwarden_data}
   vaultwarden_backup_rclone_data:
-
-secrets:
-  vaultwarden_backup_zip_password:
-    file: ${VW_BACKUP_ZIP_PASSWORD_FILE:-./secrets/vaultwarden-backup-zip-password.txt}
