@@ -36,3 +36,142 @@ Use `common_deploy_ssh_public_key` for the deploy user's authorized key.
 
 - Cert issue: update `cloudflare_api_token` in secrets, then run `task update`.
 - Komodo unreachable: run `task verify`, then check `task update` output.
+
+## Postgres Backup (WAL-G)
+
+Postgres runs with `archive_mode=on` — every WAL segment is pushed to Cloudflare R2 in real-time via `wal-g wal-push`. Base backups run on the 1st and 15th of each month via systemd timer.
+
+All backup scripts live in `/opt/backup/scripts/` on the server. WAL-G runs inside the `infra-postgres-1` container, so Postgres data and the binary are always in sync.
+
+### Taskfile commands
+
+```bash
+# Health check: timers, R2 connectivity, backup age
+task walg:health
+
+# List all backups in R2
+task walg:backup:list
+
+# Run a base backup immediately (after a config change, before an upgrade)
+task walg:backup:run
+
+# Run integrity check
+task walg:check
+
+# Restore the latest backup to /tmp/walg-restore on the server
+task walg:backup:restore
+
+# Restore a specific backup
+task walg:backup:restore BACKUP_NAME=base_000000010000000000000037
+
+# Point-in-time restore
+task walg:backup:restore:pitr PITR_TIMESTAMP='2025-03-21 10:00:00'
+```
+
+### How it works
+
+```
+Postgres (container)
+  archive_command = wal-g wal-push %p
+  → WAL segments pushed continuously to R2
+
+kiran-walg-backup.timer (1st & 15th, 3am)
+  → /opt/backup/scripts/wal-g-backup.sh
+    → docker exec infra-postgres-1 wal-g backup-push /var/lib/postgresql/data
+    → Full base backup to R2
+
+kiran-walg-prune.timer (1st of month, 4am)
+  → /opt/backup/scripts/wal-g-prune.sh
+    → docker exec infra-postgres-1 wal-g delete --retain-full 4 --keep-weekly 4 ...
+    → Prunes old backups
+
+kiran-walg-check.timer (Sunday, 5am)
+  → /opt/backup/scripts/wal-g-check.sh
+    → docker exec infra-postgres-1 wal-g backup-check
+    → Verifies backup integrity
+```
+
+### Restore workflow
+
+1. **List backups** to find what you need:
+   ```bash
+   task walg:backup:list
+   ```
+
+2. **Restore to a temp directory** inside the Postgres container:
+   ```bash
+   task walg:backup:restore
+   # or specific backup:
+   task walg:backup:restore BACKUP_NAME=base_000000010000000000000037
+   # or point-in-time:
+   task walg:backup:restore:pitr PITR_TIMESTAMP='2025-03-21 10:00:00'
+   ```
+   Files are placed at `/tmp/wal-g-restore/` inside the container.
+
+3. **Copy to the server** for inspection:
+   ```bash
+   docker cp infra-postgres-1:/tmp/wal-g-restore/. /tmp/walg-restore/
+   ```
+
+4. **Inspect the restore** (no data written to Postgres):
+   ```bash
+   # Check what databases were backed up
+   ls /tmp/walg-restore/backups/<timestamp>/
+
+   # Verify dump integrity
+   docker exec infra-postgres-1 pg_restore -U postgres -d postgres -f /dev/null /tmp/walg-restore/backups/<timestamp>/<db>.dump
+   ```
+
+5. **Promote to live** (only if restoring to a running Postgres):
+   ```bash
+   # Stop Postgres first
+   docker exec infra-postgres-1 pg_ctl stop -D /var/lib/postgresql/data
+
+   # Move old data dir and swap in restored data
+   mv /var/lib/postgresql/data /var/lib/postgresql/data.broken
+   mv /tmp/wal-g-restore /var/lib/postgresql/data
+   chown -R postgres:postgres /var/lib/postgresql/data
+
+   # Restart
+   docker restart infra-postgres-1
+   ```
+
+### Required secrets
+
+Set these in `provision/secrets.yml` (`task secrets:edit`):
+
+```yaml
+backup_wal_g_s3_bucket: "my-bucket"           # R2 bucket name
+backup_wal_g_s3_prefix: "postgres"            # folder inside bucket for Postgres backups
+backup_wal_g_aws_endpoint: "https://...r2.cloudflarestorage.com"  # R2 endpoint (just host, no path)
+backup_wal_g_s3_force_path_style: "true"
+backup_wal_g_aws_access_key_id: "..."
+backup_wal_g_aws_secret_access_key: "..."
+backup_wal_g_aws_region: "auto"
+backup_wal_g_password: "..."                  # WAL-G encryption password (separate from Postgres password)
+```
+
+### Retention
+
+| Policy | Keep |
+|--------|------|
+| Full backups | 4 |
+| Weekly | 4 |
+| Monthly | 6 |
+| Yearly | 1 |
+
+### Troubleshooting
+
+```bash
+# Check timers are active
+task walg:health
+
+# Tail backup logs
+journalctl -u kiran-walg-backup.service -n 50 --no-pager
+
+# Check WAL archival is working (should show recent files)
+docker exec infra-postgres-1 psql -U postgres -c "SELECT * FROM pg_stat_archiver;"
+
+# Verify R2 connectivity from inside the container
+docker exec infra-postgres-1 wal-g backup-list
+```

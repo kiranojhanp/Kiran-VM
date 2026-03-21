@@ -150,3 +150,75 @@ tasks:
           STACK: backrest
           WEBHOOK_URL: "{{.WEBHOOK_URL}}"
           WEBHOOK_SECRET: "{{.WEBHOOK_SECRET}}"
+
+  # ---------------------------------------------------------------------------
+  # WAL-G Postgres backup (runs inside infra-postgres-1 container)
+  # ---------------------------------------------------------------------------
+  walg:backup:list:
+    desc: List WAL-G backups in R2
+    deps: [_check:provision, provision:inventory]
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; docker exec infra-postgres-1 wal-g backup-list"
+
+  walg:backup:run:
+    desc: Run WAL-G base backup immediately
+    deps: [_check:provision, provision:inventory]
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; sudo /opt/backup/scripts/wal-g-backup.sh"
+
+  walg:backup:restore:
+    desc: Restore latest WAL-G backup to /tmp/wal-g-restore
+    deps: [_check:provision, provision:inventory]
+    vars:
+      TARGET_DIR: '/tmp/wal-g-restore'
+      BACKUP_NAME: 'LATEST'
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; sudo /opt/backup/scripts/wal-g-restore.sh --target-dir {{.TARGET_DIR}} --backup {{.BACKUP_NAME}}"
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; docker cp infra-postgres-1:{{.TARGET_DIR}}/. /tmp/walg-restore/"
+      - echo "Restored to /tmp/walg-restore on server"
+
+  walg:backup:restore:pitr:
+    desc: Point-in-time restore (set PITR_TIMESTAMP, e.g. '2025-01-15 14:30:00')
+    deps: [_check:provision, provision:inventory]
+    requires:
+      vars: [PITR_TIMESTAMP, TARGET_DIR]
+    vars:
+      TARGET_DIR: '/tmp/wal-g-restore-pitr'
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; sudo /opt/backup/scripts/wal-g-restore.sh --target-dir {{.TARGET_DIR}} --pitr '{{.PITR_TIMESTAMP}}'"
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; docker cp infra-postgres-1:{{.TARGET_DIR}}/. /tmp/walg-restore-pitr/"
+      - echo "PITR restored to /tmp/walg-restore-pitr on server"
+
+  walg:check:
+    desc: Run WAL-G backup integrity check
+    deps: [_check:provision, provision:inventory]
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; sudo /opt/backup/scripts/wal-g-check.sh"
+
+  walg:health:
+    desc: Verify WAL-G timers, R2 connectivity, and latest backup age
+    deps: [_check:provision, provision:inventory]
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; systemctl list-timers --all | grep walg"
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; docker exec infra-postgres-1 wal-g backup-list --json 2>/dev/null | python3 -c 'import sys,json; backups=json.load(sys.stdin); latest=backups[0] if backups else None; print(f\"Latest backup: {latest[\\\"backup_name\\\"]} at {latest[\\\"modified\\\"]}\" if latest else \"No backups\")'"
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; docker exec infra-postgres-1 wal-g backup-check"
