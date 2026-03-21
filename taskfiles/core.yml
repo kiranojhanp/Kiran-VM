@@ -39,7 +39,7 @@ tasks:
       - sh: test -f provision/secrets.yml
         msg: provision/secrets.yml is missing (run task secrets:init)
     cmds:
-      - ansible-vault edit --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" provision/secrets.yml
+      - EDITOR="code --wait" ansible-vault edit --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" provision/secrets.yml
 
   _check:infra:
     internal: true
