@@ -33,6 +33,10 @@ If a compose file references `${...}`, set it in that stack's Komodo Environment
 - `TZ` (default `UTC`): timezone for stacks that expose timezone settings.
 - `PUID` / `PGID` (default `1000`): UID/GID mapping for containers that support it.
 
+## Shared Database
+
+When adding a new stack that needs PostgreSQL, see [DATABASE.md](DATABASE.md) for instructions on creating a database user and database on the centralized Postgres instance.
+
 ## Stack docs
 
  - [Actual](actual/README.md)
