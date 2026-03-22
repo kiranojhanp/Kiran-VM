@@ -12,7 +12,7 @@ Compose file: `stacks/openwebui/compose.yaml`
 ## Stack environment variables
 
 - `OPENWEBUI_HOST` (required): public hostname. Example: `openwebui.fewa.app`.
-- `DATABASE_URL` (required): Postgres connection string for Open WebUI. Example: `postgresql://openwebui_user:<password>@infra-postgres-1:5432/openwebui`.
+- `DATABASE_URL` (required): Postgres connection string for Open WebUI. Example: `postgresql://openwebui_user:<password>@<postgres_container_name>:5432/openwebui` (replace `<postgres_container_name>` with value from `provision/group_vars/all.yml`, default: `infra-postgres-1`).
 - `WEBUI_SECRET_KEY` (required): long random secret used for signing and encryption. Keep this stable across redeploys.
 - `WEBUI_URL` (recommended): public URL used by Open WebUI. Example: `https://openwebui.fewa.app`.
 - `CORS_ALLOW_ORIGIN` (recommended): allowed origins for browser access; use a semicolon-separated list for multiple origins.

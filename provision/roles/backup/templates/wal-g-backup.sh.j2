@@ -5,7 +5,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/wal-g.env"
 
-POSTGRES_CONTAINER="infra-postgres-1"
+POSTGRES_CONTAINER="{{ postgres_container_name }}"
 
 log() { echo "[$(date -Iseconds)] $*"; }
 log_section() { echo ""; echo "========== $(date -Iseconds) WAL-G BASE BACKUP =========="; }

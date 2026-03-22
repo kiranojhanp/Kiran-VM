@@ -73,7 +73,7 @@
 
 - name: Wait for shared Postgres to be healthy
   community.docker.docker_container_info:
-    name: infra-postgres-1
+    name: "{{ postgres_container_name }}"
   register: pg_info
   until: pg_info.container.State.Health.Status == "healthy"
   retries: 20
@@ -81,7 +81,7 @@
 
 - name: Wait for shared Redis to be healthy
   community.docker.docker_container_info:
-    name: infra-redis-1
+    name: "{{ redis_container_name }}"
   register: redis_info
   until: redis_info.container.State.Health.Status == "healthy"
   retries: 10

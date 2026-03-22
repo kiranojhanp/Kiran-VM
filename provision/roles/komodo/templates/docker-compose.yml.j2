@@ -16,6 +16,7 @@ services:
 
   # ── FerretDB's dedicated patched Postgres ────────────────────────────────
   ferretdb-postgres:
+    container_name: komodo-ferretdb-postgres-1
     image: "{{ ferretdb_pg_image }}"
     restart: unless-stopped
     env_file: .env

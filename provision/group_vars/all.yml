@@ -73,4 +73,10 @@ redis_image: "redis:7.4.8"
 infra_dir: /opt/infra
 komodo_dir: /opt/komodo
 
+# Container names for shared infra services.
+# Used in docker-compose, health checks, backup scripts, and DATABASE.md.
+# Change these to customize container names (must be unique on the host).
+postgres_container_name: "infra-postgres-1"
+redis_container_name: "infra-redis-1"
+
 

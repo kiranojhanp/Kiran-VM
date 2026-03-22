@@ -41,7 +41,7 @@ Use `common_deploy_ssh_public_key` for the deploy user's authorized key.
 
 Postgres runs with `archive_mode=on` — every WAL segment is pushed to Cloudflare R2 in real-time via `wal-g wal-push`. Base backups run on the 1st and 15th of each month via systemd timer.
 
-All backup scripts live in `/opt/backup/scripts/` on the server. WAL-G runs inside the `infra-postgres-1` container, so Postgres data and the binary are always in sync.
+All backup scripts live in `/opt/backup/scripts/` on the server. WAL-G runs inside the Postgres container (defined by `postgres_container_name` in `group_vars/all.yml`, default: `infra-postgres-1`), so Postgres data and the binary are always in sync.
 
 ### Taskfile commands
 
@@ -77,19 +77,21 @@ Postgres (container)
 
 kiran-walg-backup.timer (1st & 15th, 3am)
   → /opt/backup/scripts/wal-g-backup.sh
-    → docker exec infra-postgres-1 wal-g backup-push /var/lib/postgresql/data
+    → docker exec <postgres_container_name> wal-g backup-push /var/lib/postgresql/data
     → Full base backup to R2
 
 kiran-walg-prune.timer (1st of month, 4am)
   → /opt/backup/scripts/wal-g-prune.sh
-    → docker exec infra-postgres-1 wal-g delete --retain-full 4 --keep-weekly 4 ...
+    → docker exec <postgres_container_name> wal-g delete --retain-full 4 --keep-weekly 4 ...
     → Prunes old backups
 
 kiran-walg-check.timer (Sunday, 5am)
   → /opt/backup/scripts/wal-g-check.sh
-    → docker exec infra-postgres-1 wal-g backup-check
+    → docker exec <postgres_container_name> wal-g backup-check
     → Verifies backup integrity
 ```
+
+Replace `<postgres_container_name>` with the value from `group_vars/all.yml` (default: `infra-postgres-1`).
 
 ### Restore workflow
 
@@ -110,7 +112,7 @@ kiran-walg-check.timer (Sunday, 5am)
 
 3. **Copy to the server** for inspection:
    ```bash
-   docker cp infra-postgres-1:/tmp/wal-g-restore/. /tmp/walg-restore/
+   docker cp <postgres_container_name>:/tmp/wal-g-restore/. /tmp/walg-restore/
    ```
 
 4. **Inspect the restore** (no data written to Postgres):
@@ -119,13 +121,13 @@ kiran-walg-check.timer (Sunday, 5am)
    ls /tmp/walg-restore/backups/<timestamp>/
 
    # Verify dump integrity
-   docker exec infra-postgres-1 pg_restore -U postgres -d postgres -f /dev/null /tmp/walg-restore/backups/<timestamp>/<db>.dump
+   docker exec <postgres_container_name> pg_restore -U postgres -d postgres -f /dev/null /tmp/walg-restore/backups/<timestamp>/<db>.dump
    ```
 
 5. **Promote to live** (only if restoring to a running Postgres):
    ```bash
    # Stop Postgres first
-   docker exec infra-postgres-1 pg_ctl stop -D /var/lib/postgresql/data
+   docker exec <postgres_container_name> pg_ctl stop -D /var/lib/postgresql/data
 
    # Move old data dir and swap in restored data
    mv /var/lib/postgresql/data /var/lib/postgresql/data.broken
@@ -133,7 +135,7 @@ kiran-walg-check.timer (Sunday, 5am)
    chown -R postgres:postgres /var/lib/postgresql/data
 
    # Restart
-   docker restart infra-postgres-1
+   docker restart <postgres_container_name>
    ```
 
 ### Required secrets
@@ -170,8 +172,8 @@ task walg:health
 journalctl -u kiran-walg-backup.service -n 50 --no-pager
 
 # Check WAL archival is working (should show recent files)
-docker exec infra-postgres-1 psql -U postgres -c "SELECT * FROM pg_stat_archiver;"
+docker exec <postgres_container_name> psql -U postgres -c "SELECT * FROM pg_stat_archiver;"
 
 # Verify R2 connectivity from inside the container
-docker exec infra-postgres-1 wal-g backup-list
+docker exec <postgres_container_name> wal-g backup-list
 ```

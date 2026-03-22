@@ -2,6 +2,16 @@
 
 This guide explains how to create a new database, user, and credentials for a new application stack that uses the centralized PostgreSQL instance.
 
+## Container Name
+
+The shared Postgres container name is defined in `provision/group_vars/all.yml`:
+
+```yaml
+postgres_container_name: "infra-postgres-1"
+```
+
+Change this value to customize the container name (must be unique on the host). After changing, re-run `task update` to redeploy.
+
 ## Prerequisites
 
 - You have SSH access to the VM
@@ -28,7 +38,7 @@ ssh user@your-vm-ip
 Replace `myapp` with your stack name and `YOUR_PASSWORD_HERE` with the password from Step 1:
 
 ```bash
-docker exec infra-postgres-1 psql -U postgres -c "
+docker exec <postgres_container_name> psql -U postgres -c "
 CREATE USER myapp WITH PASSWORD 'YOUR_PASSWORD_HERE';
 "
 ```
@@ -36,7 +46,7 @@ CREATE USER myapp WITH PASSWORD 'YOUR_PASSWORD_HERE';
 ## Step 4: Create the Database
 
 ```bash
-docker exec infra-postgres-1 psql -U postgres -c "
+docker exec <postgres_container_name> psql -U postgres -c "
 CREATE DATABASE myapp OWNER myapp;
 "
 ```
@@ -44,8 +54,8 @@ CREATE DATABASE myapp OWNER myapp;
 ## Step 5: Grant Privileges
 
 ```bash
-docker exec infra-postgres-1 psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE myapp TO myapp;"
-docker exec infra-postgres-1 psql -U postgres -d myapp -c "GRANT ALL ON SCHEMA public TO myapp;"
+docker exec <postgres_container_name> psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE myapp TO myapp;"
+docker exec <postgres_container_name> psql -U postgres -d myapp -c "GRANT ALL ON SCHEMA public TO myapp;"
 ```
 
 ## Step 6: Update Your Stack's compose.yaml
@@ -98,18 +108,18 @@ Note: Make sure port 5432 is accessible through the firewall if you need externa
 
 ### List all databases and owners:
 ```bash
-docker exec infra-postgres-1 psql -U postgres -c "SELECT datname, pg_catalog.pg_get_userbyid(datdba) FROM pg_database WHERE datname NOT IN ('postgres', 'template0', 'template1');"
+docker exec <postgres_container_name> psql -U postgres -c "SELECT datname, pg_catalog.pg_get_userbyid(datdba) FROM pg_database WHERE datname NOT IN ('postgres', 'template0', 'template1');"
 ```
 
 ### List all users:
 ```bash
-docker exec infra-postgres-1 psql -U postgres -c "SELECT rolname FROM pg_roles WHERE rolname NOT LIKE 'pg_%';"
+docker exec <postgres_container_name> psql -U postgres -c "SELECT rolname FROM pg_roles WHERE rolname NOT LIKE 'pg_%';"
 ```
 
 ### Drop a database and user (DANGER!):
 ```bash
-docker exec infra-postgres-1 psql -U postgres -c "DROP DATABASE IF EXISTS myapp;"
-docker exec infra-postgres-1 psql -U postgres -c "DROP USER IF EXISTS myapp;"
+docker exec <postgres_container_name> psql -U postgres -c "DROP DATABASE IF EXISTS myapp;"
+docker exec <postgres_container_name> psql -U postgres -c "DROP USER IF EXISTS myapp;"
 ```
 
 ## Example: Adding a New Stack
@@ -118,12 +128,12 @@ Let's say you want to add **Vikunja** (the kanban app):
 
 1. Generate password: `openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 24`
 2. SSH to VM
-3. Create user: `docker exec infra-postgres-1 psql -U postgres -c "CREATE USER vikunja WITH PASSWORD 'your-password';"`
-4. Create DB: `docker exec infra-postgres-1 psql -U postgres -c "CREATE DATABASE vikunja OWNER vikunja;"`
+3. Create user: `docker exec <postgres_container_name> psql -U postgres -c "CREATE USER vikunja WITH PASSWORD 'your-password';"`
+4. Create DB: `docker exec <postgres_container_name> psql -U postgres -c "CREATE DATABASE vikunja OWNER vikunja;"`
 5. Grant privileges:
    ```bash
-   docker exec infra-postgres-1 psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE vikunja TO vikunja;"
-   docker exec infra-postgres-1 psql -U postgres -d vikunja -c "GRANT ALL ON SCHEMA public TO vikunja;"
+   docker exec <postgres_container_name> psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE vikunja TO vikunja;"
+   docker exec <postgres_container_name> psql -U postgres -d vikunja -c "GRANT ALL ON SCHEMA public TO vikunja;"
    ```
 6. Add to `stacks/vikunja/compose.yaml`:
    ```yaml
