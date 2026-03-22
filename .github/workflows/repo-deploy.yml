@@ -16,15 +16,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Validate webhook secrets
-        run: |
-          test -n "${{ secrets.KOMODO_REPO_WEBHOOK_URL }}"
-          test -n "${{ secrets.KOMODO_REPO_WEBHOOK_SECRET }}"
-
       - name: Trigger Komodo repo pull
+        env:
+          WEBHOOK_URL: ${{ secrets.KOMODO_REPO_WEBHOOK_URL }}
+          WEBHOOK_SECRET: ${{ secrets.KOMODO_REPO_WEBHOOK_SECRET }}
         run: |
-          payload='{"event":"${{ github.event_name }}","repository":"${{ github.repository }}","commit":"${{ github.sha }}","ref":"${{ github.ref_name }}","workflow":"${{ github.workflow }}"}';
-          sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "${{ secrets.KOMODO_REPO_WEBHOOK_SECRET }}" -hex | sed 's/^.* //');
+          if [[ -z "$WEBHOOK_URL" ]]; then
+            echo "ERROR: KOMODO_REPO_WEBHOOK_URL secret is not set"
+            exit 1
+          fi
+          if [[ -z "$WEBHOOK_SECRET" ]]; then
+            echo "ERROR: KOMODO_REPO_WEBHOOK_SECRET secret is not set"
+            exit 1
+          fi
+
+          payload="{\"event\":\"${{ github.event_name }}\",\"repository\":\"${{ github.repository }}\",\"commit\":\"${{ github.sha }}\",\"ref\":\"${{ github.ref_name }}\"}"
+          sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -hex | sed 's/^.* //')
+
+          echo "Triggering Komodo repo pull..."
           curl --fail --silent --show-error \
             --retry 3 --retry-delay 2 \
             --connect-timeout 10 --max-time 30 \
@@ -33,7 +42,7 @@ jobs:
             -H "X-GitHub-Event: ${{ github.event_name }}" \
             -H "X-Hub-Signature-256: sha256=$sig" \
             -d "$payload" \
-            "${{ secrets.KOMODO_REPO_WEBHOOK_URL }}"
+            "$WEBHOOK_URL"
 
-      - name: Report success
-        run: echo "Komodo notified for repo pull at ${{ github.ref_name }}"
+          echo ""
+          echo "Komodo notified for repo pull at ${{ github.ref_name }}"
