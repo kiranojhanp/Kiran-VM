@@ -10,16 +10,17 @@ concurrency:
   group: repo-deploy
   cancel-in-progress: false
 
+env:
+  WEBHOOK_URL: ${{ vars.KOMODO_REPO_WEBHOOK_URL }}
+  WEBHOOK_SECRET: ${{ secrets.KOMODO_REPO_WEBHOOK_SECRET }}
+
 jobs:
   trigger-deploy:
     name: Trigger Komodo repo pull
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Trigger Komodo repo pull
-        env:
-          WEBHOOK_URL: ${{ secrets.KOMODO_REPO_WEBHOOK_URL }}
-          WEBHOOK_SECRET: ${{ secrets.KOMODO_REPO_WEBHOOK_SECRET }}
+      - name: Validate secrets
         run: |
           if [[ -z "$WEBHOOK_URL" ]]; then
             echo "ERROR: KOMODO_REPO_WEBHOOK_URL secret is not set"
@@ -29,7 +30,10 @@ jobs:
             echo "ERROR: KOMODO_REPO_WEBHOOK_SECRET secret is not set"
             exit 1
           fi
+          echo "Secrets validated"
 
+      - name: Trigger Komodo repo pull
+        run: |
           payload="{\"event\":\"${{ github.event_name }}\",\"repository\":\"${{ github.repository }}\",\"commit\":\"${{ github.sha }}\",\"ref\":\"${{ github.ref_name }}\"}"
           sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -hex | sed 's/^.* //')
 
