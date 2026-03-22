@@ -14,6 +14,18 @@ Use the same flow for every stack (`actual`, `mealie`, `openwebui`, `paperlessng
 
 `task verify` checks infra, Traefik, and Komodo reachability.
 
+## Auto-Deploy on Push to Main
+
+Komodo pulls from GitHub automatically when you push to `main`. Setup:
+
+1. In Komodo settings, enable the "Repository Webhook" feature and note the webhook URL.
+2. Add these GitHub repository secrets:
+   - `KOMODO_REPO_WEBHOOK_URL`: Komodo's repo webhook URL
+   - `KOMODO_REPO_WEBHOOK_SECRET`: Secret for HMAC signature verification
+3. That's it! Pushes to `main` trigger Komodo to pull the latest code.
+
+See `.github/workflows/repo-deploy.yml` for the GitHub Actions workflow.
+
 ## Where each variable belongs
 
 Use this split:

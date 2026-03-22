@@ -1,30 +1,5 @@
 version: '3'
 
 tasks:
-  komodo:trigger:
-    desc: Trigger a Komodo webhook for a stack
-    preconditions:
-      - sh: command -v curl >/dev/null 2>&1
-        msg: curl is required
-      - sh: test -n "{{.WEBHOOK_URL}}"
-        msg: WEBHOOK_URL cannot be empty
-      - sh: test -n "{{.WEBHOOK_SECRET}}"
-        msg: WEBHOOK_SECRET cannot be empty
-      - sh: printf '%s' "{{.WEBHOOK_URL}}" | grep -Eq '^https://[^[:space:]]+$'
-        msg: WEBHOOK_URL must be a valid https URL
-    requires:
-      vars: [STACK, WEBHOOK_URL, WEBHOOK_SECRET]
-    cmds:
-      - >-
-        payload='{"stack":"{{.STACK}}","event":"{{default "push" .GITHUB_EVENT_NAME}}","repository":"{{.GITHUB_REPOSITORY}}","commit":"{{.GITHUB_SHA}}","ref":"{{.GITHUB_REF}}","workflow":"{{.GITHUB_WORKFLOW}}"}';
-        sig=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "{{.WEBHOOK_SECRET}}" -hex | sed 's/^.* //');
-        curl --fail --silent --show-error
-        --retry 5 --retry-delay 2 --retry-all-errors
-        --connect-timeout 10 --max-time 30
-        -X POST
-        -H "Content-Type: application/json"
-        -H "X-GitHub-Event: {{default "push" .GITHUB_EVENT_NAME}}"
-        -H "X-Hub-Signature-256: sha256=$sig"
-        -H "X-Webhook-Secret: {{.WEBHOOK_SECRET}}"
-        -d "$payload"
-        "{{.WEBHOOK_URL}}"
+  # Repo webhook triggers are now handled by GitHub Actions (.github/workflows/repo-deploy.yml)
+  # No local task needed - GitHub calls Komodo's repo webhook directly on push to main
