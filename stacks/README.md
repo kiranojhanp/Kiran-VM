@@ -4,7 +4,7 @@ This directory contains app stacks deployed from Komodo.
 
 ## What to do in Komodo
 
-Use the same flow for every stack (`actual`, `mealie`, `openwebui`, `paperlessngx`, `vikunja`, `vaultwarden`, `vaultwarden-backup`):
+Use the same flow for every stack (`actual`, `audiobookshelf`, `mealie`, `openwebui`, `paperlessngx`, `vikunja`, `vaultwarden`, `vaultwarden-backup`):
 
 1. Create the stack in Komodo (or open the existing one).
 2. Set run directory to `stacks/<stack-name>`.
@@ -52,7 +52,8 @@ When adding a new stack that needs PostgreSQL, see [DATABASE.md](DATABASE.md) fo
 ## Stack docs
 
  - [Actual](actual/README.md)
-- [Mealie](mealie/README.md)
+ - [Audiobookshelf](audiobookshelf/README.md)
+ - [Mealie](mealie/README.md)
 - [Open WebUI](openwebui/README.md)
 - [Paperless-ngx](paperlessngx/README.md)
 
