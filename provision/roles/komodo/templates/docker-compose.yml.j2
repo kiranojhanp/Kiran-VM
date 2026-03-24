@@ -10,6 +10,7 @@ networks:
     name: "{{ shared_docker_network }}"
 
 volumes:
+  keys:
   ferretdb-pg-data:
 
 services:
@@ -51,6 +52,7 @@ services:
   # ── Komodo Core ───────────────────────────────────────────────────────────
   komodo:
     image: "{{ komodo_image }}"
+    init: true
     restart: unless-stopped
     env_file: .env
     environment:
@@ -77,6 +79,7 @@ services:
       traefik.http.middlewares.compress.compress: "true"
       traefik.http.services.komodo.loadbalancer.server.port: "{{ komodo_port }}"
     volumes:
+      - keys:/config/keys
       - "{{ komodo_dir }}/data:/etc/komodo"
     networks:
       komodo-net:
