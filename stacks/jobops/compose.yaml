@@ -1,0 +1,47 @@
+services:
+  jobops:
+    image: ghcr.io/dakheera47/job-ops:latest
+    container_name: jobops
+    restart: unless-stopped
+    volumes:
+      - jobops_data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - PYTHON_PATH=/usr/bin/python3
+    env_file:
+      - path: ./.env
+        required: false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.jobops.rule: Host(`${JOBOPS_HOST:-jobops.fewa.app}`)
+      traefik.http.routers.jobops.entrypoints: websecure
+      traefik.http.routers.jobops.tls: "true"
+      traefik.http.routers.jobops.tls.certresolver: letsencrypt
+      traefik.http.services.jobops.loadbalancer.server.port: "3001"
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+
+volumes:
+  jobops_data:
