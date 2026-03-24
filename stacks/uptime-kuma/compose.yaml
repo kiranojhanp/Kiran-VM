@@ -1,0 +1,35 @@
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+    volumes:
+      - uptime-kuma_data:/app/data
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.uptime-kuma.rule: Host(`${UPTIME_KUMA_HOST:-uptime-kuma.fewa.app}`)
+      traefik.http.routers.uptime-kuma.entrypoints: websecure
+      traefik.http.routers.uptime-kuma.tls: "true"
+      traefik.http.routers.uptime-kuma.tls.certresolver: letsencrypt
+      traefik.http.routers.uptime-kuma.middlewares: uptime-kuma-headers
+      traefik.http.middlewares.uptime-kuma-headers.headers.customResponseHeaders.Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' wss:;"
+      traefik.http.services.uptime-kuma.loadbalancer.server.port: "3001"
+    healthcheck:
+      test: ["CMD", "node", "/app/extra/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    mem_limit: 512m
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+
+volumes:
+  uptime-kuma_data:
