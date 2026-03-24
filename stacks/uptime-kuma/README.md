@@ -11,7 +11,7 @@ Compose file: `stacks/uptime-kuma/compose.yaml`
 
 ## Stack environment variables
 
-- `UPTIME_KUMA_HOST` (required): public hostname. Example: `uptime-kuma.fewa.app`.
+- `UPTIME_KUMA_HOST` (required): public hostname. Example: `uptime.fewa.app`.
 - `TZ` (optional): timezone. Default: `UTC`.
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
 
