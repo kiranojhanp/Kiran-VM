@@ -2,7 +2,6 @@
 - name: Assert required komodo secrets are defined
   ansible.builtin.assert:
     that:
-      - komodo_passkey is defined and komodo_passkey | length > 0
       - komodo_webhook_secret is defined and komodo_webhook_secret | length > 0
       - komodo_password is defined and komodo_password | length > 0
       - ferretdb_postgres_password is defined and ferretdb_postgres_password | length > 0

@@ -34,7 +34,7 @@ Use this split:
 - `provision/secrets.yml` (ansible-vault): platform secrets (`cloudflare_api_token`, `komodo_*`, shared DB/Redis passwords).
 - Pulumi config (`infra` stack): OCI and infrastructure values (`oci:*`, `kiran-vm-infra:*`).
 
-Komodo platform variables are not set per app stack. Provisioning renders them from `provision/secrets.yml` and `provision/group_vars/all.yml` into `/opt/komodo/.env` (for example: `KOMODO_PASSKEY`, `KOMODO_WEBHOOK_SECRET`, `KOMODO_JWT_SECRET`, `KOMODO_INIT_ADMIN_USERNAME`, `KOMODO_INIT_ADMIN_PASSWORD`).
+Komodo platform variables are not set per app stack. Provisioning renders them from `provision/secrets.yml` and `provision/group_vars/all.yml` into `/opt/komodo/.env` (for example: `KOMODO_WEBHOOK_SECRET`, `KOMODO_JWT_SECRET`, `KOMODO_INIT_ADMIN_USERNAME`, `KOMODO_INIT_ADMIN_PASSWORD`, `PERIPHERY_CORE_PUBLIC_KEYS`).
 
 If a compose file references `${...}`, set it in that stack's Komodo Environment unless that stack README says otherwise.
 
