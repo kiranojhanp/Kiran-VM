@@ -14,7 +14,7 @@
 :INPUT DROP [0:0]
 :FORWARD ACCEPT [0:0]
 # Note: FORWARD is ACCEPT — Docker requires this to route container traffic.
-# Docker's own DOCKER-USER chain handles inter-container isolation.
+# DOCKER-USER chain rules are defined below (before *filter COMMIT).
 :OUTPUT ACCEPT [0:0]
 
 # ── Loopback ────────────────────────────────────────────────────────────────
@@ -46,6 +46,23 @@
 -A INPUT -p tcp --dport {{ komodo_port }} -j DROP
 
 # ── Default: DROP everything else (set by chain policy above) ──────────────
+
+# ── Docker published ports hardening ────────────────────────────────────────
+# DOCKER-USER is evaluated before Docker's own NAT rules.
+# Allow established/related connections through.
+-A DOCKER-USER -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
+# Allow loopback.
+-A DOCKER-USER -s 127.0.0.0/8 -j RETURN
+# Allow Docker bridge networks (172.16–172.31 range covers default Docker DHCP range).
+-A DOCKER-USER -s 172.16.0.0/12 -j RETURN
+# Allow infra network (existing infra_net bridge, gateway 172.19.0.1).
+-A DOCKER-USER -s 172.19.0.0/16 -j RETURN
+# Allow Traefik-published web traffic from anywhere (HTTPS terminates at Traefik).
+-A DOCKER-USER -p tcp --dport 80 -j RETURN
+-A DOCKER-USER -p tcp --dport 443 -j RETURN
+# Drop everything else attempting to reach Docker-published ports.
+-A DOCKER-USER -m conntrack --ctstate NEW -j DROP
+-A DOCKER-USER -j RETURN
 
 COMMIT
 
