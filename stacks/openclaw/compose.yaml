@@ -1,6 +1,6 @@
 services:
   openclaw-gateway:
-    image: alpine/openclaw:main
+    image: alpine/openclaw:latest
     container_name: infra-openclaw-1
     restart: unless-stopped
     environment:
@@ -37,7 +37,7 @@ services:
       - no-new-privileges:true
 
   openclaw-cli:
-    image: alpine/openclaw:main
+    image: alpine/openclaw:latest
     profiles:
       - cli
     environment:
