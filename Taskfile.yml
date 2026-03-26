@@ -20,7 +20,7 @@ vars:
   DOMAIN_NAME_DEFAULT: fewa.app
   ACME_EMAIL_DEFAULT: admin@fewa.app
   KOMODO_SUBDOMAIN_LABEL: komodo
-  DNS_SUBDOMAIN_LABELS: actual,audiobookshelf,jobops,komodo,openwebui,uptime-kuma,vaultwarden,mealie,paperless,vikunja
+  DNS_SUBDOMAIN_LABELS: actual,audiobookshelf,jobops,komodo,openclaw,openwebui,uptime,vaultwarden,mealie,paperless,vikunja
   CLOUDFLARE_ZONE_ID_DEFAULT: 58dce5945a8941e4c38a3611af123052
 
   # OCI naming suffixes

@@ -79,4 +79,8 @@ komodo_dir: /opt/komodo
 postgres_container_name: "infra-postgres-1"
 redis_container_name: "infra-redis-1"
 
+# ── OpenClaw ──────────────────────────────────────────────────────────────────
+openclaw_fqdn: "openclaw.{{ domain }}"
+openclaw_config_dir: /opt/openclaw/config
+openclaw_workspace_dir: /opt/openclaw/workspace
 
