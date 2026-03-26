@@ -1,0 +1,60 @@
+services:
+  openclaw-gateway:
+    image: ghcr.io/openclaw/openclaw:main-arm64
+    container_name: infra-openclaw-1
+    restart: unless-stopped
+    environment:
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:?OPENCLAW_GATEWAY_TOKEN is required}
+      OPENCLAW_TELEGRAM_BOT_TOKEN: ${OPENCLAW_TELEGRAM_BOT_TOKEN:-}
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw:rw
+      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace:rw
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.openclaw.rule: Host(`${OPENCLAW_FQDN:?OPENCLAW_FQDN is required}`)
+      traefik.http.routers.openclaw.entrypoints: websecure
+      traefik.http.routers.openclaw.tls: "true"
+      traefik.http.routers.openclaw.tls.certresolver: letsencrypt
+      traefik.http.services.openclaw.loadbalancer.server.port: "18789"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18789/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 1g
+    memswap_limit: 1g
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+
+  openclaw-cli:
+    image: ghcr.io/openclaw/openclaw:main-arm64
+    profiles:
+      - cli
+    environment:
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:?OPENCLAW_GATEWAY_TOKEN is required}
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw:rw
+      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace:rw
+    network_mode: "service:openclaw-gateway"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
