@@ -1,6 +1,6 @@
 services:
   openclaw-gateway:
-    image: alpine/openclaw:latest
+    image: ghcr.io/openclaw/openclaw:latest
     container_name: infra-openclaw-1
     restart: unless-stopped
     environment:
@@ -20,11 +20,11 @@ services:
       traefik.http.routers.openclaw.tls.certresolver: letsencrypt
       traefik.http.services.openclaw.loadbalancer.server.port: "18789"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18789/healthz || exit 1"]
+      test: ["CMD-SHELL", "node dist/index.js health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
     logging:
       driver: json-file
       options:
@@ -37,7 +37,7 @@ services:
       - no-new-privileges:true
 
   openclaw-cli:
-    image: alpine/openclaw:latest
+    image: ghcr.io/openclaw/openclaw:latest
     profiles:
       - cli
     environment:
