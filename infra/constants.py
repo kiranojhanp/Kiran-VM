@@ -5,7 +5,11 @@
 PROJECT_NAME_DEFAULT = 'kiran-self-hosting'
 DOMAIN_NAME_DEFAULT = 'fewa.app'
 CLOUDFLARE_ZONE_ID_DEFAULT = '58dce5945a8941e4c38a3611af123052'
+<<<<<<< HEAD
 DNS_SUBDOMAIN_LABELS = ['actual', 'audiobookshelf', 'jobops', 'komodo', 'openclaw', 'openwebui', 'uptime', 'vaultwarden', 'mealie', 'paperless', 'vikunja']
+=======
+DNS_SUBDOMAIN_LABELS = ['actual', 'audiobookshelf', 'jobops', 'komodo', 'openwebui', 'uptime', 'vaultwarden', 'mealie', 'paperless', 'vikunja']
+>>>>>>> feat/openclaw-vps
 
 # -- Resource Name Suffixes ---------------------------------------------------
 SUFFIX_COMPARTMENT = '-compartment'
