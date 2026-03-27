@@ -14,7 +14,7 @@ services:
       - "443:443"
     volumes:
       - ./traefik.yml:/etc/traefik/traefik.yml:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:rw
       - traefik_letsencrypt:/letsencrypt
     networks:
       - shared
@@ -26,6 +26,8 @@ services:
         max-size: "10m"
         max-file: "3"
     mem_limit: 512m
+    group_add:
+      - 999
 
   fewa-site:
     image: hashicorp/http-echo:1.0.0

@@ -19,9 +19,15 @@ komodo_port: 9120
 komodo_image: "ghcr.io/moghtech/komodo-core:2"
 komodo_periphery_image: "ghcr.io/moghtech/komodo-periphery:2"
 komodo_log_level: info
+# Periphery agent public key — Core uses this to authenticate inbound Periphery connections.
+# Get from Periphery logs: `docker logs komodo-periphery-1 | grep "Public Key:" | tail -1`
+# Set in secrets.yml as komodo_periphery_public_keys (public key, safe to commit encrypted).
+_komodo_periphery_public_keys_default: 'MCowBQYDK2VuAyEAWwrsWyQCfnP4IiFQPIQqqamrGq2qs93sOFWOxrtzCBs='
+komodo_periphery_public_keys: ""
 # komodo_init_admin_username is set in secrets.yml (moved for security)
 # How often Komodo polls stacks for new image versions. Must be a Komodo duration string.
 komodo_resource_poll_interval: "1-hr"
+komodo_first_server_name: "kiran-vps"
 
 # ── FerretDB (MongoDB adapter for Komodo) ───────────────
 # FerretDB requires its own patched postgres image — cannot share stock postgres:16.

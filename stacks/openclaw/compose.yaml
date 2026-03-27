@@ -1,20 +1,21 @@
 services:
   openclaw-gateway:
-    image: ghcr.io/openclaw/openclaw:main-arm64
+    image: alpine/openclaw:latest
     container_name: infra-openclaw-1
     restart: unless-stopped
     environment:
-      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:?OPENCLAW_GATEWAY_TOKEN is required}
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
       OPENCLAW_TELEGRAM_BOT_TOKEN: ${OPENCLAW_TELEGRAM_BOT_TOKEN:-}
     volumes:
-      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw:rw
-      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace:rw
+      - ${OPENCLAW_CONFIG_DIR:-/opt/openclaw/config}:/home/node/.openclaw:rw
+      - ${OPENCLAW_WORKSPACE_DIR:-/opt/openclaw/workspace}:/home/node/.openclaw/workspace:rw
+      - /tmp:/tmp:rw
     networks:
       - shared
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.openclaw.rule: Host(`${OPENCLAW_FQDN:?OPENCLAW_FQDN is required}`)
+      traefik.http.routers.openclaw.rule: Host(`${OPENCLAW_FQDN:-openclaw.fewa.app}`)
       traefik.http.routers.openclaw.entrypoints: websecure
       traefik.http.routers.openclaw.tls: "true"
       traefik.http.routers.openclaw.tls.certresolver: letsencrypt
@@ -24,27 +25,29 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
-    mem_limit: 1g
-    memswap_limit: 1g
+    mem_limit: 2g
+    memswap_limit: 2g
+    tmpfs:
+      - /home/node/.npm:size=500m
     read_only: true
     security_opt:
       - no-new-privileges:true
 
   openclaw-cli:
-    image: ghcr.io/openclaw/openclaw:main-arm64
+    image: alpine/openclaw:latest
     profiles:
       - cli
     environment:
-      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:?OPENCLAW_GATEWAY_TOKEN is required}
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
     volumes:
-      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw:rw
-      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace:rw
+      - ${OPENCLAW_CONFIG_DIR:-/opt/openclaw/config}:/home/node/.openclaw:rw
+      - ${OPENCLAW_WORKSPACE_DIR:-/opt/openclaw/workspace}:/home/node/.openclaw/workspace:rw
     network_mode: "service:openclaw-gateway"
     logging:
       driver: json-file
