@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     environment:
       RCLONE_CONFIG: /config/rclone.conf
-      RCLONE_REMOTE_NAME: ${VW_BACKUP_RCLONE_REMOTE_NAME:-r2}
+      RCLONE_REMOTE_NAME: ${VW_BACKUP_RCLONE_REMOTE_NAME:-garage}
       RCLONE_REMOTE_DIR: ${VW_BACKUP_RCLONE_REMOTE_DIR:-/vaultwarden-backups/prod/}
       CRON: ${VW_BACKUP_CRON:-17 3 * * *}
       ZIP_ENABLE: ${VW_BACKUP_ZIP_ENABLE:-TRUE}
