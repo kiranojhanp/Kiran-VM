@@ -14,6 +14,14 @@ services:
       - "3903:3903"
     networks:
       - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.garage-s3.rule: Host(`${S3_GARAGE_HOST:-s3.fewa.app}`)
+      traefik.http.routers.garage-s3.entrypoints: websecure
+      traefik.http.routers.garage-s3.tls: "true"
+      traefik.http.routers.garage-s3.tls.certresolver: letsencrypt
+      traefik.http.services.garage-s3.loadbalancer.server.port: "3900"
 
   garage-webui:
     image: khairul169/garage-webui:1.1.0

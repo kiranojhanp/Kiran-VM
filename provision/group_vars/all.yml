@@ -93,3 +93,7 @@ openclaw_workspace_dir: /opt/openclaw/workspace
 # ── Garage ──────────────────────────────────────────────────────────────────
 garage_s3_region: ap-southeast-1
 garage_domain: fewa.app
+s3_garage_host: s3.fewa.app
+
+# WAL-G S3 backend (used by backup role)
+backup_wal_g_aws_region: ap-southeast-1
