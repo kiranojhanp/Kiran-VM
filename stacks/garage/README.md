@@ -2,7 +2,7 @@
 
 Compose file: `stacks/garage/compose.yaml`
 Config template: `stacks/garage/garage.toml.tmpl`
-Entrypoint: `stacks/garage/entrypoint.sh`
+Dockerfile: `stacks/garage/Dockerfile`
 
 [Garage](https://garagehq.deuxfleurs.fr) is an S3-compatible object storage solution designed for self-hosting. This stack deploys both Garage and the [garage-webui](https://github.com/khairul169/garage-webui) management interface.
 
@@ -13,7 +13,7 @@ Entrypoint: `stacks/garage/entrypoint.sh`
 3. Set compose path to `stacks/garage/compose.yaml`.
 4. Add the variables below in the stack Environment.
 5. Add `GARAGE_ADMIN_TOKEN` and `GARAGE_METRICS_TOKEN` in Komodo as secret variables.
-6. Deploy (or Redeploy).
+6. Deploy (or Redeploy). Note: first deploy will build the Docker image.
 7. Run the post-deploy layout setup (see below).
 
 ## Stack environment variables

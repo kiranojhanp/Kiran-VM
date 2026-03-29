@@ -1,10 +1,10 @@
 services:
   garage:
-    image: dxflrs/garage:v2.1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: garage
     restart: unless-stopped
-    entrypoint: ["/entrypoint.sh"]
-    command: []
     environment:
       - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
       - GARAGE_ADMIN_TOKEN=${GARAGE_ADMIN_TOKEN}
@@ -15,7 +15,6 @@ services:
       - ./garage.toml.tmpl:/etc/garage.toml.template:ro
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
-      - ./entrypoint.sh:/entrypoint.sh:ro
     ports:
       - "3900:3900"
       - "3901:3901"
