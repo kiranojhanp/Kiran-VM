@@ -18,7 +18,9 @@ section() {
 section
 
 log "Verifying container is running"
+{% raw %}
 if ! docker ps --format '{{.Names}}' | grep -q "^${POSTGRES_CONTAINER}$"; then
+{% endraw %}
   log "ERROR: Container ${POSTGRES_CONTAINER} is not running" >&2
   exit 1
 fi
