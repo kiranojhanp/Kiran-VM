@@ -12,7 +12,7 @@ services:
       - GARAGE_S3_REGION=${GARAGE_S3_REGION:-us-east-1}
       - GARAGE_DOMAIN=${GARAGE_DOMAIN:-localhost}
     volumes:
-      - ./garage.toml.tmpl:/etc/garage.toml.template:ro
+      - garage_config:/config
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
     ports:
@@ -33,7 +33,7 @@ services:
     image: khairul169/garage-webui:1.1.0
     restart: unless-stopped
     volumes:
-      - ./garage.toml.tmpl:/etc/garage.toml.template:ro
+      - garage_config:/config:ro
     environment:
       API_BASE_URL: "http://garage:3903"
       S3_ENDPOINT_URL: "http://garage:3900"
@@ -57,5 +57,6 @@ networks:
     external: true
 
 volumes:
+  garage_config:
   garage_meta:
   garage_data:

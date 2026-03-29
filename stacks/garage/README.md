@@ -3,8 +3,11 @@
 Compose file: `stacks/garage/compose.yaml`
 Config template: `stacks/garage/garage.toml.tmpl`
 Dockerfile: `stacks/garage/Dockerfile`
+Entrypoint: `stacks/garage/entrypoint.sh`
 
 [Garage](https://garagehq.deuxfleurs.fr) is an S3-compatible object storage solution designed for self-hosting. This stack deploys both Garage and the [garage-webui](https://github.com/khairul169/garage-webui) management interface.
+
+The Docker image is built from the base image with an entrypoint that generates `garage.toml` from environment variables on first start.
 
 ## In Komodo
 
@@ -31,25 +34,25 @@ Dockerfile: `stacks/garage/Dockerfile`
 After the first deploy, you must initialize the storage layout. Run these commands on the host:
 
 ```bash
-# Get the container name or ID
-docker exec garage /garage -c /etc/garage.toml node id
+# Get the node ID
+docker exec garage garage node id
 
 # Create layout (replace NODE_ID and SIZE as needed)
-docker exec garage /garage -c /etc/garage.toml layout assign <NODE_ID> -z dc1 -c 10G
-docker exec garage /garage -c /etc/garage.toml layout apply --version 1
+docker exec garage garage layout assign <NODE_ID> -z dc1 -c 10G
+docker exec garage garage layout apply --version 1
 ```
 
-The `-c 10G` sets 10GB of storage; adjust as needed. Check `docker exec garage /garage -c /etc/garage.toml layout show` to verify.
+The `-c 10G` sets 10GB of storage; adjust as needed. Check `docker exec garage garage layout show` to verify.
 
 ## Creating access keys
 
 After layout setup, use garage-webui or the CLI:
 
 ```bash
-# Via CLI (after getting NODE_ID)
-docker exec garage /garage -c /etc/garage.toml key create myapp
-docker exec garage /garage -c /etc/garage.toml bucket create mybucket
-docker exec garage /garage -c /etc/garage.toml bucket allow mybucket --read --write --key <ACCESS_KEY>
+# Via CLI
+docker exec garage garage key create myapp
+docker exec garage garage bucket create mybucket
+docker exec garage garage bucket allow mybucket --read --write --key <ACCESS_KEY>
 ```
 
 Or visit `https://<GARAGE_HOST>` to use the webui.
@@ -58,7 +61,7 @@ Or visit `https://<GARAGE_HOST>` to use the webui.
 
 Use these S3-compatible endpoints:
 
-- **S3 API**: `http://<host>:3900` (or configure `GARAGE_DOMAIN` for virtual-host style)
+- **S3 API**: `http://<host>:3900`
 - **S3 region**: set via `GARAGE_S3_REGION`
 
 Example s5cmd config:
