@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-{% raw %}
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,7 +16,7 @@ section() {
 
 section
 
-log "Verifying R2 connectivity and listing backups"
+log "Verifying S3 connectivity and listing backups"
 docker exec "${POSTGRES_CONTAINER}" env \
   PGUSER=postgres \
   PGPASSWORD="${POSTGRES_PASSWORD}" \
@@ -51,4 +50,3 @@ if ! docker exec "${POSTGRES_CONTAINER}" env \
 fi
 
 log "Integrity check passed"
-{% endraw %}

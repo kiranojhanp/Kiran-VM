@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-{% raw %}
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -60,4 +59,3 @@ docker exec "${POSTGRES_CONTAINER}" env \
     --keep-yearly "${WALG_RETENTION_KEEP_YEARLY}"
 
 log "Retention prune completed"
-{% endraw %}

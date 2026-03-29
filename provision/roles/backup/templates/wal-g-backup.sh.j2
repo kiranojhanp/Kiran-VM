@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-{% raw %}
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -30,7 +29,7 @@ if ! docker exec "${POSTGRES_CONTAINER}" wal-g --version 2>/dev/null; then
   exit 1
 fi
 
-log "Verifying R2 connectivity"
+log "Verifying S3 connectivity"
 docker exec "${POSTGRES_CONTAINER}" wal-g backup-list 2>/dev/null | head -3
 
 log "Running WAL-G backup-push from inside container"
@@ -65,4 +64,3 @@ docker exec "${POSTGRES_CONTAINER}" env \
   wal-g backup-list
 
 log "Base backup completed successfully"
-{% endraw %}
