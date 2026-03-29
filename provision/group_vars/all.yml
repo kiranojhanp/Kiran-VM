@@ -90,3 +90,6 @@ openclaw_fqdn: "openclaw.{{ domain }}"
 openclaw_config_dir: /opt/openclaw/config
 openclaw_workspace_dir: /opt/openclaw/workspace
 
+# ── Garage ──────────────────────────────────────────────────────────────────
+garage_s3_region: ap-southeast-1
+garage_domain: fewa.app
