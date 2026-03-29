@@ -18,3 +18,4 @@ infra/bin/
 
 # Ruff lint cache
 **/.ruff_cache/
+stacks/garage/garage-webui.env

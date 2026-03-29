@@ -66,9 +66,21 @@ docker exec garage garage bucket allow mybucket --read --write --key <ACCESS_KEY
 
 Or visit `https://<GARAGE_HOST>` to use the webui.
 
+### WebUI authentication
+
+The webui requires HTTP Basic Auth. Credentials are configured in `garage-webui.env` (gitignored). Generate a new password hash with:
+
+```bash
+htpasswd -nbBC 10 "username" "password"
+```
+
+Then update `garage-webui.env` with the hash (use `$$` to escape dollar signs in compose).
+
 ## Connecting apps
 
-- **S3 API**: `http://<host>:3900`
+- **S3 API (internal)**: `http://garage:3900`
+- **S3 API (public)**: `https://s3.fewa.app`
+- **WebUI**: `https://garage.fewa.app`
 - **S3 region**: set via `garage_s3_region` in group_vars
 
 Example s5cmd config:
