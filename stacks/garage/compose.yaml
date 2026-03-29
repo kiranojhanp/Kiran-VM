@@ -14,12 +14,6 @@ services:
       - "3903:3903"
     networks:
       - shared
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:3901/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
   garage-webui:
     image: khairul169/garage-webui:1.1.0
@@ -31,7 +25,7 @@ services:
       S3_ENDPOINT_URL: "http://garage:3900"
     depends_on:
       garage:
-        condition: service_healthy
+        condition: service_started
     networks:
       - shared
     labels:
