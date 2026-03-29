@@ -28,10 +28,11 @@ services:
     restart: unless-stopped
     volumes:
       - /opt/garage/garage.toml:/etc/garage.toml:ro
+    env_file:
+      - garage-webui.env
     environment:
       API_BASE_URL: "http://garage:3903"
       S3_ENDPOINT_URL: "http://garage:3900"
-      AUTH_USER_PASS: "${GARAGE_WEBUI_AUTH}"
     depends_on:
       garage:
         condition: service_started
