@@ -1,6 +1,6 @@
 services:
   open-webui:
-    image: ghcr.io/open-webui/open-webui:main
+    image: ghcr.io/open-webui/open-webui:v0.8.12
     restart: unless-stopped
     environment:
       ENABLE_OLLAMA_API: "false"
