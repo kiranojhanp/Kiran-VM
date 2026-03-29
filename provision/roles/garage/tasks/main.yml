@@ -1,0 +1,23 @@
+---
+- name: Assert required garage secrets are defined
+  ansible.builtin.assert:
+    that:
+      - garage_rpc_secret is defined and garage_rpc_secret | length > 0
+      - garage_admin_token is defined and garage_admin_token | length > 0
+      - garage_metrics_token is defined and garage_metrics_token | length > 0
+    fail_msg: "One or more required Garage secrets are missing. Fill provision/secrets.yml"
+
+- name: Ensure garage config directory exists
+  ansible.builtin.file:
+    path: /opt/garage
+    state: directory
+    owner: root
+    mode: "0755"
+
+- name: Generate garage.toml from template
+  ansible.builtin.template:
+    src: garage.toml.j2
+    dest: /opt/garage/garage.toml
+    owner: root
+    mode: "0600"
+  notify: Restart garage containers

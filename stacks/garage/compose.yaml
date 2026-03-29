@@ -1,18 +1,10 @@
 services:
   garage:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: dxflrs/garage:v2.1.0
     container_name: garage
     restart: unless-stopped
-    environment:
-      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
-      - GARAGE_ADMIN_TOKEN=${GARAGE_ADMIN_TOKEN}
-      - GARAGE_METRICS_TOKEN=${GARAGE_METRICS_TOKEN}
-      - GARAGE_S3_REGION=${GARAGE_S3_REGION:-us-east-1}
-      - GARAGE_DOMAIN=${GARAGE_DOMAIN:-localhost}
     volumes:
-      - garage_config:/config
+      - /opt/garage/garage.toml:/etc/garage.toml:ro
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
     ports:
@@ -33,7 +25,7 @@ services:
     image: khairul169/garage-webui:1.1.0
     restart: unless-stopped
     volumes:
-      - garage_config:/config:ro
+      - /opt/garage/garage.toml:/etc/garage.toml:ro
     environment:
       API_BASE_URL: "http://garage:3903"
       S3_ENDPOINT_URL: "http://garage:3900"
@@ -57,6 +49,5 @@ networks:
     external: true
 
 volumes:
-  garage_config:
   garage_meta:
   garage_data:

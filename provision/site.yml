@@ -35,3 +35,6 @@
 
     - role: traefik
       tags: [traefik, services]
+
+    - role: garage
+      tags: [garage, services]

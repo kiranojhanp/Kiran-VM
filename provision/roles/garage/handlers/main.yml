@@ -1,0 +1,7 @@
+---
+- name: Restart garage containers
+  community.docker.docker_compose_v2:
+    project_src: /opt/komodo/stacks/garage
+    state: restarted
+  register: result
+  failed_when: false  # Don't fail if containers not running
