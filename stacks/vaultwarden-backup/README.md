@@ -2,7 +2,7 @@
 
 Compose file: `stacks/vaultwarden-backup/compose.yaml`
 
-This stack runs `ttionya/vaultwarden-backup` independently from the `vaultwarden` app stack and uploads backups to your `rclone` remote (R2 recommended).
+This stack runs `ttionya/vaultwarden-backup` independently from the `vaultwarden` app stack and uploads backups to Garage S3 via rclone.
 
 ## In Komodo
 
@@ -13,28 +13,29 @@ This stack runs `ttionya/vaultwarden-backup` independently from the `vaultwarden
 5. Add `VW_BACKUP_ZIP_PASSWORD` in Komodo as a secret variable.
 6. Deploy (or Redeploy).
 
-## Configure rclone for R2
+## Configure rclone for Garage S3
 
-Create `rclone.conf` in the persistent Docker volume used by this stack:
+The rclone config lives in the `vaultwarden_backup_rclone_data` Docker volume. To set it up:
 
 ```bash
 docker run --rm -it -v vaultwarden_backup_rclone_data:/config rclone/rclone:latest config --config /config/rclone.conf
 ```
 
-Use remote name `r2` (or set `VW_BACKUP_RCLONE_REMOTE_NAME` to match your name).
-
-Example remote settings:
+Use remote name `garage` (default). Example settings:
 
 - `type`: `s3`
-- `provider`: `Cloudflare`
-- `endpoint`: `https://<account_id>.r2.cloudflarestorage.com`
-- `access_key_id` / `secret_access_key`: your R2 credentials
-- `no_check_bucket = true` when using object-scoped tokens
+- `provider`: `Other`
+- `access_key_id` / `secret_access_key`: Garage S3 credentials
+- `endpoint`: `https://s3.fewa.app`
+- `region`: `ap-southeast-1`
+- `force_path_style`: `true`
+
+Also create the `vaultwarden-backups` bucket in Garage and grant your access key permission to it.
 
 ## Stack environment variables
 
-- `VW_BACKUP_RCLONE_REMOTE_NAME` (optional): rclone remote name. Default: `r2`.
-- `VW_BACKUP_RCLONE_REMOTE_DIR` (optional): target prefix in remote storage. Default: `/vaultwarden-backups/prod/`.
+- `VW_BACKUP_RCLONE_REMOTE_NAME` (optional): rclone remote name. Default: `garage`.
+- `VW_BACKUP_RCLONE_REMOTE_DIR` (optional): target path in remote storage. Default: `postgres-backup/vaultwarden/prod/`.
 - `VW_BACKUP_CRON` (optional): backup schedule. Default: `17 3 * * *`.
 - `VW_BACKUP_ZIP_ENABLE` (optional): archive backups (`TRUE`/`FALSE`). Default: `TRUE`.
 - `VW_BACKUP_ZIP_TYPE` (optional): archive format (`zip`/`7z`). Default: `7z`.
@@ -47,7 +48,7 @@ Example remote settings:
 
 ## First-run checks
 
-1. Trigger one manual backup after deploy.
-2. Confirm backup objects appear in R2 path.
+1. Trigger one manual backup after deploy: `docker exec vaultwarden-backup-vaultwarden-backup-1 /bin/bash /app/backup.sh`
+2. Confirm backup objects appear in Garage bucket.
 3. Confirm retention cleanup works after the configured window.
 4. Test restore in a non-production Vaultwarden instance before relying on the backups.
