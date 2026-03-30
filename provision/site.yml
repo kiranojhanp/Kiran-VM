@@ -58,6 +58,6 @@
         litestream_backup_enabled: true
         litestream_backup_service_name: actual
         litestream_backup_data_volume: actual_actual_data
-        litestream_backup_db_path: db.sqlite3
+        litestream_backup_db_path: server-files/account.sqlite
         litestream_backup_bucket: actual-backups
         litestream_backup_path: prod/db
