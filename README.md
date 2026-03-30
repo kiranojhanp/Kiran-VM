@@ -65,9 +65,11 @@ The VM instance is protected from accidental `pulumi down`:
 
 ```bash
 # To delete the VM, you must first unprotect it:
-pulumi state unprotect <urn>
+cd infra
+pulumi state unprotect urn:pulumi:kiran-self-hosting::kiran-vm-infra::oci:Core/instance:Instance::kiran-self-hosting-vm
 
 # Then you can destroy
+cd infra
 pulumi down
 ```
 
