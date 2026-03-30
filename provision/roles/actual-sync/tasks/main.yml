@@ -45,7 +45,7 @@
 
 - name: Pull Actual sync Docker image
   ansible.builtin.shell:
-    cmd: docker pull timsmart/actualbudget-sync:latest
+    cmd: docker pull timsmart/actualbudget-sync:main
   register: docker_pull
   changed_when: true
 

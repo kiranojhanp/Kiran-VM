@@ -16,6 +16,6 @@ ExecStart=/usr/bin/docker run --rm \
   -e ACTUAL_PASSWORD \
   -e ACTUAL_DATA \
   -e UP_USER_TOKEN \
-  timsmart/actualbudget-sync:latest \
+  timsmart/actualbudget-sync:main \
   --bank up \
   --accounts '{{ actual_sync_actual_account_id }}={{ actual_sync_up_account_id }}'
