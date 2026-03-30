@@ -1,0 +1,115 @@
+---
+- name: Configure Vaultwarden Litestream backups
+  when: vaultwarden_litestream_enabled | bool
+  block:
+    - name: Assert required Litestream backup secrets are set
+      ansible.builtin.assert:
+        that:
+          - vaultwarden_litestream_access_key_id | default('') | length > 0
+          - vaultwarden_litestream_secret_access_key | default('') | length > 0
+        fail_msg: >-
+          Vaultwarden Litestream is enabled but required AWS credentials are missing.
+          Set vaultwarden_litestream_access_key_id and vaultwarden_litestream_secret_access_key
+          in secrets.yml.
+
+    - name: Detect host architecture for Litestream package
+      ansible.builtin.command: dpkg --print-architecture
+      register: litestream_host_arch
+      changed_when: false
+
+    - name: Set Litestream package name based on architecture
+      ansible.builtin.set_fact:
+        litestream_pkg_name: >-
+          {{
+            'litestream-v' ~ vaultwarden_litestream_version ~ '-linux-arm64.deb'
+              if (litestream_host_arch.stdout | trim) == 'arm64'
+              else 'litestream-v' ~ vaultwarden_litestream_version ~ '-linux-amd64.deb'
+          }}
+
+    - name: Install Litestream .deb package
+      ansible.builtin.apt:
+        deb: "https://github.com/benbjohnson/litestream/releases/download/v{{ vaultwarden_litestream_version }}/{{ litestream_pkg_name }}"
+        state: present
+      register: litestream_installed
+
+    - name: Get Vaultwarden data volume mountpoint
+      ansible.builtin.shell:
+        cmd: "docker volume inspect {{ vaultwarden_data_volume }} --format '%[Mountpoint]'"
+      register: volume_mountpoint
+      changed_when: false
+      failed_when: false
+
+    - name: Set vaultwarden data path fact
+      ansible.builtin.set_fact:
+        vaultwarden_data_path: >-
+          {{
+            (volume_mountpoint.stdout | trim) if (volume_mountpoint.stdout | trim | length > 0)
+            else '/var/lib/docker/volumes/' ~ vaultwarden_data_volume ~ '/_data'
+          }}
+
+    - name: Create Litestream backup directory
+      ansible.builtin.file:
+        path: "{{ backup_dir }}/vaultwarden"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Deploy Litestream env file with secrets
+      ansible.builtin.template:
+        src: litestream.env.j2
+        dest: "{{ backup_dir }}/vaultwarden/litestream.env"
+        owner: root
+        group: root
+        mode: "0600"
+      register: litestream_env_deployed
+
+    - name: Deploy Litestream config
+      ansible.builtin.template:
+        src: litestream.yml.j2
+        dest: "{{ backup_dir }}/vaultwarden/litestream.yml"
+        owner: root
+        group: root
+        mode: "0600"
+      register: litestream_config_deployed
+
+    - name: Deploy Litestream systemd service
+      ansible.builtin.template:
+        src: kiran-vaultwarden-litestream.service.j2
+        dest: /etc/systemd/system/kiran-vaultwarden-litestream.service
+        owner: root
+        group: root
+        mode: "0644"
+      register: litestream_service_deployed
+
+    - name: Deploy Litestream systemd timer for health checks
+      ansible.builtin.template:
+        src: kiran-vaultwarden-litestream-check.timer.j2
+        dest: /etc/systemd/system/kiran-vaultwarden-litestream-check.timer
+        owner: root
+        group: root
+        mode: "0644"
+      register: litestream_timer_deployed
+
+    - name: Deploy Litestream check service
+      ansible.builtin.template:
+        src: kiran-vaultwarden-litestream-check.service.j2
+        dest: /etc/systemd/system/kiran-vaultwarden-litestream-check.service
+        owner: root
+        group: root
+        mode: "0644"
+      register: litestream_check_service_deployed
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: true
+      when: litestream_service_deployed.changed or litestream_timer_deployed.changed or litestream_check_service_deployed.changed or litestream_config_deployed.changed or litestream_env_deployed.changed
+
+    - name: Enable and start Litestream service and timer
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop:
+        - kiran-vaultwarden-litestream.service
+        - kiran-vaultwarden-litestream-check.timer

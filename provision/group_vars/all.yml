@@ -97,3 +97,9 @@ s3_garage_host: s3.fewa.app
 
 # WAL-G S3 backend (used by backup role)
 backup_wal_g_aws_region: ap-southeast-1
+
+# ── Vaultwarden Litestream Backup ───────────────────────────────────────────
+# Enable Litestream backup for Vaultwarden SQLite database.
+# When enabled, add vaultwarden_litestream_access_key_id and
+# vaultwarden_litestream_secret_access_key to secrets.yml.
+vaultwarden_litestream_enabled: true

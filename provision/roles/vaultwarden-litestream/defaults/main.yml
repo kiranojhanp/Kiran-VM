@@ -1,0 +1,12 @@
+---
+vaultwarden_litestream_enabled: false
+vaultwarden_dir: /opt/vaultwarden
+vaultwarden_data_volume: vaultwarden_vaultwarden_data
+vaultwarden_litestream_version: "0.3.14"
+
+vaultwarden_litestream_backup_bucket: vaultwarden-backups
+vaultwarden_litestream_backup_path: prod/db
+
+vaultwarden_litestream_retention_max_size: "5GB"
+vaultwarden_litestream_check_on_calendar: "*-*-01,15 04:00:00"
+vaultwarden_litestream_config_file_mode: "0600"

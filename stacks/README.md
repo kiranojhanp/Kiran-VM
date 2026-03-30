@@ -4,7 +4,7 @@ This directory contains app stacks deployed from Komodo.
 
 ## What to do in Komodo
 
-Use the same flow for every stack (`actual`, `audiobookshelf`, `garage`, `jobops`, `mealie`, `openwebui`, `paperlessngx`, `uptime-kuma`, `vikunja`, `vaultwarden`, `vaultwarden-backup`):
+Use the same flow for every stack (`actual`, `audiobookshelf`, `garage`, `jobops`, `mealie`, `openwebui`, `paperlessngx`, `uptime-kuma`, `vikunja`, `vaultwarden`):
 
 1. Create the stack in Komodo (or open the existing one).
 2. Set run directory to `stacks/<stack-name>`.
@@ -60,8 +60,7 @@ When adding a new stack that needs PostgreSQL, see [DATABASE.md](DATABASE.md) fo
  - [Paperless-ngx](paperlessngx/README.md)
  - [Uptime Kuma](uptime-kuma/README.md)
  - [Vikunja](vikunja/README.md)
- - [Vaultwarden](vaultwarden/README.md)
- - [Vaultwarden Backup](vaultwarden-backup/README.md)
+  - [Vaultwarden](vaultwarden/README.md)
 
 Traefik is provisioned from `provision/roles/traefik/*`, not as a Komodo app stack.
 

@@ -171,3 +171,71 @@ tasks:
       - >-
         ansible -i provision/inventory/hosts.ini all -b -m shell -a
         "set -e; docker exec infra-postgres-1 wal-g backup-check"
+
+  # ---------------------------------------------------------------------------
+  # Vaultwarden Litestream backup (runs on host, replicates SQLite to Garage)
+  # ---------------------------------------------------------------------------
+  litestream:status:
+    desc: Check Litestream service and timer status
+    deps: [_check:provision, provision:inventory]
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; systemctl status kiran-vaultwarden-litestream.service --no-pager"
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; systemctl list-timers --all | grep vaultwarden-litestream"
+
+  litestream:versions:
+    desc: List available Litestream snapshots in Garage
+    deps: [_check:provision, provision:inventory]
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; LITESTREAM_ACCESS_KEY_ID={{.LITESTREAM_ACCESS_KEY_ID}} LITESTREAM_SECRET_ACCESS_KEY={{.LITESTREAM_SECRET_ACCESS_KEY}} /usr/local/bin/litestream versions s3://vaultwarden-backups/prod/db"
+
+  litestream:restore:
+    desc: Restore latest Litestream snapshot to target directory
+    deps: [_check:provision, provision:inventory]
+    requires:
+      vars: [TARGET_DIR]
+    vars:
+      TARGET_DIR: '/tmp/litestream-restore'
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; mkdir -p {{.TARGET_DIR}}"
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; LITESTREAM_ACCESS_KEY_ID={{.LITESTREAM_ACCESS_KEY_ID}} LITESTREAM_SECRET_ACCESS_KEY={{.LITESTREAM_SECRET_ACCESS_KEY}} /usr/local/bin/litestream restore -o {{.TARGET_DIR}}/db.sqlite3 s3://vaultwarden-backups/prod/db"
+      - echo "Restored to {{.TARGET_DIR}}/db.sqlite3 on server"
+
+  litestream:restore:pitr:
+    desc: Restore Litestream to specific point in time
+    deps: [_check:provision, provision:inventory]
+    requires:
+      vars: [PITR_TIMESTAMP, TARGET_DIR]
+    vars:
+      TARGET_DIR: '/tmp/litestream-restore-pitr'
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; mkdir -p {{.TARGET_DIR}}"
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; LITESTREAM_ACCESS_KEY_ID={{.LITESTREAM_ACCESS_KEY_ID}} LITESTREAM_SECRET_ACCESS_KEY={{.LITESTREAM_SECRET_ACCESS_KEY}} /usr/local/bin/litestream restore -t '{{.PITR_TIMESTAMP}}' -o {{.TARGET_DIR}}/db.sqlite3 s3://vaultwarden-backups/prod/db"
+      - echo "Point-in-time restore to {{.TARGET_DIR}}/db.sqlite3 on server"
+
+  litestream:health:
+    desc: Verify Litestream service, timers, and Garage connectivity
+    deps: [_check:provision, provision:inventory]
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; systemctl status kiran-vaultwarden-litestream.service --no-pager"
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; systemctl list-timers --all | grep vaultwarden-litestream"
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; journalctl -u kiran-vaultwarden-litestream.service -n 20 --no-pager"

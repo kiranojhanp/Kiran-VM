@@ -1,0 +1,9 @@
+[Unit]
+Description=Vaultwarden Litestream health check timer
+
+[Timer]
+OnCalendar={{ vaultwarden_litestream_check_on_calendar }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -38,3 +38,6 @@
 
     - role: garage
       tags: [garage, services]
+
+    - role: vaultwarden-litestream
+      tags: [vaultwarden-litestream, backup, services]

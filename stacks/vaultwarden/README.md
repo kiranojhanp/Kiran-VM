@@ -17,5 +17,4 @@ Compose file: `stacks/vaultwarden/compose.yaml`
 
 ## Backups
 
-Vaultwarden backups are managed by a separate stack: `stacks/vaultwarden-backup/compose.yaml`.
-See `stacks/vaultwarden-backup/README.md` for R2 and `rclone` setup.
+Vaultwarden uses Litestream for continuous SQLite replication to Garage S3. This is managed via Ansible in `provision/roles/vaultwarden-litestream`. Enable by setting `vaultwarden_litestream_enabled: true` in `group_vars/all.yml` and adding credentials to `secrets.yml`.
