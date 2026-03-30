@@ -57,3 +57,28 @@ STACK=<name> BASE_STACK=kiran-self-hosting task push
 - `stacks/README.md` - Komodo-managed app stacks and Traefik label routing
  - `provision/README.md` - Postgres backup via WAL-G (see Backup section)
 - `llms.txt` - concise machine-readable project map
+
+## Disaster Recovery
+
+### Delete Protection
+The VM instance is protected from accidental `pulumi down`:
+
+```bash
+# To delete the VM, you must first unprotect it:
+pulumi state unprotect <urn>
+
+# Then you can destroy
+pulumi down
+```
+
+### Backup Status
+| Service        | Backup Method           | Status |
+| -------------- | ---------------------- | ------ |
+| PostgreSQL    | WAL-G → Garage (R2)    | ✅     |
+| Vaultwarden   | Litestream → Garage    | ✅     |
+| Actual Budget | Litestream → Garage    | ✅     |
+
+### Encryption
+- **OCI Block Volumes**: AES-256 encrypted at rest (default)
+- **Traffic to Garage**: HTTPS
+- **Garage internal**: Secret Handshake encryption
