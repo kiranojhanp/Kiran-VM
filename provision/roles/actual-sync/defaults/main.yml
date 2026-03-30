@@ -1,0 +1,7 @@
+---
+actual_sync_enabled: false
+actual_sync_dir: /opt/actual-sync
+actual_sync_data_dir: "{{ actual_sync_dir }}/data"
+actual_sync_schedule: "*/15 * * * *"  # Every 15 minutes
+actual_sync_up_account_id: ""  # Auto-discovered if empty
+actual_sync_actual_account_id: ""

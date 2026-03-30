@@ -122,3 +122,9 @@ vaultwarden_litestream_backup_path: prod/db
 actual_litestream_enabled: true
 actual_litestream_backup_bucket: actual-backups
 actual_litestream_backup_path: prod/db
+
+# ── Actual Budget Sync ─────────────────────────────────────────────────────────
+# Sync transactions from Up Bank to Actual Budget
+actual_sync_enabled: false
+actual_sync_actual_account_id: "5c1c9fdc-34a5-4abb-aa37-00a95bfb51ba"
+actual_sync_up_account_id: "a57fe330-78c9-4664-9843-3a45c634fd4f"

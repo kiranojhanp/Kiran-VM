@@ -1,0 +1,79 @@
+---
+- name: Assert required Actual sync secrets are set
+  ansible.builtin.assert:
+    that:
+      - up_user_token | default('') | length > 0
+      - actual_sync_id | default('') | length > 0
+      - actual_password | default('') | length > 0
+      - actual_sync_actual_account_id | default('') | length > 0
+    fail_msg: >-
+      Actual sync is enabled but required secrets are missing.
+      Fill provision/secrets.yml and set actual_sync_actual_account_id in group_vars/all.yml.
+
+- name: Create Actual sync directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ actual_sync_dir }}", mode: "0750" }
+    - { path: "{{ actual_sync_data_dir }}", mode: "0700" }
+
+- name: Auto-discover Up Bank account ID if not set
+  when: actual_sync_up_account_id | default('') | length == 0
+  block:
+    - name: Fetch Up Bank account ID
+      ansible.builtin.command:
+        cmd: "curl -s https://api.up.com.au/api/v1/accounts -H 'Authorization: Bearer {{ up_user_token }}' | python3 -c \"import sys,json; accounts=json.load(sys.stdin)['data']; print(accounts[0]['id'] if accounts else '')\""
+      register: up_account_result
+      changed_when: false
+
+    - name: Set Up account ID fact
+      ansible.builtin.set_fact:
+        actual_sync_up_account_id: "{{ up_account_result.stdout }}"
+
+- name: Deploy Actual sync env file
+  ansible.builtin.template:
+    src: actual-sync.env.j2
+    dest: "{{ actual_sync_dir }}/actual-sync.env"
+    owner: root
+    group: root
+    mode: "0600"
+  register: actual_sync_env
+
+- name: Pull Actual sync Docker image
+  ansible.builtin.shell:
+    cmd: docker pull timsmart/actualbudget-sync:latest
+  register: docker_pull
+  changed_when: true
+
+- name: Deploy systemd service
+  ansible.builtin.template:
+    src: kiran-actual-sync.service.j2
+    dest: "/etc/systemd/system/kiran-actual-sync.service"
+    owner: root
+    group: root
+    mode: "0644"
+  register: actual_sync_service
+
+- name: Deploy systemd timer
+  ansible.builtin.template:
+    src: kiran-actual-sync.timer.j2
+    dest: "/etc/systemd/system/kiran-actual-sync.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  register: actual_sync_timer
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: actual_sync_service.changed or actual_sync_timer.changed
+
+- name: Enable and start Actual sync timer
+  ansible.builtin.systemd:
+    name: kiran-actual-sync.timer
+    enabled: true
+    state: started

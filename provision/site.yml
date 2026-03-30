@@ -61,3 +61,8 @@
         litestream_backup_data_path: /var/lib/docker/volumes/actual_actual_data/_data
         litestream_backup_pattern: "*.sqlite"
         litestream_backup_bucket: actual-backups
+
+    - role: actual-sync
+      tags: [actual-sync, services]
+      vars:
+        actual_sync_enabled: true

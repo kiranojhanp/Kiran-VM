@@ -1,0 +1,21 @@
+[Unit]
+Description=Actual Budget Sync (Up Bank)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory={{ actual_sync_dir }}
+EnvironmentFile={{ actual_sync_dir }}/actual-sync.env
+ExecStartPre=-/usr/bin/docker rm -f kiran-actual-sync || true
+ExecStart=/usr/bin/docker run --rm \
+  --name kiran-actual-sync \
+  -v {{ actual_sync_data_dir }}:/data \
+  -e ACTUAL_SERVER \
+  -e ACTUAL_SYNC_ID \
+  -e ACTUAL_PASSWORD \
+  -e ACTUAL_DATA \
+  -e UP_USER_TOKEN \
+  timsmart/actualbudget-sync:latest \
+  --bank up \
+  --accounts '{{ actual_sync_actual_account_id }}={{ actual_sync_up_account_id }}'

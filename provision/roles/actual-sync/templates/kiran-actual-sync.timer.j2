@@ -1,0 +1,9 @@
+[Unit]
+Description=Actual Budget Sync Timer (Every 15 minutes)
+
+[Timer]
+OnCalendar={{ actual_sync_schedule }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target
