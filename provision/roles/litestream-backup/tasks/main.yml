@@ -12,24 +12,26 @@
   ansible.builtin.assert:
     that:
       - litestream_backup_service_name | default('') | length > 0
-      - litestream_backup_data_volume | default('') | length > 0
-      - litestream_backup_db_path | default('') | length > 0
       - litestream_backup_bucket | default('') | length > 0
+      - litestream_backup_pattern | default('') | length > 0
 
-- name: Get data volume mountpoint
-  ansible.builtin.command:
-    cmd: "docker volume inspect {{ litestream_backup_data_volume }} --format '{{ '{{' }}.Mountpoint{{ '}}' }}'"
-  register: volume_mountpoint
-  changed_when: false
-  failed_when: false
+- name: Set data path from volume if not provided
+  when: litestream_backup_data_path is not defined
+  block:
+    - name: Get data volume mountpoint
+      ansible.builtin.command:
+        cmd: "docker volume inspect {{ litestream_backup_data_volume }} --format '{{ '{{' }}.Mountpoint{{ '}}' }}'"
+      register: volume_mountpoint
+      changed_when: false
+      failed_when: false
 
-- name: Set data path fact
-  ansible.builtin.set_fact:
-    litestream_backup_data_path: >-
-      {{
-        (volume_mountpoint.stdout | trim) if (volume_mountpoint.stdout | trim | length > 0)
-        else '/var/lib/docker/volumes/' ~ litestream_backup_data_volume ~ '/_data'
-      }}
+    - name: Set data path fact
+      ansible.builtin.set_fact:
+        litestream_backup_data_path: >-
+          {{
+            (volume_mountpoint.stdout | trim) if (volume_mountpoint.stdout | trim | length > 0)
+            else '/var/lib/docker/volumes/' ~ litestream_backup_data_volume ~ '/_data'
+          }}
 
 - name: Create Litestream backup directory
   ansible.builtin.file:

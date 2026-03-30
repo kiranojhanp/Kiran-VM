@@ -2,9 +2,12 @@ access-key-id: {{ garage_access_key_id }}
 secret-access-key: {{ garage_secret_access_key }}
 
 dbs:
-  - path: {{ litestream_backup_data_path }}/{{ litestream_backup_db_path }}
+  - dir: {{ litestream_backup_data_path }}
+    pattern: "{{ litestream_backup_pattern }}"
+    recursive: {{ litestream_backup_recursive | default(true) | lower }}
+    watch: true
     replicas:
-      - url: s3://{{ litestream_backup_bucket }}/{{ litestream_backup_path }}
+      - url: s3://{{ litestream_backup_bucket }}/${DB_NAME}
         endpoint: https://s3.fewa.app
         region: ap-southeast-1
         force-path-style: true
