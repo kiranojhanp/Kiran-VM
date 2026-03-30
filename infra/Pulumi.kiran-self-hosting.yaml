@@ -12,3 +12,4 @@ config:
     secure: v1:pLZGpSJSR0JrPe/Z:ar0iOz+Z6uUZg7wr24e9AvLf+XQRbHN3SItRDyYHGAVCaBuJbUixrXpgvGmjgEM3mdG44EYXpZ17v11Md0BGdoNEMDxlXmpNCiG40LokI+GLi3QyLMXT0L2clt7JXeU=
   oci:userOcid:
     secure: v1:vqkgZQRcbhfbq6Up:r2iOw7Rs+7E1Vd+o9bGOJCUWTiw/xxF/vMw8VkbFPqcaOAVFlBjByShTKUTvj81Q0Q6zmh/JBonEIXQIFcnwj/sxdVBIEyc6NDUTv+SYtxEdGW3Ms4rB3IOTdHM=
+  kiran-vm-infra:allowSshBootstrapPort22: "true"

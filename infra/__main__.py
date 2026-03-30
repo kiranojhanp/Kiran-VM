@@ -278,7 +278,7 @@ instance = oci.core.Instance(
         # Built as a Pulumi Output so ssh_public_key resolves before encoding
         "user_data": user_data,
     },
-    protect=True,
+    opts=pulumi.ResourceOptions(protect=True),
 )
 
 # ── Cloudflare DNS records ────────────────────────────────────────────────────
