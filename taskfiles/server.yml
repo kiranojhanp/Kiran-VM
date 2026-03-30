@@ -192,7 +192,7 @@ tasks:
     cmds:
       - >-
         ansible -i provision/inventory/hosts.ini all -b -m shell -a
-        "set -e; LITESTREAM_ACCESS_KEY_ID={{.LITESTREAM_ACCESS_KEY_ID}} LITESTREAM_SECRET_ACCESS_KEY={{.LITESTREAM_SECRET_ACCESS_KEY}} /usr/local/bin/litestream versions s3://vaultwarden-backups/prod/db"
+        "set -e; LITESTREAM_ACCESS_KEY_ID={{.LITESTREAM_ACCESS_KEY_ID}} LITESTREAM_SECRET_ACCESS_KEY={{.LITESTREAM_SECRET_ACCESS_KEY}} /usr/bin/litestream versions s3://vaultwarden-backups/prod/db"
 
   litestream:restore:
     desc: Restore latest Litestream snapshot to target directory
@@ -207,7 +207,7 @@ tasks:
         "set -e; mkdir -p {{.TARGET_DIR}}"
       - >-
         ansible -i provision/inventory/hosts.ini all -b -m shell -a
-        "set -e; LITESTREAM_ACCESS_KEY_ID={{.LITESTREAM_ACCESS_KEY_ID}} LITESTREAM_SECRET_ACCESS_KEY={{.LITESTREAM_SECRET_ACCESS_KEY}} /usr/local/bin/litestream restore -o {{.TARGET_DIR}}/db.sqlite3 s3://vaultwarden-backups/prod/db"
+        "set -e; LITESTREAM_ACCESS_KEY_ID={{.LITESTREAM_ACCESS_KEY_ID}} LITESTREAM_SECRET_ACCESS_KEY={{.LITESTREAM_SECRET_ACCESS_KEY}} /usr/bin/litestream restore -o {{.TARGET_DIR}}/db.sqlite3 s3://vaultwarden-backups/prod/db"
       - echo "Restored to {{.TARGET_DIR}}/db.sqlite3 on server"
 
   litestream:restore:pitr:
@@ -223,7 +223,7 @@ tasks:
         "set -e; mkdir -p {{.TARGET_DIR}}"
       - >-
         ansible -i provision/inventory/hosts.ini all -b -m shell -a
-        "set -e; LITESTREAM_ACCESS_KEY_ID={{.LITESTREAM_ACCESS_KEY_ID}} LITESTREAM_SECRET_ACCESS_KEY={{.LITESTREAM_SECRET_ACCESS_KEY}} /usr/local/bin/litestream restore -t '{{.PITR_TIMESTAMP}}' -o {{.TARGET_DIR}}/db.sqlite3 s3://vaultwarden-backups/prod/db"
+        "set -e; LITESTREAM_ACCESS_KEY_ID={{.LITESTREAM_ACCESS_KEY_ID}} LITESTREAM_SECRET_ACCESS_KEY={{.LITESTREAM_SECRET_ACCESS_KEY}} /usr/bin/litestream restore -t '{{.PITR_TIMESTAMP}}' -o {{.TARGET_DIR}}/db.sqlite3 s3://vaultwarden-backups/prod/db"
       - echo "Point-in-time restore to {{.TARGET_DIR}}/db.sqlite3 on server"
 
   litestream:health:
