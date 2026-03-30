@@ -83,35 +83,23 @@
 - name: Create Postgres users and databases
   when: postgres_databases_list is defined and postgres_databases_list | length > 0
   block:
-    - name: Check if Postgres user exists
-      ansible.builtin.shell:
-        cmd: >
-          docker exec {{ postgres_container_name }} psql -U postgres -t -c "SELECT 1 FROM pg_roles WHERE rolname = '{{ item }}'"
-      register: user_check
-      changed_when: false
-      loop: "{{ postgres_databases_list }}"
-
     - name: Create Postgres users
       ansible.builtin.shell:
         cmd: >
-          docker exec {{ postgres_container_name }} psql -U postgres -c "CREATE USER {{ item }} WITH ENCRYPTED PASSWORD '{{ shared_postgres_password }}'"
-      loop: "{{ postgres_databases_list }}"
-      when: item not in (user_check.results | mapattr('stdout') | reject('match', '^$') | list)
-
-    - name: Check if Postgres database exists
-      ansible.builtin.shell:
-        cmd: >
-          docker exec {{ postgres_container_name }} psql -U postgres -t -c "SELECT 1 FROM pg_database WHERE datname = '{{ item }}'"
-      register: db_check
-      changed_when: false
+          docker exec {{ postgres_container_name }} psql -U postgres -c "CREATE USER {{ item }} WITH ENCRYPTED PASSWORD '{{ shared_postgres_password }}'" 2>&1 ||
+          true
+      register: user_result
+      changed_when: "'CREATE ROLE' in user_result.stderr"
       loop: "{{ postgres_databases_list }}"
 
     - name: Create Postgres databases
       ansible.builtin.shell:
         cmd: >
-          docker exec {{ postgres_container_name }} psql -U postgres -c "CREATE DATABASE {{ item }} WITH OWNER {{ item }}"
+          docker exec {{ postgres_container_name }} psql -U postgres -c "CREATE DATABASE {{ item }} WITH OWNER {{ item }}" 2>&1 ||
+          true
+      register: db_result
+      changed_when: "'CREATE DATABASE' in db_result.stderr"
       loop: "{{ postgres_databases_list }}"
-      when: item not in (db_check.results | mapattr('stdout') | reject('match', '^$') | list)
 
     - name: Grant database ownership
       ansible.builtin.shell:
