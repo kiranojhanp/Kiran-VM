@@ -1,0 +1,99 @@
+---
+- name: Assert required Litestream backup secrets are set
+  ansible.builtin.assert:
+    that:
+      - garage_access_key_id | default('') | length > 0
+      - garage_secret_access_key | default('') | length > 0
+    fail_msg: >-
+      Litestream backup is enabled but required AWS credentials are missing.
+      Set garage_access_key_id and garage_secret_access_key in secrets.yml.
+
+- name: Assert required variables are set
+  ansible.builtin.assert:
+    that:
+      - litestream_backup_service_name | default('') | length > 0
+      - litestream_backup_data_volume | default('') | length > 0
+      - litestream_backup_db_path | default('') | length > 0
+      - litestream_backup_bucket | default('') | length > 0
+
+- name: Get data volume mountpoint
+  ansible.builtin.command:
+    cmd: "docker volume inspect {{ litestream_backup_data_volume }} --format '{{ '{{' }}.Mountpoint{{ '}}' }}'"
+  register: volume_mountpoint
+  changed_when: false
+  failed_when: false
+
+- name: Set data path fact
+  ansible.builtin.set_fact:
+    litestream_backup_data_path: >-
+      {{
+        (volume_mountpoint.stdout | trim) if (volume_mountpoint.stdout | trim | length > 0)
+        else '/var/lib/docker/volumes/' ~ litestream_backup_data_volume ~ '/_data'
+      }}
+
+- name: Create Litestream backup directory
+  ansible.builtin.file:
+    path: "{{ backup_dir }}/{{ litestream_backup_service_name }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Deploy Litestream env file with secrets
+  ansible.builtin.template:
+    src: litestream.env.j2
+    dest: "{{ backup_dir }}/{{ litestream_backup_service_name }}/litestream.env"
+    owner: root
+    group: root
+    mode: "0600"
+  register: litestream_env_deployed
+
+- name: Deploy Litestream config
+  ansible.builtin.template:
+    src: litestream.yml.j2
+    dest: "{{ backup_dir }}/{{ litestream_backup_service_name }}/litestream.yml"
+    owner: root
+    group: root
+    mode: "0600"
+  register: litestream_config_deployed
+
+- name: Deploy Litestream systemd service
+  ansible.builtin.template:
+    src: kiran-litestream-backup.service.j2
+    dest: "/etc/systemd/system/kiran-{{ litestream_backup_service_name }}-litestream.service"
+    owner: root
+    group: root
+    mode: "0644"
+  register: litestream_service_deployed
+
+- name: Deploy Litestream systemd timer for health checks
+  ansible.builtin.template:
+    src: kiran-litestream-backup-check.timer.j2
+    dest: "/etc/systemd/system/kiran-{{ litestream_backup_service_name }}-litestream-check.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  register: litestream_timer_deployed
+
+- name: Deploy Litestream check service
+  ansible.builtin.template:
+    src: kiran-litestream-backup-check.service.j2
+    dest: "/etc/systemd/system/kiran-{{ litestream_backup_service_name }}-litestream-check.service"
+    owner: root
+    group: root
+    mode: "0644"
+  register: litestream_check_service_deployed
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: litestream_service_deployed.changed or litestream_timer_deployed.changed or litestream_check_service_deployed.changed or litestream_config_deployed.changed or litestream_env_deployed.changed
+
+- name: Enable and start Litestream service and timer
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - "kiran-{{ litestream_backup_service_name }}-litestream.service"
+    - "kiran-{{ litestream_backup_service_name }}-litestream-check.timer"

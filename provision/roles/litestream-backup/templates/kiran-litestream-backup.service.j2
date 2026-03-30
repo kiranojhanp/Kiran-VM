@@ -1,0 +1,15 @@
+[Unit]
+Description={{ litestream_backup_service_name | title }} Litestream SQLite Replication
+After=network.target
+
+[Service]
+Type=simple
+User=root
+EnvironmentFile={{ backup_dir }}/{{ litestream_backup_service_name }}/litestream.env
+ExecStartPre=/usr/bin/test -f {{ backup_dir }}/{{ litestream_backup_service_name }}/litestream.yml
+ExecStart=/usr/bin/litestream replicate -config {{ backup_dir }}/{{ litestream_backup_service_name }}/litestream.yml
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

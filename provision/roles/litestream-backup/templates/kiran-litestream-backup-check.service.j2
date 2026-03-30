@@ -1,0 +1,8 @@
+[Unit]
+Description={{ litestream_backup_service_name | title }} Litestream Health Check
+
+[Service]
+Type=oneshot
+User=root
+EnvironmentFile={{ backup_dir }}/{{ litestream_backup_service_name }}/litestream.env
+ExecStart=/usr/bin/litestream snapshots s3://{{ litestream_backup_bucket }}/{{ litestream_backup_path }}

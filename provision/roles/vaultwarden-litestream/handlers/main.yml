@@ -1,5 +1,0 @@
----
-- name: Restart Litestream
-  ansible.builtin.systemd:
-    name: kiran-vaultwarden-litestream
-    state: restarted

@@ -1,0 +1,27 @@
+---
+- name: Detect host architecture for Litestream package
+  ansible.builtin.command: dpkg --print-architecture
+  register: litestream_host_arch
+  changed_when: false
+
+- name: Set Litestream package name based on architecture
+  ansible.builtin.set_fact:
+    litestream_pkg_name: >-
+      {{
+        'litestream-v' ~ litestream_version ~ '-linux-arm64.deb'
+          if (litestream_host_arch.stdout | trim) == 'arm64'
+          else 'litestream-v' ~ litestream_version ~ '-linux-amd64.deb'
+      }}
+
+- name: Install Litestream .deb package
+  ansible.builtin.apt:
+    deb: "https://github.com/benbjohnson/litestream/releases/download/v{{ litestream_version }}/{{ litestream_pkg_name }}"
+    state: present
+  register: litestream_installed
+
+- name: Create Litestream binary symlink
+  ansible.builtin.file:
+    src: "/usr/bin/litestream-v{{ litestream_version }}"
+    dest: /usr/bin/litestream
+    state: link
+    force: true

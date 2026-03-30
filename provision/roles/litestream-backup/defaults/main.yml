@@ -1,0 +1,5 @@
+---
+litestream_backup_enabled: false
+litestream_backup_db_path: db.sqlite3
+litestream_backup_path: prod/db
+litestream_backup_check_on_calendar: "*-*-01,15 04:00:00"

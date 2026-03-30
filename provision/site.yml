@@ -39,5 +39,25 @@
     - role: garage
       tags: [garage, services]
 
-    - role: vaultwarden-litestream
-      tags: [vaultwarden-litestream, backup, services]
+    - role: litestream
+      tags: [litestream, backup, services]
+
+    - role: litestream-backup
+      tags: [vaultwarden-backup, backup, services]
+      vars:
+        litestream_backup_enabled: true
+        litestream_backup_service_name: vaultwarden
+        litestream_backup_data_volume: vaultwarden_vaultwarden_data
+        litestream_backup_db_path: db.sqlite3
+        litestream_backup_bucket: vaultwarden-backups
+        litestream_backup_path: prod/db
+
+    - role: litestream-backup
+      tags: [actual-backup, backup, services]
+      vars:
+        litestream_backup_enabled: true
+        litestream_backup_service_name: actual
+        litestream_backup_data_volume: actual_actual_data
+        litestream_backup_db_path: db.sqlite3
+        litestream_backup_bucket: actual-backups
+        litestream_backup_path: prod/db

@@ -100,6 +100,14 @@ backup_wal_g_aws_region: ap-southeast-1
 
 # ── Vaultwarden Litestream Backup ───────────────────────────────────────────
 # Enable Litestream backup for Vaultwarden SQLite database.
-# When enabled, add vaultwarden_litestream_access_key_id and
-# vaultwarden_litestream_secret_access_key to secrets.yml.
+# Uses shared garage_access_key_id and garage_secret_access_key from secrets.yml.
 vaultwarden_litestream_enabled: true
+vaultwarden_litestream_backup_bucket: vaultwarden-backups
+vaultwarden_litestream_backup_path: prod/db
+
+# ── Actual Budget Litestream Backup ──────────────────────────────────────────
+# Enable Litestream backup for Actual Budget SQLite database.
+# Uses shared garage_access_key_id and garage_secret_access_key from secrets.yml.
+actual_litestream_enabled: true
+actual_litestream_backup_bucket: actual-backups
+actual_litestream_backup_path: prod/db
