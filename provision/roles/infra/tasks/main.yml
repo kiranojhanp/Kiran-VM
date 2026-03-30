@@ -87,6 +87,35 @@
   retries: 10
   delay: 3
 
+# ── Shared Postgres Databases ───────────────────────────────────────────────────
+- name: Create Postgres users and databases
+  when: postgres_databases_list is defined and postgres_databases_list | length > 0
+  block:
+    - name: Create Postgres users
+      ansible.builtin.shell:
+        cmd: >
+          docker exec {{ postgres_container_name }} psql -U postgres -c "CREATE USER {{ item }} WITH ENCRYPTED PASSWORD '{{ shared_postgres_password }}'" 2>&1 ||
+            echo "User already exists, skipping"
+      register: user_result
+      changed_when: "'CREATE' in user_result.stdout"
+      loop: "{{ postgres_databases_list }}"
+
+    - name: Create Postgres databases
+      ansible.builtin.shell:
+        cmd: >
+          docker exec {{ postgres_container_name }} psql -U postgres -c "CREATE DATABASE {{ item }} WITH OWNER {{ item }}" 2>&1 ||
+            echo "Database already exists, skipping"
+      register: db_result
+      changed_when: "'CREATE DATABASE' in db_result.stdout"
+      loop: "{{ postgres_databases_list }}"
+
+    - name: Grant database ownership
+      ansible.builtin.shell:
+        cmd: >
+          docker exec {{ postgres_container_name }} psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE {{ item }} TO {{ item }}" &&
+          docker exec {{ postgres_container_name }} psql -U postgres -d {{ item }} -c "GRANT ALL ON SCHEMA public TO {{ item }}"
+      loop: "{{ postgres_databases_list }}"
+
 # ── OpenClaw directories ──────────────────────────────────────────────────────
 - name: Create OpenClaw config directory
   ansible.builtin.file:

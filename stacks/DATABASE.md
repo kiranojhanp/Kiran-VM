@@ -2,6 +2,24 @@
 
 This guide explains how to create a new database, user, and credentials for a new application stack that uses the centralized PostgreSQL instance.
 
+## Automatic Database Creation
+
+Databases are automatically created/updated when you run `task update`. To add a new database:
+
+1. Add the database name to `postgres_databases_list` in `provision/group_vars/all.yml`:
+   ```yaml
+   postgres_databases_list:
+     - mealie
+     - vikunja
+     - yournewapp
+   ```
+
+2. Run `task update` to re-provision the infra.
+
+This works even if Postgres already has data - it won't recreate existing databases.
+
+All databases use the same password defined by `shared_postgres_password` in `secrets.yml`.
+
 ## Container Name
 
 The shared Postgres container name is defined in `provision/group_vars/all.yml`:
