@@ -172,6 +172,15 @@ tasks:
         ansible -i provision/inventory/hosts.ini all -b -m shell -a
         "set -e; docker exec infra-postgres-1 wal-g backup-check"
 
+  # ── Actual Budget Sync ───────────────────────────────────────────────────────
+  actual-sync:run:
+    desc: Manually trigger Actual Budget sync
+    deps: [_check:provision, provision:inventory]
+    cmds:
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m systemdd -a
+        "name=kiran-actual-sync.service state=started daemon_reload=true"
+
   # ---------------------------------------------------------------------------
   # Litestream backup (runs on host, replicates SQLite to Garage)
   # Usage: task litestream:status SERVICE=vaultwarden

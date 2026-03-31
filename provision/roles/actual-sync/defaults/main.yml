@@ -2,7 +2,7 @@
 actual_sync_enabled: false
 actual_sync_dir: /opt/actual-sync
 actual_sync_data_dir: "{{ actual_sync_dir }}/data"
-actual_sync_schedule: "*:*/15"  # Every 15 minutes
+actual_sync_schedule: "*-*-* *:00:00"  # Every hour
 
 # Multiple profiles for different Up Bank users (each with own token)
 # Example:
