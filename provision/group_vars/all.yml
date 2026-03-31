@@ -127,8 +127,9 @@ actual_litestream_backup_path: prod/db
 # Sync transactions from Up Bank to Actual Budget
 actual_sync_enabled: true
 actual_sync_profiles:
-  - up_user_token: "{{ up_user_token }}"  # From secrets.yml
+  - up_user_token: "{{ up_user_token_1 }}"  # From secrets.yml
     accounts:
       - actual_account_id: "5c1c9fdc-34a5-4abb-aa37-00a95bfb51ba"
         up_account_id: "a57fe330-78c9-4664-9843-3a45c634fd4f"
+  # Add more profiles using up_user_token_2, etc.
 
