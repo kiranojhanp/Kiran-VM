@@ -6,14 +6,16 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory={{ actual_sync_dir }}
+Environment="FNM_DIR=$HOME/.fnm"
+Environment="PATH=$PATH:$HOME/.fnm"
 {% for profile in actual_sync_profiles %}
-ExecStart=/bin/bash -c 'source ~/.bashrc && fnm exec -- actualsync --bank up \
+ExecStart=/bin/bash -c 'export FNM_DIR="$HOME/.fnm" && $FNM_DIR/fnm exec -- actualsync --bank up \
 {% for account in profile.accounts %}
   --accounts "{{ account.actual_account_id }}={{ account.up_account_id }}" \
 {% endfor %}'
 Environment="UP_USER_TOKEN={{ profile.up_user_token }}"
+{% endfor %}
 Environment="ACTUAL_SERVER=https://actual.fewa.app"
 Environment="ACTUAL_SYNC_ID={{ actual_sync_id }}"
 Environment="ACTUAL_PASSWORD={{ actual_password }}"
 Environment="ACTUAL_DATA={{ actual_sync_data_dir }}"
-{% endfor %}

@@ -37,13 +37,19 @@
 
 - name: Install Node.js LTS via fnm
   ansible.builtin.shell:
-    cmd: bash -c "source ~/.bashrc && fnm install --lts && fnm default lts-latest"
+    cmd: >
+      export FNM_DIR="$HOME/.fnm" &&
+      curl -fsSL https://fnm.vercel.app/install | bash &&
+      $FNM_DIR/fnm install --lts &&
+      $FNM_DIR/fnm default lts-latest
   register: node_install
   changed_when: node_install.rc != 0
 
 - name: Install Actual sync npm package
   ansible.builtin.shell:
-    cmd: bash -c "source ~/.bashrc && fnm exec -- npm install -g @tim-smart/actualbudget-sync"
+    cmd: >
+      export FNM_DIR="$HOME/.fnm" &&
+      $FNM_DIR/fnm exec -- npm install -g @tim-smart/actualbudget-sync
   register: npm_install
   changed_when: npm_install.rc != 0
 
