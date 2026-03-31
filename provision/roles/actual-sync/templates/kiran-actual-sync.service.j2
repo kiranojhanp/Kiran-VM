@@ -6,18 +6,17 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory={{ actual_sync_dir }}
-ExecStartPre=-/usr/bin/docker rm -f kiran-actual-sync || true
-ExecStart=/bin/bash -c 'docker run --rm --platform linux/arm64 --name kiran-actual-sync \
+{% for profile in actual_sync_profiles %}
+ExecStart=/bin/bash -c 'docker run --rm --platform linux/arm64 --name kiran-actual-sync-{{ loop.index0 }} \
   -v {{ actual_sync_data_dir }}:/data \
   -e ACTUAL_SERVER \
   -e ACTUAL_SYNC_ID \
   -e ACTUAL_PASSWORD \
   -e ACTUAL_DATA \
+  -e UP_USER_TOKEN={{ profile.up_user_token }} \
   timsmart/actualbudget-sync:main \
   --bank up \
-{% for profile in actual_sync_profiles %}
-  -e UP_USER_TOKEN={{ profile.up_user_token }} \
 {% for account in profile.accounts %}
   --accounts "{{ account.actual_account_id }}={{ account.up_account_id }}" \
-{% endfor %}
 {% endfor %}'
+{% endfor %}
