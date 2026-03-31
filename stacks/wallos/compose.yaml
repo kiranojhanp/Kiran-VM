@@ -1,0 +1,28 @@
+services:
+  wallos:
+    image: bellamy/wallos:latest
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+    volumes:
+      - wallos_db:/var/www/html/db
+      - wallos_logos:/var/www/html/images/uploads/logos
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.wallos.rule: Host(`${WALLOS_HOST:-wallos.fewa.app}`)
+      traefik.http.routers.wallos.entrypoints: websecure
+      traefik.http.routers.wallos.tls: "true"
+      traefik.http.routers.wallos.tls.certresolver: letsencrypt
+      traefik.http.services.wallos.loadbalancer.server.port: "80"
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+
+volumes:
+  wallos_db:
+  wallos_logos:
