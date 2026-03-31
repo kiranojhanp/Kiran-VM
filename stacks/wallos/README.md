@@ -18,5 +18,10 @@ Compose file: `stacks/wallos/compose.yaml`
 ## Notes
 
 - First visit: create an admin account in the web UI.
+- Login uses the **username** you created during registration (not the email).
 - Uses named Docker volumes (`wallos_db`, `wallos_logos`) to match other stacks and keep setup simpler in Komodo.
 - Uses official in-container paths (`/var/www/html/db` and `/var/www/html/images/uploads/logos`).
+
+## Backups
+
+Wallos uses Litestream for continuous SQLite replication to Garage S3. This is managed via Ansible in `provision/roles/litestream-backup` with service name `wallos` and bucket `wallos-backups`.

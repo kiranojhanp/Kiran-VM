@@ -123,6 +123,13 @@ actual_litestream_enabled: true
 actual_litestream_backup_bucket: actual-backups
 actual_litestream_backup_path: prod/db
 
+# ── Wallos Litestream Backup ─────────────────────────────────────────────────
+# Enable Litestream backup for Wallos SQLite database.
+# Uses shared garage_access_key_id and garage_secret_access_key from secrets.yml.
+wallos_litestream_enabled: true
+wallos_litestream_backup_bucket: wallos-backups
+wallos_litestream_backup_path: prod/db
+
 # ── Actual Budget Sync ─────────────────────────────────────────────────────────
 # Sync transactions from Up Bank to Actual Budget
 actual_sync_enabled: true
@@ -137,4 +144,3 @@ actual_sync_profiles:
         up_account_id: "4de91d76-4333-4303-a683-40cdb3245457"
       - actual_account_id: "183ea0df-a7a8-427c-b419-b79582db0121"
         up_account_id: "ca524198-9978-42a5-9a07-e2be2898973a"
-

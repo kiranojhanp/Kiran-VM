@@ -62,6 +62,16 @@
         litestream_backup_pattern: "*.sqlite"
         litestream_backup_bucket: actual-backups
 
+    - role: litestream-backup
+      tags: [wallos-backup, backup, services]
+      vars:
+        litestream_backup_enabled: true
+        litestream_backup_service_name: wallos
+        litestream_backup_data_volume: wallos_wallos_db
+        litestream_backup_data_path: /var/lib/docker/volumes/wallos_wallos_db/_data
+        litestream_backup_pattern: "wallos.db"
+        litestream_backup_bucket: wallos-backups
+
     - role: actual-sync
       tags: [actual-sync, services]
       vars:

@@ -252,13 +252,16 @@ tasks:
     cmds:
       - >-
         ansible -i provision/inventory/hosts.ini all -b -m shell -a
-        "set -e; systemctl status kiran-vaultwarden-litestream.service kiran-actual-litestream.service --no-pager"
+        "set -e; systemctl status kiran-vaultwarden-litestream.service kiran-actual-litestream.service kiran-wallos-litestream.service --no-pager"
       - >-
         ansible -i provision/inventory/hosts.ini all -b -m shell -a
-        "set -e; systemctl list-timers --all | grep -E 'vaultwarden-litestream|actual-litestream'"
+        "set -e; systemctl list-timers --all | grep -E 'vaultwarden-litestream|actual-litestream|wallos-litestream'"
       - >-
         ansible -i provision/inventory/hosts.ini all -b -m shell -a
         "set -e; journalctl -u kiran-vaultwarden-litestream.service -n 10 --no-pager"
       - >-
         ansible -i provision/inventory/hosts.ini all -b -m shell -a
         "set -e; journalctl -u kiran-actual-litestream.service -n 10 --no-pager"
+      - >-
+        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        "set -e; journalctl -u kiran-wallos-litestream.service -n 10 --no-pager"
