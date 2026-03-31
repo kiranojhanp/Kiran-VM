@@ -24,6 +24,11 @@
   ansible.builtin.debug:
     msg: "Docker image no longer needed - using npm instead"
 
+- name: Install fnm dependencies
+  ansible.builtin.apt:
+    name: unzip
+    state: present
+
 - name: Install fnm (Fast Node Manager)
   ansible.builtin.shell:
     cmd: curl -fsSL https://fnm.vercel.app/install | bash
