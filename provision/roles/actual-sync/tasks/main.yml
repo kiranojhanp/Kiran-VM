@@ -24,15 +24,21 @@
   ansible.builtin.debug:
     msg: "Docker image no longer needed - using npm instead"
 
-- name: Include nodejs role
-  ansible.builtin.import_role:
-    name: geerlingguy.nodejs
-  vars:
-    nodejs_version: "20"
+- name: Install fnm (Fast Node Manager)
+  ansible.builtin.shell:
+    cmd: curl -fsSL https://fnm.vercel.app/install | bash
+  register: fnm_install
+  changed_when: fnm_install.rc != 0
+
+- name: Install Node.js LTS via fnm
+  ansible.builtin.shell:
+    cmd: bash -c "source ~/.bashrc && fnm install --lts && fnm default lts-latest"
+  register: node_install
+  changed_when: node_install.rc != 0
 
 - name: Install Actual sync npm package
   ansible.builtin.shell:
-    cmd: npm install -g @tim-smart/actualbudget-sync
+    cmd: bash -c "source ~/.bashrc && fnm exec -- npm install -g @tim-smart/actualbudget-sync"
   register: npm_install
   changed_when: npm_install.rc != 0
 
