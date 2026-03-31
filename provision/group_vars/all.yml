@@ -133,8 +133,8 @@ actual_sync_profiles:
         up_account_id: "a57fe330-78c9-4664-9843-3a45c634fd4f"
   - up_user_token: "{{ up_user_token_2 }}"
     accounts:
-      - actual_account_id: "183ea0df-a7a8-427c-b419-b79582db0121"
-        up_account_id: "4de91d76-4333-4303-a683-40cdb3245457"
       - actual_account_id: "37489f69-d73d-4ea0-9851-af510f276d46"
+        up_account_id: "4de91d76-4333-4303-a683-40cdb3245457"
+      - actual_account_id: "183ea0df-a7a8-427c-b419-b79582db0121"
         up_account_id: "ca524198-9978-42a5-9a07-e2be2898973a"
 

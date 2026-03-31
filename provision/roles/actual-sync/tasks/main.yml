@@ -20,27 +20,51 @@
     - { path: "{{ actual_sync_dir }}", mode: "0750" }
     - { path: "{{ actual_sync_data_dir }}", mode: "0700" }
 
-- name: Pull Actual sync Docker image
-  ansible.builtin.debug:
-    msg: "Docker image no longer needed - using npm instead"
-
 - name: Clean up broken nodesource repos
   ansible.builtin.shell:
     cmd: rm -f /etc/apt/sources.list.d/nodesource*.list /etc/apt/sources.list.d/nodesource*.sources /etc/apt/keyrings/nodesource*.gpg 2>/dev/null || true
 
 - name: Install Node.js 20.x
   ansible.builtin.shell:
-    cmd: >
-      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&
-      apt-get install -y nodejs
+    cmd: |
+      set -e
+      if command -v node >/dev/null 2>&1 && node -v | grep -q '^v20\.'; then
+        echo node20-present
+      else
+        apt-get remove -y libnode-dev nodejs-doc || true
+        curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+        apt-get install -y nodejs
+        echo node20-installed
+      fi
   register: node_install
-  changed_when: node_install.rc != 0
+  changed_when: "'node20-installed' in node_install.stdout"
 
 - name: Install Actual sync npm package
   ansible.builtin.shell:
-    cmd: npm install -g @tim-smart/actualbudget-sync
+    cmd: |
+      set -e
+      if npm list -g @tim-smart/actualbudget-sync --depth=0 2>/dev/null | grep -q '@tim-smart/actualbudget-sync@'; then
+        echo actualsync-present
+      else
+        npm install -g @tim-smart/actualbudget-sync
+        echo actualsync-installed
+      fi
   register: npm_install
-  changed_when: npm_install.rc != 0
+  changed_when: "'actualsync-installed' in npm_install.stdout"
+
+- name: Install Actual API compatibility package
+  ansible.builtin.shell:
+    cmd: |
+      set -e
+      pkg="actual-app-api-{{ actual_sync_actual_api_version }}"
+      if npm list -g "$pkg" --depth=0 2>/dev/null | grep -q "${pkg}@"; then
+        echo api-compat-present
+      else
+        npm install -g "${pkg}@npm:@actual-app/api@{{ actual_sync_actual_api_version }}"
+        echo api-compat-installed
+      fi
+  register: api_compat_install
+  changed_when: "'api-compat-installed' in api_compat_install.stdout"
 
 - name: Deploy systemd service
   ansible.builtin.template:
@@ -50,6 +74,15 @@
     group: root
     mode: "0644"
   register: actual_sync_service
+
+- name: Deploy actual-sync wrapper
+  ansible.builtin.template:
+    src: kiran-actualsync-wrapper.sh.j2
+    dest: /usr/local/bin/kiran-actualsync-wrapper
+    owner: root
+    group: root
+    mode: "0755"
+  register: actual_sync_wrapper
 
 - name: Deploy systemd timer
   ansible.builtin.template:
@@ -63,7 +96,7 @@
 - name: Reload systemd daemon
   ansible.builtin.systemd:
     daemon_reload: true
-  when: actual_sync_service.changed or actual_sync_timer.changed
+  when: actual_sync_service.changed or actual_sync_timer.changed or actual_sync_wrapper.changed
 
 - name: Enable and start Actual sync timer
   ansible.builtin.systemd:

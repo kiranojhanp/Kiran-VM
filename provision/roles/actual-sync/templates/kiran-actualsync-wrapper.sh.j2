@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+exec /usr/bin/node -e 'global.navigator = { userAgent: "node" }; import("/usr/lib/node_modules/@tim-smart/actualbudget-sync/main.cjs");' -- "$@"

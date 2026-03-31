@@ -178,7 +178,7 @@ tasks:
     deps: [_check:provision, provision:inventory]
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m systemdd -a
+        ansible -i provision/inventory/hosts.ini all -b -m systemd -a
         "name=kiran-actual-sync.service state=started daemon_reload=true"
 
   # ---------------------------------------------------------------------------

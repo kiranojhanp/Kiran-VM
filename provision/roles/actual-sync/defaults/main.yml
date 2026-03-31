@@ -3,6 +3,7 @@ actual_sync_enabled: false
 actual_sync_dir: /opt/actual-sync
 actual_sync_data_dir: "{{ actual_sync_dir }}/data"
 actual_sync_schedule: "hourly"  # Every hour
+actual_sync_actual_api_version: "26.3.0"
 
 # Multiple profiles for different Up Bank users (each with own token)
 # Example:
