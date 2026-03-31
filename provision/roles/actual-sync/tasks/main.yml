@@ -20,15 +20,6 @@
     - { path: "{{ actual_sync_dir }}", mode: "0750" }
     - { path: "{{ actual_sync_data_dir }}", mode: "0700" }
 
-- name: Deploy Actual sync env file
-  ansible.builtin.template:
-    src: actual-sync.env.j2
-    dest: "{{ actual_sync_dir }}/actual-sync.env"
-    owner: root
-    group: root
-    mode: "0600"
-  register: actual_sync_env
-
 - name: Pull Actual sync Docker image
   ansible.builtin.shell:
     cmd: docker pull timsmart/actualbudget-sync:main
