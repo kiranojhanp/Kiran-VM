@@ -6,10 +6,8 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory={{ actual_sync_dir }}
-Environment="FNM_DIR=$HOME/.fnm"
-Environment="PATH=$PATH:$HOME/.fnm"
 {% for profile in actual_sync_profiles %}
-ExecStart=/bin/bash -c 'export FNM_DIR="$HOME/.fnm" && $FNM_DIR/fnm exec -- actualsync --bank up \
+ExecStart=/bin/bash -c 'actualsync --bank up \
 {% for account in profile.accounts %}
   --accounts "{{ account.actual_account_id }}={{ account.up_account_id }}" \
 {% endfor %}'
