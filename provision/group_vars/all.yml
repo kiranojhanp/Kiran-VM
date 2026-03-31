@@ -129,5 +129,4 @@ actual_sync_enabled: true
 actual_sync_accounts:
   - actual_account_id: "5c1c9fdc-34a5-4abb-aa37-00a95bfb51ba"
     up_account_id: "a57fe330-78c9-4664-9843-3a45c634fd4f"
-  - actual_account_id: ""
-    up_account_id: "ad51d7cd-7de2-467f-9593-65dd406fcb85"
+
