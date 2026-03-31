@@ -24,11 +24,11 @@
   ansible.builtin.debug:
     msg: "Docker image no longer needed - using npm instead"
 
-- name: Install Node.js if not present
-  ansible.builtin.shell:
-    cmd: command -v node || (curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs)
-  register: node_install
-  changed_when: node_install.rc != 0
+- name: Include nodejs role
+  ansible.builtin.import_role:
+    name: geerlingguy.nodejs
+  vars:
+    nodejs_version: "20"
 
 - name: Install Actual sync npm package
   ansible.builtin.shell:
