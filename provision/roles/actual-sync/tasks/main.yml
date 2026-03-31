@@ -21,10 +21,20 @@
     - { path: "{{ actual_sync_data_dir }}", mode: "0700" }
 
 - name: Pull Actual sync Docker image
+  ansible.builtin.debug:
+    msg: "Docker image no longer needed - using npm instead"
+
+- name: Install Node.js if not present
   ansible.builtin.shell:
-    cmd: docker pull timsmart/actualbudget-sync:main
-  register: docker_pull
-  changed_when: true
+    cmd: command -v node || (curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs)
+  register: node_install
+  changed_when: node_install.rc != 0
+
+- name: Install Actual sync npm package
+  ansible.builtin.shell:
+    cmd: npm install -g @tim-smart/actualbudget-sync
+  register: npm_install
+  changed_when: npm_install.rc != 0
 
 - name: Deploy systemd service
   ansible.builtin.template:
