@@ -3,5 +3,10 @@ actual_sync_enabled: false
 actual_sync_dir: /opt/actual-sync
 actual_sync_data_dir: "{{ actual_sync_dir }}/data"
 actual_sync_schedule: "*:*/15"  # Every 15 minutes
-actual_sync_up_account_id: ""  # Auto-discovered if empty
-actual_sync_actual_account_id: ""
+
+# Account mappings: list of {actual_account_id, up_account_id}
+# Example:
+# actual_sync_accounts:
+#   - actual_account_id: "5c1c9fdc-34a5-4abb-aa37-00a95bfb51ba"
+#     up_account_id: "a57fe330-78c9-4664-9843-3a45c634fd4f"
+actual_sync_accounts: []

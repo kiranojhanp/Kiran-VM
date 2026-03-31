@@ -5,10 +5,10 @@
       - up_user_token | default('') | length > 0
       - actual_sync_id | default('') | length > 0
       - actual_password | default('') | length > 0
-      - actual_sync_actual_account_id | default('') | length > 0
+      - actual_sync_accounts | length > 0
     fail_msg: >-
-      Actual sync is enabled but required secrets are missing.
-      Fill provision/secrets.yml and set actual_sync_actual_account_id in group_vars/all.yml.
+      Actual sync is enabled but required secrets/config are missing.
+      Fill provision/secrets.yml and set actual_sync_accounts in group_vars/all.yml.
 
 - name: Create Actual sync directories
   ansible.builtin.file:
@@ -20,19 +20,6 @@
   loop:
     - { path: "{{ actual_sync_dir }}", mode: "0750" }
     - { path: "{{ actual_sync_data_dir }}", mode: "0700" }
-
-- name: Auto-discover Up Bank account ID if not set
-  when: actual_sync_up_account_id | default('') | length == 0
-  block:
-    - name: Fetch Up Bank account ID
-      ansible.builtin.command:
-        cmd: "curl -s https://api.up.com.au/api/v1/accounts -H 'Authorization: Bearer {{ up_user_token }}' | python3 -c \"import sys,json; accounts=json.load(sys.stdin)['data']; print(accounts[0]['id'] if accounts else '')\""
-      register: up_account_result
-      changed_when: false
-
-    - name: Set Up account ID fact
-      ansible.builtin.set_fact:
-        actual_sync_up_account_id: "{{ up_account_result.stdout }}"
 
 - name: Deploy Actual sync env file
   ansible.builtin.template:
