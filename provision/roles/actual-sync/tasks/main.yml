@@ -28,13 +28,13 @@
   ansible.builtin.shell:
     cmd: rm -f /etc/apt/sources.list.d/nodesource*.list /etc/apt/sources.list.d/nodesource*.sources /etc/apt/keyrings/nodesource*.gpg 2>/dev/null || true
 
-- name: Install Node.js and npm
-  ansible.builtin.apt:
-    pkg:
-      - nodejs
-      - npm
-    state: present
-    update_cache: no
+- name: Install Node.js 20.x
+  ansible.builtin.shell:
+    cmd: >
+      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &&
+      apt-get install -y nodejs
+  register: node_install
+  changed_when: node_install.rc != 0
 
 - name: Install Actual sync npm package
   ansible.builtin.shell:
