@@ -7,7 +7,7 @@ Wants=network-online.target
 Type=oneshot
 WorkingDirectory={{ actual_sync_dir }}
 ExecStartPre=-/usr/bin/docker rm -f kiran-actual-sync || true
-ExecStart=/bin/bash -c 'docker run --rm --name kiran-actual-sync \
+ExecStart=/bin/bash -c 'docker run --rm --platform linux/arm64 --name kiran-actual-sync \
   -v {{ actual_sync_data_dir }}:/data \
   -e ACTUAL_SERVER \
   -e ACTUAL_SYNC_ID \
