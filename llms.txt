@@ -39,7 +39,15 @@ task destroy CONFIRM=yes
 - `push` full deploy (infra + bootstrap + provision + verify)
 - `update` re-run provisioning + verify
 - `verify` health checks
+- `backup:health` run Postgres + SQLite backup health checks
+- `backup:postgres:list|run|restore|restore:pitr|check|health` Postgres backup operations
+- `backup:sqlite:status|versions|restore|restore:pitr|health` SQLite backup operations
 - `destroy CONFIRM=yes` teardown
+
+Legacy aliases are supported for backward compatibility:
+
+- Postgres: `backup:walg:*`, `walg:*`
+- SQLite: `backup:litestream:*`, `litestream:*`
 
 ## source of truth
 

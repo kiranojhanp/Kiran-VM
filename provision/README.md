@@ -37,7 +37,17 @@ Use `common_deploy_ssh_public_key` for the deploy user's authorized key.
 - Cert issue: update `cloudflare_api_token` in secrets, then run `task update`.
 - Komodo unreachable: run `task verify`, then check `task update` output.
 
-## Postgres Backup (WAL-G)
+## Backups
+
+Task groups are organized by database type:
+
+- `backup:postgres:*` - PostgreSQL backups via WAL-G
+- `backup:sqlite:*` - SQLite backups via Litestream
+- `backup:health` - runs both health checks
+
+Legacy names (`walg:*`, `litestream:*`) still work as aliases.
+
+### Postgres Backup (WAL-G)
 
 Postgres runs with `archive_mode=on` — every WAL segment is pushed to Cloudflare R2 in real-time via `wal-g wal-push`. Base backups run on the 1st and 15th of each month via systemd timer.
 
@@ -47,25 +57,25 @@ All backup scripts live in `/opt/backup/scripts/` on the server. WAL-G runs insi
 
 ```bash
 # Health check: timers, R2 connectivity, backup age
-task walg:health
+task backup:postgres:health
 
 # List all backups in R2
-task walg:backup:list
+task backup:postgres:list
 
 # Run a base backup immediately (after a config change, before an upgrade)
-task walg:backup:run
+task backup:postgres:run
 
 # Run integrity check
-task walg:check
+task backup:postgres:check
 
 # Restore the latest backup to /tmp/walg-restore on the server
-task walg:backup:restore
+task backup:postgres:restore
 
 # Restore a specific backup
-task walg:backup:restore BACKUP_NAME=base_000000010000000000000037
+task backup:postgres:restore BACKUP_NAME=base_000000010000000000000037
 
 # Point-in-time restore
-task walg:backup:restore:pitr PITR_TIMESTAMP='2025-03-21 10:00:00'
+task backup:postgres:restore:pitr PITR_TIMESTAMP='2025-03-21 10:00:00' TARGET_DIR=/tmp/wal-g-restore-pitr
 ```
 
 ### How it works
@@ -97,16 +107,16 @@ Replace `<postgres_container_name>` with the value from `group_vars/all.yml` (de
 
 1. **List backups** to find what you need:
    ```bash
-   task walg:backup:list
+   task backup:postgres:list
    ```
 
 2. **Restore to a temp directory** inside the Postgres container:
    ```bash
-   task walg:backup:restore
+   task backup:postgres:restore
    # or specific backup:
-   task walg:backup:restore BACKUP_NAME=base_000000010000000000000037
+   task backup:postgres:restore BACKUP_NAME=base_000000010000000000000037
    # or point-in-time:
-   task walg:backup:restore:pitr PITR_TIMESTAMP='2025-03-21 10:00:00'
+   task backup:postgres:restore:pitr PITR_TIMESTAMP='2025-03-21 10:00:00' TARGET_DIR=/tmp/wal-g-restore-pitr
    ```
    Files are placed at `/tmp/wal-g-restore/` inside the container.
 
@@ -166,7 +176,7 @@ backup_wal_g_password: "..."                  # WAL-G encryption password (separ
 
 ```bash
 # Check timers are active
-task walg:health
+task backup:postgres:health
 
 # Tail backup logs
 journalctl -u kiran-walg-backup.service -n 50 --no-pager
@@ -176,4 +186,25 @@ docker exec <postgres_container_name> psql -U postgres -c "SELECT * FROM pg_stat
 
 # Verify R2 connectivity from inside the container
 docker exec <postgres_container_name> wal-g backup-list
+```
+
+### SQLite Backup (Litestream)
+
+Litestream continuously replicates SQLite snapshots to Garage/R2 for services like Vaultwarden, Actual, and Wallos.
+
+```bash
+# Health check for all configured SQLite services
+task backup:sqlite:health
+
+# Check one service's timer and service status
+task backup:sqlite:status SERVICE=vaultwarden
+
+# List snapshots for one service
+task backup:sqlite:versions SERVICE=vaultwarden
+
+# Restore latest snapshot
+task backup:sqlite:restore SERVICE=vaultwarden TARGET_DIR=/tmp/litestream-restore
+
+# Point-in-time restore
+task backup:sqlite:restore:pitr SERVICE=vaultwarden PITR_TIMESTAMP='2025-03-21 10:00:00' TARGET_DIR=/tmp/litestream-restore-pitr
 ```

@@ -1,5 +1,10 @@
 version: '3'
 
+vars:
+  INVENTORY_FILE: provision/inventory/hosts.ini
+  ANSIBLE_ALL: ansible -i {{.INVENTORY_FILE}} all
+  ANSIBLE_ALL_BECOME: ansible -i {{.INVENTORY_FILE}} all -b
+
 tasks:
   # ---------------------------------------------------------------------------
   # Server lifecycle
@@ -15,7 +20,7 @@ tasks:
         msg: Cloudflare token not found in provision/secrets.yml (cloudflare_api_token)
       - sh: test -f ../provision/secrets.yml
         msg: provision/secrets.yml is required
-      - sh: test -f "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}"
+      - sh: test -f "{{.VAULT_PASSWORD_FILE}}"
         msg: vault password file not found (set ANSIBLE_VAULT_PASSWORD_FILE or create ~/.vault_pass)
       - sh: pulumi config get oci:tenancyOcid >/dev/null
         msg: missing Pulumi config key oci:tenancyOcid for selected stack
@@ -70,10 +75,10 @@ tasks:
     preconditions:
       - sh: test -f provision/secrets.yml
         msg: provision/secrets.yml is required
-      - sh: test -f "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}"
+      - sh: test -f "{{.VAULT_PASSWORD_FILE}}"
         msg: vault password file not found (set ANSIBLE_VAULT_PASSWORD_FILE or create ~/.vault_pass)
     cmds:
-      - ansible-playbook -i provision/inventory/hosts.ini provision/site.yml --vault-password-file "${ANSIBLE_VAULT_PASSWORD_FILE:-$HOME/.vault_pass}" --extra-vars "@provision/secrets.yml" --extra-vars "{{.PROVISION_EXTRA_VARS}}"
+      - ansible-playbook -i {{.INVENTORY_FILE}} provision/site.yml --vault-password-file "{{.VAULT_PASSWORD_FILE}}" --extra-vars "@provision/secrets.yml" --extra-vars "{{.PROVISION_EXTRA_VARS}}"
 
   verify:
     desc: Verify SSH, containers, and ingress endpoints
@@ -84,14 +89,14 @@ tasks:
       - sh: command -v openssl >/dev/null 2>&1
         msg: openssl is required
     cmds:
-      - ansible -i provision/inventory/hosts.ini all -m ping
-      - ansible -i provision/inventory/hosts.ini all -m shell -a "set -e; sudo -n docker ps >/dev/null; test -z \"\$(sudo -n docker ps -a --filter health=unhealthy -q)\""
-      - ansible -b -i provision/inventory/hosts.ini all -m script -a provision/scripts/check_unique_traefik_hosts.py
+      - '{{.ANSIBLE_ALL}} -m ping'
+      - '{{.ANSIBLE_ALL}} -m shell -a "set -e; sudo -n docker ps >/dev/null; test -z \"\$(sudo -n docker ps -a --filter health=unhealthy -q)\""'
+      - '{{.ANSIBLE_ALL_BECOME}} -m script -a provision/scripts/check_unique_traefik_hosts.py'
       - >-
-        ansible -i provision/inventory/hosts.ini all -m shell -a
+        {{.ANSIBLE_ALL}} -m shell -a
         "set -e; base=/opt/traefik; test -f \"\$base/compose.yaml\"; test -f \"\$base/traefik.yml\"; sudo -n docker compose -f \"\$base/compose.yaml\" config >/dev/null"
       - >-
-        ansible -i provision/inventory/hosts.ini all -m shell -a
+        {{.ANSIBLE_ALL}} -m shell -a
         "set -e; sudo -n docker ps --filter label=com.docker.compose.project=traefik --filter label=com.docker.compose.service=traefik --filter status=running --quiet | grep -q ."
       - curl --fail --silent --show-error --location --max-redirs 3 "{{.KOMODO_HTTP_URL}}" >/dev/null
       - curl --fail --silent --show-error "{{.KOMODO_URL}}" >/dev/null
@@ -101,25 +106,35 @@ tasks:
         | openssl x509 -noout -issuer -subject >/dev/null
 
   # ---------------------------------------------------------------------------
-  # WAL-G Postgres backup (runs inside infra-postgres-1 container)
+  # Streaming backups (WAL-G for Postgres, Litestream for SQLite)
   # ---------------------------------------------------------------------------
-  walg:backup:list:
+  backup:health:
+    desc: Run both Postgres and SQLite backup health checks
+    deps: [_check:provision, provision:inventory]
+    cmds:
+      - task backup:postgres:health
+      - task backup:sqlite:health
+
+  backup:postgres:list:
+    aliases: [backup:walg:list, walg:backup:list]
     desc: List WAL-G backups in R2
     deps: [_check:provision, provision:inventory]
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; docker exec infra-postgres-1 wal-g backup-list"
 
-  walg:backup:run:
+  backup:postgres:run:
+    aliases: [backup:walg:run, walg:backup:run]
     desc: Run WAL-G base backup immediately
     deps: [_check:provision, provision:inventory]
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; sudo /opt/backup/scripts/wal-g-backup.sh"
 
-  walg:backup:restore:
+  backup:postgres:restore:
+    aliases: [backup:walg:restore, walg:backup:restore]
     desc: Restore latest WAL-G backup to /tmp/wal-g-restore
     deps: [_check:provision, provision:inventory]
     vars:
@@ -127,14 +142,15 @@ tasks:
       BACKUP_NAME: 'LATEST'
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; sudo /opt/backup/scripts/wal-g-restore.sh --target-dir {{.TARGET_DIR}} --backup {{.BACKUP_NAME}}"
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; docker cp infra-postgres-1:{{.TARGET_DIR}}/. /tmp/walg-restore/"
       - echo "Restored to /tmp/walg-restore on server"
 
-  walg:backup:restore:pitr:
+  backup:postgres:restore:pitr:
+    aliases: [backup:walg:restore:pitr, walg:backup:restore:pitr]
     desc: Point-in-time restore (set PITR_TIMESTAMP, e.g. '2025-01-15 14:30:00')
     deps: [_check:provision, provision:inventory]
     requires:
@@ -143,33 +159,35 @@ tasks:
       TARGET_DIR: '/tmp/wal-g-restore-pitr'
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; sudo /opt/backup/scripts/wal-g-restore.sh --target-dir {{.TARGET_DIR}} --pitr '{{.PITR_TIMESTAMP}}'"
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; docker cp infra-postgres-1:{{.TARGET_DIR}}/. /tmp/walg-restore-pitr/"
       - echo "PITR restored to /tmp/walg-restore-pitr on server"
 
-  walg:check:
+  backup:postgres:check:
+    aliases: [backup:walg:check, walg:check]
     desc: Run WAL-G backup integrity check
     deps: [_check:provision, provision:inventory]
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; sudo /opt/backup/scripts/wal-g-check.sh"
 
-  walg:health:
+  backup:postgres:health:
+    aliases: [backup:walg:health, walg:health]
     desc: Verify WAL-G timers, R2 connectivity, and latest backup age
     deps: [_check:provision, provision:inventory]
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; systemctl list-timers --all | grep walg"
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; docker exec infra-postgres-1 wal-g backup-list --json 2>/dev/null | python3 -c 'import sys,json; backups=json.load(sys.stdin); latest=backups[0] if backups else None; print(f\"Latest backup: {latest[\\\"backup_name\\\"]} at {latest[\\\"modified\\\"]}\" if latest else \"No backups\")'"
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; docker exec infra-postgres-1 wal-g backup-check"
 
   # ── Actual Budget Sync ───────────────────────────────────────────────────────
@@ -178,14 +196,15 @@ tasks:
     deps: [_check:provision, provision:inventory]
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m systemd -a
+        {{.ANSIBLE_ALL_BECOME}} -m systemd -a
         "name=kiran-actual-sync.service state=started daemon_reload=true"
 
   # ---------------------------------------------------------------------------
-  # Litestream backup (runs on host, replicates SQLite to Garage)
-  # Usage: task litestream:status SERVICE=vaultwarden
+  # SQLite streaming backups (Litestream)
+  # Usage: task backup:sqlite:status SERVICE=vaultwarden
   # ---------------------------------------------------------------------------
-  litestream:status:
+  backup:sqlite:status:
+    aliases: [backup:litestream:status, litestream:status]
     desc: Check Litestream service and timer status
     deps: [_check:provision, provision:inventory]
     requires:
@@ -194,13 +213,14 @@ tasks:
       SERVICE: vaultwarden
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; systemctl status kiran-{{.SERVICE}}-litestream.service --no-pager"
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; systemctl list-timers --all | grep {{.SERVICE}}-litestream"
 
-  litestream:versions:
+  backup:sqlite:versions:
+    aliases: [backup:litestream:versions, litestream:versions]
     desc: List available Litestream snapshots in Garage
     deps: [_check:provision, provision:inventory]
     requires:
@@ -209,10 +229,11 @@ tasks:
       SERVICE: vaultwarden
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; LITESTREAM_ACCESS_KEY_ID={{.garage_access_key_id}} LITESTREAM_SECRET_ACCESS_KEY={{.garage_secret_access_key}} /usr/bin/litestream snapshots s3://{{.SERVICE}}-backups/prod/db"
 
-  litestream:restore:
+  backup:sqlite:restore:
+    aliases: [backup:litestream:restore, litestream:restore]
     desc: Restore latest Litestream snapshot to target directory
     deps: [_check:provision, provision:inventory]
     requires:
@@ -222,14 +243,15 @@ tasks:
       TARGET_DIR: '/tmp/litestream-restore'
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; mkdir -p {{.TARGET_DIR}}"
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; LITESTREAM_ACCESS_KEY_ID={{.garage_access_key_id}} LITESTREAM_SECRET_ACCESS_KEY={{.garage_secret_access_key}} /usr/bin/litestream restore -o {{.TARGET_DIR}}/db.sqlite3 s3://{{.SERVICE}}-backups/prod/db"
       - echo "Restored to {{.TARGET_DIR}}/db.sqlite3 on server"
 
-  litestream:restore:pitr:
+  backup:sqlite:restore:pitr:
+    aliases: [backup:litestream:restore:pitr, litestream:restore:pitr]
     desc: Restore Litestream to specific point in time
     deps: [_check:provision, provision:inventory]
     requires:
@@ -239,29 +261,30 @@ tasks:
       TARGET_DIR: '/tmp/litestream-restore-pitr'
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; mkdir -p {{.TARGET_DIR}}"
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; LITESTREAM_ACCESS_KEY_ID={{.garage_access_key_id}} LITESTREAM_SECRET_ACCESS_KEY={{.garage_secret_access_key}} /usr/bin/litestream restore -t '{{.PITR_TIMESTAMP}}' -o {{.TARGET_DIR}}/db.sqlite3 s3://{{.SERVICE}}-backups/prod/db"
       - echo "Point-in-time restore to {{.TARGET_DIR}}/db.sqlite3 on server"
 
-  litestream:health:
+  backup:sqlite:health:
+    aliases: [backup:litestream:health, litestream:health]
     desc: Verify Litestream services, timers, and Garage connectivity
     deps: [_check:provision, provision:inventory]
     cmds:
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; systemctl status kiran-vaultwarden-litestream.service kiran-actual-litestream.service kiran-wallos-litestream.service --no-pager"
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; systemctl list-timers --all | grep -E 'vaultwarden-litestream|actual-litestream|wallos-litestream'"
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; journalctl -u kiran-vaultwarden-litestream.service -n 10 --no-pager"
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; journalctl -u kiran-actual-litestream.service -n 10 --no-pager"
       - >-
-        ansible -i provision/inventory/hosts.ini all -b -m shell -a
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; journalctl -u kiran-wallos-litestream.service -n 10 --no-pager"

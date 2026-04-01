@@ -33,8 +33,29 @@ When it finishes, open `https://komodo.<your-domain>`.
 ```bash
 task update    # re-apply provisioning + verify
 task verify    # health checks only
+task backup:health
 task destroy CONFIRM=yes
 ```
+
+## Backup commands
+
+```bash
+# Postgres (WAL-G)
+task backup:postgres:health
+task backup:postgres:list
+task backup:postgres:run
+task backup:postgres:restore
+task backup:postgres:restore:pitr PITR_TIMESTAMP='2025-03-21 10:00:00' TARGET_DIR=/tmp/wal-g-restore-pitr
+
+# SQLite services (Litestream)
+task backup:sqlite:health
+task backup:sqlite:status SERVICE=vaultwarden
+task backup:sqlite:versions SERVICE=vaultwarden
+task backup:sqlite:restore SERVICE=vaultwarden TARGET_DIR=/tmp/litestream-restore
+task backup:sqlite:restore:pitr SERVICE=vaultwarden PITR_TIMESTAMP='2025-03-21 10:00:00' TARGET_DIR=/tmp/litestream-restore-pitr
+```
+
+Legacy task names (`walg:*`, `litestream:*`, `backup:walg:*`, `backup:litestream:*`) are still available as aliases.
 
 ## Non-default stack
 
@@ -55,7 +76,7 @@ STACK=<name> BASE_STACK=kiran-self-hosting task push
 - `infra/README.md` - Pulumi setup and required config keys
 - `provision/README.md` - provisioning and secrets workflow
 - `stacks/README.md` - Komodo-managed app stacks and Traefik label routing
- - `provision/README.md` - Postgres backup via WAL-G (see Backup section)
+- `provision/README.md` - backup operations (Postgres + SQLite)
 - `llms.txt` - concise machine-readable project map
 
 ## Disaster Recovery
