@@ -53,16 +53,16 @@ wal_g_version: "3.0.1"
 wal_g_delta_max_steps: 6
 wal_g_max_wal_senders: 3
 wal_g_wal_keep_size: "1GB"
-wal_g_archive_timeout: 300
+wal_g_archive_timeout: 1800
 
 # WAL-G host-side timers (base backups, prune, integrity check)
-backup_walg_backup_on_calendar: "*-*-01,15 03:00:00"
-backup_walg_prune_on_calendar: "*-*-01 04:00:00"
+backup_walg_backup_on_calendar: "*-*-* 03:00:00"
+backup_walg_prune_on_calendar: "*-*-* 04:00:00"
 backup_walg_check_on_calendar: "*-*-07 05:00:00"
-backup_walg_retention_full: 4
-backup_walg_retention_keep_weekly: 4
-backup_walg_retention_keep_monthly: 6
-backup_walg_retention_keep_yearly: 1
+backup_wal_g_retention_full: 1
+backup_wal_g_retention_keep_weekly: 0
+backup_wal_g_retention_keep_monthly: 0
+backup_wal_g_retention_keep_yearly: 0
 
 # Postgres connection for host-side WAL-G operations
 # The infra_net bridge gateway IP — verify with: docker network inspect infra_net
