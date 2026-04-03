@@ -190,7 +190,7 @@ docker exec <postgres_container_name> wal-g backup-list
 
 ### SQLite Backup (Litestream)
 
-Litestream continuously replicates SQLite snapshots to Garage/R2 for services like Vaultwarden, Actual, and Wallos.
+Litestream continuously replicates SQLite snapshots to Garage/R2 for services like Vaultwarden, Actual, Wallos, and Wealthfolio.
 
 ```bash
 # Health check for all configured SQLite services

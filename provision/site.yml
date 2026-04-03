@@ -72,6 +72,16 @@
         litestream_backup_pattern: "wallos.db"
         litestream_backup_bucket: wallos-backups
 
+    - role: litestream-backup
+      tags: [wealthfolio-backup, backup, services]
+      vars:
+        litestream_backup_enabled: true
+        litestream_backup_service_name: wealthfolio
+        litestream_backup_data_volume: wealthfolio_wealthfolio_data
+        litestream_backup_data_path: /var/lib/docker/volumes/wealthfolio_wealthfolio_data/_data
+        litestream_backup_pattern: "wealthfolio.db"
+        litestream_backup_bucket: wealthfolio-backups
+
     - role: actual-sync
       tags: [actual-sync, services]
       vars:

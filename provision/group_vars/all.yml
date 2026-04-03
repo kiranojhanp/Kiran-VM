@@ -130,6 +130,13 @@ wallos_litestream_enabled: true
 wallos_litestream_backup_bucket: wallos-backups
 wallos_litestream_backup_path: prod/db
 
+# ── Wealthfolio Litestream Backup ─────────────────────────────────────────────
+# Enable Litestream backup for Wealthfolio SQLite database.
+# Uses shared garage_access_key_id and garage_secret_access_key from secrets.yml.
+wealthfolio_litestream_enabled: true
+wealthfolio_litestream_backup_bucket: wealthfolio-backups
+wealthfolio_litestream_backup_path: prod/db
+
 # ── Actual Budget Sync ─────────────────────────────────────────────────────────
 # Sync transactions from Up Bank to Actual Budget
 actual_sync_enabled: true

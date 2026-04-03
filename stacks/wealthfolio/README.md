@@ -38,3 +38,7 @@ Compose file: `stacks/wealthfolio/compose.yaml`
 
 - Uses the `ghcr.io/afadil/wealthfolio:latest` image (Wealthfolio self-host build).
 - Uses named Docker volume `wealthfolio_data` mounted to `/data` to persist the SQLite database.
+
+## Backups
+
+Wealthfolio uses Litestream for continuous SQLite replication to Garage S3. This is managed via Ansible in `provision/roles/litestream-backup` with service name `wealthfolio` and bucket `wealthfolio-backups`.

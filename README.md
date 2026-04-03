@@ -100,6 +100,8 @@ pulumi down
 | PostgreSQL    | WAL-G → Garage (R2)    | ✅     |
 | Vaultwarden   | Litestream → Garage    | ✅     |
 | Actual Budget | Litestream → Garage    | ✅     |
+| Wallos        | Litestream → Garage    | ✅     |
+| Wealthfolio   | Litestream → Garage    | ✅     |
 
 ### Encryption
 - **OCI Block Volumes**: AES-256 encrypted at rest (default)
