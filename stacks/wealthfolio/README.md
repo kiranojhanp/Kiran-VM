@@ -1,17 +1,17 @@
-# Ghostfolio Stack
+# Wealthfolio Stack
 
-Compose file: `stacks/ghostfolio/compose.yaml`
+Compose file: `stacks/wealthfolio/compose.yaml`
 
 ## In Komodo
 
-1. Create or open the `ghostfolio` stack.
-2. Set compose path to `stacks/ghostfolio/compose.yaml`.
+1. Create or open the `wealthfolio` stack.
+2. Set compose path to `stacks/wealthfolio/compose.yaml`.
 3. Add the variables below in the stack Environment.
-4. Deploy (or Redeploy), then open `https://<GHOSTFOLIO_HOST>`.
+4. Deploy (or Redeploy), then open `https://<WEALTHFOLIO_HOST>`.
 
 ## Stack environment variables
 
-- `GHOSTFOLIO_HOST` (required): public hostname. Example: `wealthfolio.fewa.app`.
+- `WEALTHFOLIO_HOST` (required): public hostname. Example: `wealthfolio.fewa.app`.
 - `WF_CORS_ALLOW_ORIGINS` (required when auth is enabled): comma-separated allowed origins. Example: `https://wealthfolio.fewa.app`.
 - `WF_SECRET_KEY` (required): encryption key generated with `openssl rand -base64 32`.
 - `WF_AUTH_PASSWORD_HASH` (required): Argon2 password hash generated from your login password.
@@ -37,4 +37,4 @@ Compose file: `stacks/ghostfolio/compose.yaml`
 ## Notes
 
 - Uses the `ghcr.io/afadil/wealthfolio:latest` image (Wealthfolio self-host build).
-- Uses named Docker volume `ghostfolio_data` mounted to `/data` to persist the SQLite database.
+- Uses named Docker volume `wealthfolio_data` mounted to `/data` to persist the SQLite database.
