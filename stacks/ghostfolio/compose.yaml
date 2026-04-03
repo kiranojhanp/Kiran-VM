@@ -13,7 +13,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.ghostfolio.rule: Host(`${GHOSTFOLIO_HOST:-ghostfolio.fewa.app}`)
+      traefik.http.routers.ghostfolio.rule: Host(`${GHOSTFOLIO_HOST:-wealthfolio.fewa.app}`)
       traefik.http.routers.ghostfolio.entrypoints: websecure
       traefik.http.routers.ghostfolio.tls: "true"
       traefik.http.routers.ghostfolio.tls.certresolver: letsencrypt
