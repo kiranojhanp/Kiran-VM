@@ -1,0 +1,28 @@
+services:
+  ghostfolio:
+    image: ghcr.io/afadil/wealthfolio:latest
+    restart: unless-stopped
+    environment:
+      WF_DB_PATH: ${WF_DB_PATH:-/data/wealthfolio.db}
+      WF_SECRET_KEY: ${WF_SECRET_KEY:-}
+      WF_AUTH_PASSWORD_HASH: ${WF_AUTH_PASSWORD_HASH:-}
+    volumes:
+      - ghostfolio_data:/data
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.ghostfolio.rule: Host(`${GHOSTFOLIO_HOST:-ghostfolio.fewa.app}`)
+      traefik.http.routers.ghostfolio.entrypoints: websecure
+      traefik.http.routers.ghostfolio.tls: "true"
+      traefik.http.routers.ghostfolio.tls.certresolver: letsencrypt
+      traefik.http.services.ghostfolio.loadbalancer.server.port: "8088"
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+
+volumes:
+  ghostfolio_data:
