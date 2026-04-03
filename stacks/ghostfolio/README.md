@@ -12,6 +12,7 @@ Compose file: `stacks/ghostfolio/compose.yaml`
 ## Stack environment variables
 
 - `GHOSTFOLIO_HOST` (required): public hostname. Example: `wealthfolio.fewa.app`.
+- `WF_CORS_ALLOW_ORIGINS` (required when auth is enabled): comma-separated allowed origins. Example: `https://wealthfolio.fewa.app`.
 - `WF_SECRET_KEY` (required): encryption key generated with `openssl rand -base64 32`.
 - `WF_AUTH_PASSWORD_HASH` (required): Argon2 password hash generated from your login password.
 - `WF_DB_PATH` (optional): SQLite database path in container. Default: `/data/wealthfolio.db`.
