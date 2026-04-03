@@ -50,6 +50,7 @@ task backup:postgres:restore:pitr PITR_TIMESTAMP='2025-03-21 10:00:00' TARGET_DI
 # SQLite services (Litestream)
 task backup:sqlite:health
 task backup:sqlite:status SERVICE=vaultwarden
+# Show Garage bucket object stats for the service backup
 task backup:sqlite:versions SERVICE=vaultwarden
 task backup:sqlite:restore SERVICE=vaultwarden TARGET_DIR=/tmp/litestream-restore
 task backup:sqlite:restore:pitr SERVICE=vaultwarden PITR_TIMESTAMP='2025-03-21 10:00:00' TARGET_DIR=/tmp/litestream-restore-pitr

@@ -209,8 +209,6 @@ tasks:
     deps: [_check:provision, provision:inventory]
     requires:
       vars: [SERVICE]
-    vars:
-      SERVICE: vaultwarden
     cmds:
       - >-
         {{.ANSIBLE_ALL_BECOME}} -m shell -a
@@ -221,16 +219,14 @@ tasks:
 
   backup:sqlite:versions:
     aliases: [backup:litestream:versions, litestream:versions]
-    desc: List available Litestream snapshots in Garage
+    desc: Show Garage object stats for SQLite backup bucket
     deps: [_check:provision, provision:inventory]
     requires:
       vars: [SERVICE]
-    vars:
-      SERVICE: vaultwarden
     cmds:
       - >-
         {{.ANSIBLE_ALL_BECOME}} -m shell -a
-        "set -e; LITESTREAM_ACCESS_KEY_ID={{.garage_access_key_id}} LITESTREAM_SECRET_ACCESS_KEY={{.garage_secret_access_key}} /usr/bin/litestream snapshots s3://{{.SERVICE}}-backups/prod/db"
+        "set -e; docker exec garage /garage bucket info {{.SERVICE}}-backups"
 
   backup:sqlite:restore:
     aliases: [backup:litestream:restore, litestream:restore]
@@ -239,7 +235,6 @@ tasks:
     requires:
       vars: [SERVICE, TARGET_DIR]
     vars:
-      SERVICE: vaultwarden
       TARGET_DIR: '/tmp/litestream-restore'
     cmds:
       - >-
@@ -257,7 +252,6 @@ tasks:
     requires:
       vars: [SERVICE, PITR_TIMESTAMP, TARGET_DIR]
     vars:
-      SERVICE: vaultwarden
       TARGET_DIR: '/tmp/litestream-restore-pitr'
     cmds:
       - >-

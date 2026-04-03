@@ -199,7 +199,7 @@ task backup:sqlite:health
 # Check one service's timer and service status
 task backup:sqlite:status SERVICE=vaultwarden
 
-# List snapshots for one service
+# Show object stats for one service bucket
 task backup:sqlite:versions SERVICE=vaultwarden
 
 # Restore latest snapshot
