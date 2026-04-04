@@ -5,6 +5,8 @@ services:
     environment:
       WEBSOCKET_ENABLED: "true"
       SIGNUPS_ALLOWED: ${VAULTWARDEN_SIGNUPS_ALLOWED:-false}
+      DOMAIN: https://${VAULTWARDEN_HOST:-vaultwarden.fewa.app}
+      URL: https://${VAULTWARDEN_HOST:-vaultwarden.fewa.app}
       # SSO / authentik
       SSO_ENABLED: "true"
       SSO_PKCE: "true"

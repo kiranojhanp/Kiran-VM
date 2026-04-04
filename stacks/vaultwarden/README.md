@@ -32,6 +32,7 @@ To enable authentik SSO:
    - `VAULTWARDEN_SSO_CLIENT_ID`: from authentik
    - `VAULTWARDEN_SSO_CLIENT_SECRET`: from authentik
    - `VAULTWARDEN_SSO_ONLY` (optional): set to `true` to disable email+password login
+   - `DOMAIN` (required): must match your VAULTWARDEN_HOST. Example: `https://vaultwarden.fewa.app`
 
 ## Backups
 
