@@ -16,18 +16,18 @@ services:
       POSTGRES_DB: ${MEALIE_DB_NAME:-mealie}
       POSTGRES_USER: ${MEALIE_DB_USER:-mealie}
       POSTGRES_PASSWORD: ${MEALIE_DB_PASSWORD:-mealie}
-      OIDC_AUTH_ENABLED: ${MEALIE_OIDC_AUTH_ENABLED:-true}
-      OIDC_PROVIDER_NAME: ${MEALIE_OIDC_PROVIDER_NAME:-authentik}
-      OIDC_CONFIGURATION_URL: ${MEALIE_OIDC_CONFIGURATION_URL:-https://authentik.fewa.app/application/o/mealie/.well-known/openid-configuration}
-      OIDC_CLIENT_ID: ${MEALIE_OIDC_CLIENT_ID:-}
-      OIDC_CLIENT_SECRET: ${MEALIE_OIDC_CLIENT_SECRET:-}
-      OIDC_SIGNUP_ENABLED: ${MEALIE_OIDC_SIGNUP_ENABLED:-true}
-      OIDC_USER_GROUP: ${MEALIE_OIDC_USER_GROUP:-mealie-users}
-      OIDC_ADMIN_GROUP: ${MEALIE_OIDC_ADMIN_GROUP:-mealie-admins}
-      OIDC_GROUPS_CLAIM: ${MEALIE_OIDC_GROUPS_CLAIM:-groups}
-      OIDC_SIGNING_ALGORITHM: ${MEALIE_OIDC_SIGNING_ALGORITHM:-RS256}
-      OIDC_AUTO_REDIRECT: ${MEALIE_OIDC_AUTO_REDIRECT:-true}
-      OIDC_REMEMBER_ME: ${MEALIE_OIDC_REMEMBER_ME:-true}
+      OIDC_AUTH_ENABLED: ${OIDC_AUTH_ENABLED:-true}
+      OIDC_PROVIDER_NAME: ${OIDC_PROVIDER_NAME:-authentik}
+      OIDC_CONFIGURATION_URL: ${OIDC_CONFIGURATION_URL:-https://authentik.fewa.app/application/o/mealie/.well-known/openid-configuration}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_SIGNUP_ENABLED: ${OIDC_SIGNUP_ENABLED:-true}
+      OIDC_USER_GROUP: ${OIDC_USER_GROUP:-mealie-users}
+      OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP:-mealie-admins}
+      OIDC_GROUPS_CLAIM: ${OIDC_GROUPS_CLAIM:-groups}
+      OIDC_SIGNING_ALGORITHM: ${OIDC_SIGNING_ALGORITHM:-RS256}
+      OIDC_AUTO_REDIRECT: ${OIDC_AUTO_REDIRECT:-true}
+      OIDC_REMEMBER_ME: ${OIDC_REMEMBER_ME:-true}
     volumes:
       - mealie_data:/app/data
       - /etc/localtime:/etc/localtime:ro
