@@ -89,6 +89,7 @@ redis_container_name: "infra-redis-1"
 # All databases listed here will be created automatically on first Postgres init.
 # All users use the same shared_postgres_password (defined in secrets.yml).
 postgres_databases_list:
+  - authentik
   - mealie
   - vikunja
   - paperless
