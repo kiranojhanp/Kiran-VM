@@ -19,3 +19,14 @@ Compose file: `stacks/vikunja/compose.yaml`
 - `SHARED_POSTGRES_HOST` (optional): shared Postgres host. Default: `postgres`.
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
 - `SHARED_INFRA_NETWORK` (optional): shared infra network. Default: `infra_net`.
+
+### OpenID / authentik SSO
+
+To enable authentik SSO, set these variables:
+
+- `VIKUNJA_AUTH_OPENID_AUTHURL` (required): OpenID provider URL. Example: `https://authentik.fewa.app/application/o/<slug>/`
+- `VIKUNJA_AUTH_OPENID_CLIENTID` (required): OAuth2 Client ID from authentik.
+- `VIKUNJA_AUTH_OPENID_CLIENTSECRET` (required): OAuth2 Client Secret from authentik.
+- `VIKUNJA_AUTH_LOCAL_ENABLED` (optional): Set to `false` to disable local login. Default: `true`.
+
+**Note:** In authentik, set the Redirect URI to `https://vikunja.fewa.app/auth/openid/authentik`.
