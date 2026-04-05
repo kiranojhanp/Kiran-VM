@@ -13,6 +13,7 @@ Compose file: `stacks/music/compose.yaml`
 
 - `NAVIDROME_HOST` (required): public hostname. Example: `music.fewa.app`.
 - `LIDARR_HOST` (required): public hostname. Example: `lidarr.fewa.app`.
+- `FEISHIN_HOST` (required): public hostname. Example: `feishin.fewa.app`.
 - `TZ` (optional): timezone. Default: `UTC`.
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
 - `PUID` (optional): user ID for file permissions. Default: `1000`.
@@ -29,9 +30,13 @@ Compose file: `stacks/music/compose.yaml`
 - `/music`: music library (shared with Navidrome).
 - `/downloads`: download folder for new music.
 
+### Feishin
+- No persistent volumes (stateless client).
+
 ## Notes
 
-- Navidrome and Lidarr share the same `/music` volume - music downloaded by Lidarr is immediately available in Navidrome.
-- Both services use SQLite internally (stored in their respective config volumes).
-- Navidrome runs on port 4533, Lidarr on port 8686.
-- Navidrome supports Subsonic API, compatible with many music clients (including Feishin, Symfonium, DSub).
+- Navidrome, Lidarr, and Feishin share the same `/music` volume.
+- Lidarr downloads music to `/downloads`, then it's available in Navidrome/Feishin.
+- All services use SQLite internally (Navidrome and Lidarr store in config volumes).
+- Navidrome runs on port 4533, Lidarr on 8686, Feishin on 9180.
+- Feishin connects to Navidrome via Subsonic API for a modern Spotify-like interface.

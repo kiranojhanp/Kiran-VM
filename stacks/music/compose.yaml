@@ -42,6 +42,22 @@ services:
       traefik.http.routers.lidarr.tls.certresolver: letsencrypt
       traefik.http.services.lidarr.loadbalancer.server.port: "8686"
 
+  feishin:
+    image: ghcr.io/jeffvli/feishin:latest
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.feishin.rule: Host(`${FEISHIN_HOST:-feishin.fewa.app}`)
+      traefik.http.routers.feishin.entrypoints: websecure
+      traefik.http.routers.feishin.tls: "true"
+      traefik.http.routers.feishin.tls.certresolver: letsencrypt
+      traefik.http.services.feishin.loadbalancer.server.port: "9180"
+
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
