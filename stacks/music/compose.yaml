@@ -1,0 +1,58 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      JELLYFIN_PublishedServerUrl: https://${JELLYFIN_HOST:-music.fewa.app}
+    volumes:
+      - jellyfin_config:/config
+      - jellyfin_cache:/cache
+      - jellyfin_music:/music
+      - jellyfin_metadata:/metadata
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.jellyfin.rule: Host(`${JELLYFIN_HOST:-music.fewa.app}`)
+      traefik.http.routers.jellyfin.entrypoints: websecure
+      traefik.http.routers.jellyfin.tls: "true"
+      traefik.http.routers.jellyfin.tls.certresolver: letsencrypt
+      traefik.http.services.jellyfin.loadbalancer.server.port: "8096"
+
+  lidarr:
+    image: linuxserver/lidarr:latest
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+    volumes:
+      - lidarr_config:/config
+      - jellyfin_music:/music
+      - lidarr_downloads:/downloads
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.lidarr.rule: Host(`${LIDARR_HOST:-lidarr.fewa.app}`)
+      traefik.http.routers.lidarr.entrypoints: websecure
+      traefik.http.routers.lidarr.tls: "true"
+      traefik.http.routers.lidarr.tls.certresolver: letsencrypt
+      traefik.http.services.lidarr.loadbalancer.server.port: "8686"
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+
+volumes:
+  jellyfin_config:
+  jellyfin_cache:
+  jellyfin_music:
+  jellyfin_metadata:
+  lidarr_config:
+  lidarr_downloads:
