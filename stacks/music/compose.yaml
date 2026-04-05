@@ -58,6 +58,77 @@ services:
       traefik.http.routers.feishin.tls.certresolver: letsencrypt
       traefik.http.services.feishin.loadbalancer.server.port: "9180"
 
+  prowlarr:
+    image: ghcr.io/hotio/prowlarr:latest
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+    volumes:
+      - prowlarr_config:/config
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.prowlarr.rule: Host(`${PROWLARR_HOST:-prowlarr.fewa.app}`)
+      traefik.http.routers.prowlarr.entrypoints: websecure
+      traefik.http.routers.prowlarr.tls: "true"
+      traefik.http.routers.prowlarr.tls.certresolver: letsencrypt
+      traefik.http.services.prowlarr.loadbalancer.server.port: "9696"
+
+  slskd:
+    image: slskd/slskd
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      SLSKD_REMOTE_CONFIGURATION: "true"
+    volumes:
+      - slskd_config:/app
+      - slskd_downloads:/downloads
+      - slskd_incomplete:/incomplete
+      - navidrome_music:/data:ro
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.slskd.rule: Host(`${SLSKD_HOST:-slskd.fewa.app}`)
+      traefik.http.routers.slskd.entrypoints: websecure
+      traefik.http.routers.slskd.tls: "true"
+      traefik.http.routers.slskd.tls.certresolver: letsencrypt
+      traefik.http.services.slskd.loadbalancer.server.port: "5030"
+
+  soularr:
+    image: mrusse08/soularr:latest
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      SCRIPT_INTERVAL: "300"
+      SLSKD_URL: "http://slskd:5030"
+    volumes:
+      - soularr_config:/data
+      - slskd_downloads:/downloads
+      - slskd_incomplete:/incomplete
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.soularr.rule: Host(`${SOULARR_HOST:-soularr.fewa.app}`)
+      traefik.http.routers.soularr.entrypoints: websecure
+      traefik.http.routers.soularr.tls: "true"
+      traefik.http.routers.soularr.tls.certresolver: letsencrypt
+      traefik.http.services.soularr.loadbalancer.server.port: "5055"
+
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
@@ -68,3 +139,8 @@ volumes:
   navidrome_music:
   lidarr_config:
   lidarr_downloads:
+  prowlarr_config:
+  slskd_config:
+  slskd_downloads:
+  slskd_incomplete:
+  soularr_config:
