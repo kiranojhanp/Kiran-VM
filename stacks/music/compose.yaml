@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     environment:
       TZ: ${TZ:-UTC}
-      ND_PUBLISHURL: https://${NAVIDROME_HOST:-music.fewa.app}
+      ND_PUBLISHURL: https://${NAVIDROME_HOST:-navidrome.fewa.app}
     volumes:
       - navidrome_config:/config
       - navidrome_music:/music
@@ -14,7 +14,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.navidrome.rule: Host(`${NAVIDROME_HOST:-music.fewa.app}`)
+      traefik.http.routers.navidrome.rule: Host(`${NAVIDROME_HOST:-navidrome.fewa.app}`)
       traefik.http.routers.navidrome.entrypoints: websecure
       traefik.http.routers.navidrome.tls: "true"
       traefik.http.routers.navidrome.tls.certresolver: letsencrypt
@@ -52,7 +52,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.feishin.rule: Host(`${FEISHIN_HOST:-feishin.fewa.app}`)
+      traefik.http.routers.feishin.rule: Host(`${FEISHIN_HOST:-music.fewa.app}`)
       traefik.http.routers.feishin.entrypoints: websecure
       traefik.http.routers.feishin.tls: "true"
       traefik.http.routers.feishin.tls.certresolver: letsencrypt
