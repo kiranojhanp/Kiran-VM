@@ -4,10 +4,12 @@ services:
     restart: unless-stopped
     environment:
       TZ: ${TZ:-UTC}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
       ND_PUBLISHURL: https://${NAVIDROME_HOST:-navidrome.fewa.app}
     volumes:
       - navidrome_config:/config
-      - /opt/music:/music
+      - slskd_downloads:/music
       - /etc/localtime:/etc/localtime:ro
     networks:
       - shared
@@ -29,8 +31,8 @@ services:
       PGID: ${PGID:-1000}
     volumes:
       - lidarr_config:/config
-      - /opt/music:/music
-      - slskd_downloads:/slskd_downloads
+      - slskd_downloads:/music
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - shared
     labels:
@@ -41,22 +43,6 @@ services:
       traefik.http.routers.lidarr.tls: "true"
       traefik.http.routers.lidarr.tls.certresolver: letsencrypt
       traefik.http.services.lidarr.loadbalancer.server.port: "8686"
-
-  feishin:
-    image: ghcr.io/jeffvli/feishin:latest
-    restart: unless-stopped
-    environment:
-      TZ: ${TZ:-UTC}
-    networks:
-      - shared
-    labels:
-      traefik.enable: "true"
-      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.feishin.rule: Host(`${FEISHIN_HOST:-music.fewa.app}`)
-      traefik.http.routers.feishin.entrypoints: websecure
-      traefik.http.routers.feishin.tls: "true"
-      traefik.http.routers.feishin.tls.certresolver: letsencrypt
-      traefik.http.services.feishin.loadbalancer.server.port: "9180"
 
   prowlarr:
     image: ghcr.io/hotio/prowlarr:latest
@@ -78,6 +64,22 @@ services:
       traefik.http.routers.prowlarr.tls: "true"
       traefik.http.routers.prowlarr.tls.certresolver: letsencrypt
       traefik.http.services.prowlarr.loadbalancer.server.port: "9696"
+
+  feishin:
+    image: ghcr.io/jeffvli/feishin:latest
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.feishin.rule: Host(`${FEISHIN_HOST:-music.fewa.app}`)
+      traefik.http.routers.feishin.entrypoints: websecure
+      traefik.http.routers.feishin.tls: "true"
+      traefik.http.routers.feishin.tls.certresolver: letsencrypt
+      traefik.http.services.feishin.loadbalancer.server.port: "9180"
 
   slskd:
     image: slskd/slskd
