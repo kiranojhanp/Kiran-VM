@@ -15,3 +15,17 @@ Compose file: `stacks/actual/compose.yaml`
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
 
 Do not set `ACTUAL_PORT` in Komodo. It is fixed to `5006` in compose.
+
+### OpenID / authentik SSO
+
+To enable authentik SSO:
+
+1. **In authentik**: Create OAuth2/OIDC provider with:
+   - Redirect URI (Strict): `https://actual.fewa.app/openid/callback`
+   - Signing Key: select any (Actual only supports RS256)
+2. **In Komodo**, set these variables:
+   - `ACTUAL_OPENID_DISCOVERY_URL`: `https://authentik.fewa.app/application/o/<slug>/`
+   - `ACTUAL_OPENID_CLIENT_ID`: from authentik
+   - `ACTUAL_OPENID_CLIENT_SECRET`: from authentik
+
+**Important:** Users must be manually created in Actual Budget first (go to Server online → User Directory) before SSO login will work.

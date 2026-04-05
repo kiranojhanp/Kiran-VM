@@ -4,6 +4,11 @@ services:
     restart: unless-stopped
     environment:
       ACTUAL_PORT: "5006"
+      # OpenID / authentik SSO
+      ACTUAL_OPENID_DISCOVERY_URL: ${ACTUAL_OPENID_DISCOVERY_URL:-}
+      ACTUAL_OPENID_CLIENT_ID: ${ACTUAL_OPENID_CLIENT_ID:-}
+      ACTUAL_OPENID_CLIENT_SECRET: ${ACTUAL_OPENID_CLIENT_SECRET:-}
+      ACTUAL_OPENID_SERVER_HOSTNAME: https://${ACTUAL_HOST:-actual.fewa.app}
     volumes:
       - actual_data:/data
     healthcheck:
