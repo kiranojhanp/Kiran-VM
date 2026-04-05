@@ -163,7 +163,7 @@ services:
           echo 'allowed_filetypes = flac' >> /data/config.ini;
           echo 'track_prepend_artist = False' >> /data/config.ini;
           echo 'search_type = first_page' >> /data/config.ini;
-          echo 'number_of_albums_to_grab = 5' >> /data/config.ini;
+          echo 'number_of_albums_to_grab = 1' >> /data/config.ini;
           echo 'remove_wanted_on_failure = True' >> /data/config.ini;
           echo '' >> /data/config.ini;
           echo '[Download Settings]' >> /data/config.ini;
