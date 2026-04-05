@@ -159,7 +159,7 @@ services:
           echo 'search_timeout = 3000' >> /data/config.ini;
           echo 'maximum_peer_queue = 30' >> /data/config.ini;
           echo 'minimum_peer_upload_speed = 0' >> /data/config.ini;
-          echo 'minimum_filename_match_ratio = 0.85' >> /data/config.ini;
+          echo 'minimum_filename_match_ratio = 0.95' >> /data/config.ini;
           echo 'allowed_filetypes = flac' >> /data/config.ini;
           echo 'track_prepend_artist = False' >> /data/config.ini;
           echo 'search_type = first_page' >> /data/config.ini;
