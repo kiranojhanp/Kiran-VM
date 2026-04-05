@@ -9,6 +9,14 @@ Compose file: `stacks/music/compose.yaml`
 3. Add the variables below in the stack Environment.
 4. Deploy (or Redeploy), then open `https://<FEISHIN_HOST>`.
 
+## Prerequisites
+
+Before deploying, create the music folder on your server:
+```bash
+sudo mkdir -p /opt/music
+sudo chown -R 1000:1000 /opt/music
+```
+
 ## Stack environment variables
 
 - `NAVIDROME_HOST` (optional): public hostname. Default: `navidrome.fewa.app`.
@@ -35,49 +43,60 @@ Compose file: `stacks/music/compose.yaml`
 
 ## Volume mappings
 
-### Navidrome
-- `/config`: database, users, settings, logs.
-- `/music`: music library (shared with Lidarr, exposed to slskd).
+### Host folder: `/opt/music`
+The music library lives on the host at `/opt/music`. All music services access this folder:
+- **Navidrome**: `/opt/music` → `/music` (read-only)
+- **Lidarr**: `/opt/music` → `/music` (read-write)
+- **slskd**: `/opt/music` → `/data` (read-only, for sharing on Soulseek)
 
-### Lidarr
-- `/config`: database, settings, logs.
-- `/music`: music library (shared with Navidrome).
-- `/downloads`: download folder for new music.
-
-### Feishin
-- No persistent volumes (stateless client).
-
-### Prowlarr
-- `/config`: database, indexer configs, settings.
-
-### slskd
-- `/app`: configuration and data.
-- `/downloads`: completed downloads (shared with Soularr).
-- `/incomplete`: incomplete downloads.
-- `/data`: read-only access to music library for sharing.
-
-### Soularr
-- `/data`: configuration and data.
-- `/downloads`: download queue (shared with slskd).
-- `/incomplete`: incomplete downloads.
+### Other volumes
+- Navidrome: `/config` - database, settings
+- Lidarr: `/config` - database, settings; `/downloads` - download folder
+- Prowlarr: `/config` - indexer configs, settings
+- slskd: `/app` - config; `/downloads`, `/incomplete` - download folders
+- Soularr: `/data` - config
 
 ## Configuration
 
 ### Lidarr Setup
-1. Go to Lidarr → Settings → Indexers
-2. Add Prowlarr as an indexer (Add via Prowlarr)
-3. Go to Settings → Download Clients
-4. Add Soularr as download client
-5. Add artists to monitor
+1. Go to Lidarr → Settings → Media Management
+2. Add root folder: `/music`
+3. Go to Settings → Indexers
+4. Add Prowlarr as an indexer (Add via Prowlarr)
+5. Go to Settings → Download Clients
+6. Add Soularr as download client
+7. Add artists to monitor
 
-### Soularr/slskd Setup
-1. Go to `https://slskd.fewa.app` to configure slskd
-2. Go to `https://soularr.fewa.app` to use Soulseek client
-3. Configure username/password in slskd to connect to Soulseek network
+### Prowlarr → Lidarr Sync
+1. Go to Prowlarr (`prowlarr.fewa.app`) → Settings → Apps
+2. Add Application → Select Lidarr
+3. Configure:
+   - Prowlarr Server: `http://prowlarr:9696`
+   - Lidarr Server: `http://lidarr:8686`
+   - API Key: Get from Lidarr → Settings → General
+4. Save - indexers will sync to Lidarr
+
+### slskd Setup
+1. Go to `https://slskd.fewa.app`
+2. Login: `slskd` / `slskd` (default)
+3. Go to System → Options → Edit
+4. Configure:
+   ```yaml
+   directories:
+     incomplete: /incomplete
+     downloads: /downloads
+   shares:
+     directories:
+       - /data/music
+   ```
+5. Set web credentials (not SoulSeek)
+6. Set your SoulSeek username/password
+7. Click "Disconnected" to connect to SoulSeek network
 
 ## Notes
 
-- All services share the same music library via Docker volumes.
-- Lidarr searches via Prowlarr indexers and downloads via Soularr.
-- Feishin connects to Navidrome via Subsonic API for the best UI experience.
-- Prowlarr manages indexers for all *arr applications.
+- Music folder is bind-mounted from host: `/opt/music`
+- Lidarr downloads go to `/downloads` (Docker volume, not host)
+- Soularr/slskd downloads go to their volumes
+- Feishin connects to Navidrome via Subsonic API for the best UI experience
+- Prowlarr manages indexers for all *arr applications

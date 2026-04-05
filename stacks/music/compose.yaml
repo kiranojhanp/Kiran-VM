@@ -7,7 +7,7 @@ services:
       ND_PUBLISHURL: https://${NAVIDROME_HOST:-navidrome.fewa.app}
     volumes:
       - navidrome_config:/config
-      - navidrome_music:/music
+      - /opt/music:/music
       - /etc/localtime:/etc/localtime:ro
     networks:
       - shared
@@ -29,7 +29,7 @@ services:
       PGID: ${PGID:-1000}
     volumes:
       - lidarr_config:/config
-      - navidrome_music:/music
+      - /opt/music:/music
       - lidarr_downloads:/downloads
     networks:
       - shared
@@ -91,7 +91,7 @@ services:
       - slskd_config:/app
       - slskd_downloads:/downloads
       - slskd_incomplete:/incomplete
-      - navidrome_music:/data:ro
+      - /opt/music:/data:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
       - shared
@@ -136,7 +136,6 @@ networks:
 
 volumes:
   navidrome_config:
-  navidrome_music:
   lidarr_config:
   lidarr_downloads:
   prowlarr_config:
