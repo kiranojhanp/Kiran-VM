@@ -25,6 +25,8 @@ sudo chown -R 1000:1000 /opt/music
 - `PROWLARR_HOST` (optional): public hostname. Default: `prowlarr.fewa.app`.
 - `SLSKD_HOST` (optional): public hostname. Default: `slskd.fewa.app`.
 - `SOULARR_HOST` (optional): public hostname. Default: `soularr.fewa.app`.
+- `LIDARR_API_KEY` (required for Soularr): Lidarr API key from Settings → General.
+- `SLSKD_API_KEY` (required for Soularr): slskd API key from Settings → API.
 - `TZ` (optional): timezone. Default: `UTC`.
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
 - `PUID` (optional): user ID for file permissions. Default: `1000`.
@@ -93,7 +95,14 @@ The music library lives on the host at `/opt/music`. All music services access t
 6. Set your SoulSeek username/password
 7. Click "Disconnected" to connect to SoulSeek network
 
-## Notes
+### Soularr Setup
+Soularr connects Lidarr to Soulseek for auto-downloading music. The config is auto-generated from environment variables.
+
+**Required environment variables:**
+1. `LIDARR_API_KEY` - Get from Lidarr → Settings → General → API Key
+2. `SLSKD_API_KEY` - Get from slskd → Settings → API → API Key
+
+The container automatically creates `config.ini` with these values on startup.
 
 - Music folder is bind-mounted from host: `/opt/music`
 - Lidarr downloads go to `/downloads` (Docker volume, not host)

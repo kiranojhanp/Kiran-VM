@@ -30,7 +30,7 @@ services:
     volumes:
       - lidarr_config:/config
       - /opt/music:/music
-      - lidarr_downloads:/downloads
+      - slskd_downloads:/slskd_downloads
     networks:
       - shared
     labels:
@@ -87,10 +87,10 @@ services:
       PUID: ${PUID:-1000}
       PGID: ${PGID:-1000}
       SLSKD_REMOTE_CONFIGURATION: "true"
+      SLSKD_DIRECTORIES_DOWNLOADS: /app/downloads
     volumes:
       - slskd_config:/app
-      - slskd_downloads:/downloads
-      - slskd_incomplete:/incomplete
+      - slskd_downloads:/app/downloads
       - /opt/music:/data:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
@@ -113,10 +113,11 @@ services:
       PGID: ${PGID:-1000}
       SCRIPT_INTERVAL: "300"
       SLSKD_URL: "http://slskd:5030"
+      LIDARR_API_KEY: ${LIDARR_API_KEY:-}
+      SLSKD_API_KEY: ${SLSKD_API_KEY:-}
     volumes:
       - soularr_config:/data
-      - slskd_downloads:/downloads
-      - slskd_incomplete:/incomplete
+      - /opt/music:/data/slskd_downloads:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
       - shared
@@ -128,6 +129,48 @@ services:
       traefik.http.routers.soularr.tls: "true"
       traefik.http.routers.soularr.tls.certresolver: letsencrypt
       traefik.http.services.soularr.loadbalancer.server.port: "5055"
+    command: >
+      /bin/sh -c "
+        if [ -n \"$$LIDARR_API_KEY\" ] && [ -n \"$$SLSKD_API_KEY\" ]; then
+          echo '[Lidarr]' > /data/config.ini;
+          echo \"api_key = $$LIDARR_API_KEY\" >> /data/config.ini;
+          echo 'host_url = http://lidarr:8686' >> /data/config.ini;
+          echo 'download_dir = /data/slskd_downloads' >> /data/config.ini;
+          echo 'disable_sync = False' >> /data/config.ini;
+          echo '' >> /data/config.ini;
+          echo '[Slskd]' >> /data/config.ini;
+          echo \"api_key = $$SLSKD_API_KEY\" >> /data/config.ini;
+          echo 'host_url = http://slskd:5030' >> /data/config.ini;
+          echo 'url_base = /' >> /data/config.ini;
+          echo 'download_dir = /downloads' >> /data/config.ini;
+          echo 'delete_searches = False' >> /data/config.ini;
+          echo 'stalled_timeout = 3600' >> /data/config.ini;
+          echo '' >> /data/config.ini;
+          echo '[Release Settings]' >> /data/config.ini;
+          echo 'use_most_common_tracknum = True' >> /data/config.ini;
+          echo 'allow_multi_disc = True' >> /data/config.ini;
+          echo 'accepted_countries = Europe,Japan,United Kingdom,United States,[Worldwide],Australia,Canada' >> /data/config.ini;
+          echo 'skip_region_check = False' >> /data/config.ini;
+          echo 'accepted_formats = CD,Digital Media,Vinyl' >> /data/config.ini;
+          echo '' >> /data/config.ini;
+          echo '[Search Settings]' >> /data/config.ini;
+          echo 'search_timeout = 5000' >> /data/config.ini;
+          echo 'maximum_peer_queue = 50' >> /data/config.ini;
+          echo 'minimum_peer_upload_speed = 0' >> /data/config.ini;
+          echo 'minimum_filename_match_ratio = 0.8' >> /data/config.ini;
+          echo 'allowed_filetypes = flac 24/192,flac 16/44.1,flac,mp3 320,mp3' >> /data/config.ini;
+          echo 'track_prepend_artist = True' >> /data/config.ini;
+          echo 'search_type = incrementing_page' >> /data/config.ini;
+          echo 'number_of_albums_to_grab = 10' >> /data/config.ini;
+          echo '' >> /data/config.ini;
+          echo '[Download Settings]' >> /data/config.ini;
+          echo 'download_filtering = True' >> /data/config.ini;
+          echo '' >> /data/config.ini;
+          echo '[Logging]' >> /data/config.ini;
+          echo 'level = INFO' >> /data/config.ini;
+        fi;
+        exec python /app/soularr.py
+      "
 
 networks:
   shared:
@@ -137,9 +180,7 @@ networks:
 volumes:
   navidrome_config:
   lidarr_config:
-  lidarr_downloads:
   prowlarr_config:
   slskd_config:
   slskd_downloads:
-  slskd_incomplete:
   soularr_config:
