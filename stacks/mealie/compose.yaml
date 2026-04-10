@@ -4,12 +4,19 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+      - apparmor:docker-default
+
     cap_drop:
       - ALL
     user: "1000:1000"
     mem_limit: 1g
     memswap_limit: 1g
     pids_limit: 100
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      nproc: 100
     environment:
       ALLOW_SIGNUP: "${MEALIE_ALLOW_SIGNUP:-true}"
       TZ: ${TZ:-UTC}

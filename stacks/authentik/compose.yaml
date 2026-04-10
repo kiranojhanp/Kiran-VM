@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+      - apparmor:docker-default
+
     cap_drop:
       - ALL
     read_only: true
@@ -13,6 +15,13 @@ services:
       - /run
     mem_limit: 1g
     memswap_limit: 1g
+    pids_limit: 100
+    user: "1000:1000"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      nproc: 100
     environment:
       AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:-change-me}
       AUTHENTIK_POSTGRESQL__HOST: ${SHARED_POSTGRES_HOST:-postgres}
@@ -43,6 +52,8 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+      - apparmor:docker-default
+
     cap_drop:
       - ALL
     read_only: true
@@ -51,6 +62,13 @@ services:
       - /run
     mem_limit: 1g
     memswap_limit: 1g
+    pids_limit: 100
+    user: "1000:1000"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      nproc: 100
     environment:
       AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:-change-me}
       AUTHENTIK_POSTGRESQL__HOST: ${SHARED_POSTGRES_HOST:-postgres}
