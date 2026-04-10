@@ -2,6 +2,8 @@ services:
   paperlessngx:
     image: ghcr.io/paperless-ngx/paperless-ngx:latest
     restart: unless-stopped
+    cap_drop:
+      - ALL
     depends_on:
       - gotenberg
       - tika
