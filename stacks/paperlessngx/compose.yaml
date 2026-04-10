@@ -2,13 +2,6 @@ services:
   paperlessngx:
     image: ghcr.io/paperless-ngx/paperless-ngx:latest
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    mem_limit: 1g
-    memswap_limit: 1g
-    pids_limit: 100
     depends_on:
       - gotenberg
       - tika
@@ -43,20 +36,10 @@ services:
   gotenberg:
     image: gotenberg/gotenberg:latest
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    mem_limit: 512m
 
   tika:
     image: apache/tika:latest
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    mem_limit: 512m
 
 networks:
   shared:
