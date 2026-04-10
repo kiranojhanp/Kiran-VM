@@ -1,0 +1,44 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stacks/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stacks/**'
+
+jobs:
+  trivy-scan:
+    name: Trivy Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: 'stacks/'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  hadolint:
+    name: Hadolint Dockerfile Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.0.0
+        with:
+          dockerfile: 'provision/roles/infra/files/Dockerfile.wal-g.j2'

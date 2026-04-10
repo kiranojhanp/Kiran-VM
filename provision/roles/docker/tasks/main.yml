@@ -81,6 +81,24 @@
           "max-file": "3"
         },
         "live-restore": true,
-        "userland-proxy": false
+        "userland-proxy": false,
+        "content-trust": true
       }
   notify: Restart docker
+
+- name: Install Trivy for container scanning
+  ansible.builtin.apt:
+    name: trivy
+    state: present
+    update_cache: true
+  ignore_errors: true
+
+- name: Install Cosign for image signing
+  ansible.builtin.shell: |
+    export ARCH=$(dpkg --print-architecture | sed 's|arm64|aarch64|' | sed 's|amd64|x86_64|')
+    export COSIGN_VERSION=$(curl -s https://api.github.com/repos/sigstore/cosign/releases/latest | grep -oP '"tag_name": "\K[^"]+')
+    curl -o /usr/local/bin/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-${ARCH}"
+    chmod +x /usr/local/bin/cosign
+  args:
+    creates: /usr/local/bin/cosign
+  ignore_errors: true
