@@ -6,9 +6,9 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    user: "1000:1000"
     mem_limit: 256m
     memswap_limit: 256m
+    pids_limit: 100
     environment:
       TZ: ${TZ:-UTC}
     volumes:

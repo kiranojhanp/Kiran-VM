@@ -6,23 +6,29 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    user: "1000:1000"
     mem_limit: 512m
     memswap_limit: 512m
     pids_limit: 100
-    tmpfs:
-      - /tmp
+    volumes:
+      - uptime-kuma_data:/app/data
     healthcheck:
       test: ["CMD", "node", "/app/extra/healthcheck.js"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-    mem_limit: 512m
-
-volumes:
-      - uptime-kuma_data:/app/data
     networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.uptime-kuma.rule: Host(`${UPTIME_KUMA_HOST:-uptime.fewa.app}`)
+      traefik.http.routers.uptime-kuma.entrypoints: websecure
+      traefik.http.routers.uptime-kuma.tls: "true"
+      traefik.http.routers.uptime-kuma.tls.certresolver: letsencrypt
+      traefik.http.services.uptime-kuma.loadbalancer.server.port: "3001"
+
+networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
     external: true
