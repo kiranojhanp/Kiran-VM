@@ -6,7 +6,9 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    read_only: true
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 100
     tmpfs:
       - /tmp
     healthcheck:

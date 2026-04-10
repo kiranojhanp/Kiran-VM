@@ -6,9 +6,7 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    read_only: true
-    tmpfs:
-      - /tmp
+    user: "1000:1000"
     mem_limit: 512m
     memswap_limit: 512m
     environment:
