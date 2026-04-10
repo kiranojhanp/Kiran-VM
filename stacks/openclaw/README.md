@@ -156,3 +156,13 @@ This stack applies the [OpenClaw hardened baseline](https://docs.openclaw.ai/gat
 - Host directories: `700` owned by uid 1000 (container's node user)
 - Container: read-only root filesystem with writable bind mounts
 - DOCKER-USER iptables rules block unexpected Docker port access
+
+## Docker Security Hardening
+
+This stack includes additional Docker-level security hardening:
+
+- **Read-only root filesystem**: Prevents container from writing to root filesystem
+- **No new privileges**: Prevents privilege escalation attacks
+- **Dropped all capabilities**: Removes all Linux capabilities (`cap_drop: ALL`)
+- **Memory limits**: `mem_limit` and `memswap_limit` set to prevent resource exhaustion
+- **Process limits**: `pids_limit: 100` prevents fork bombs

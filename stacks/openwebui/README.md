@@ -20,3 +20,13 @@ Compose file: `stacks/openwebui/compose.yaml`
 - `OPENAI_API_BASE_URLS` (optional): comma-separated base URLs. Default: `https://api.openai.com/v1`.
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
 - `INFRA_DOCKER_NETWORK` (optional): network that contains the shared Postgres container. Default: `infra_net`.
+
+## Security
+
+This stack includes Docker security hardening:
+
+- **Read-only root filesystem**: Prevents container from writing to root filesystem
+- **No new privileges**: Prevents privilege escalation attacks
+- **Dropped all capabilities**: Removes all Linux capabilities (`cap_drop: ALL`)
+- **Memory limits**: `mem_limit` and `memswap_limit` set to prevent resource exhaustion
+- **Process limits**: `pids_limit: 100` prevents fork bombs

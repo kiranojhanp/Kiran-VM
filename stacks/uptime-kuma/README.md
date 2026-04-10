@@ -22,3 +22,13 @@ Compose file: `stacks/uptime-kuma/compose.yaml`
 - WebSocket support is enabled via Traefik for real-time dashboard updates.
 - Resource usage is lightweight (~80MB RAM with 50 monitors at 60s intervals).
 - First visit: create an admin account via the web UI.
+
+## Security
+
+This stack includes Docker security hardening:
+
+- **Read-only root filesystem**: Prevents container from writing to root filesystem
+- **No new privileges**: Prevents privilege escalation attacks
+- **Dropped all capabilities**: Removes all Linux capabilities (`cap_drop: ALL`)
+- **Memory limits**: `mem_limit` and `memswap_limit` set to prevent resource exhaustion
+- **Process limits**: `pids_limit: 100` prevents fork bombs

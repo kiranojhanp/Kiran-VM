@@ -20,3 +20,13 @@ Compose file: `stacks/paperlessngx/compose.yaml`
 - `TZ` (optional): timezone. Default: `UTC`.
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
 - `SHARED_INFRA_NETWORK` (optional): shared infra network. Default: `infra_net`.
+
+## Security
+
+This stack includes Docker security hardening:
+
+- **Read-only root filesystem**: Prevents container from writing to root filesystem
+- **No new privileges**: Prevents privilege escalation attacks
+- **Dropped all capabilities**: Removes all Linux capabilities (`cap_drop: ALL`)
+- **Memory limits**: `mem_limit` and `memswap_limit` set to prevent resource exhaustion
+- **Process limits**: `pids_limit: 100` prevents fork bombs

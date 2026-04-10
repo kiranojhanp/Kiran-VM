@@ -39,3 +39,13 @@ Compose file: `stacks/authentik/compose.yaml`
 2. Limit public signup and review default flows/policies.
 3. Add monitoring for `https://<AUTHENTIK_HOST>/` and alert on downtime.
 4. Keep image tags pinned and upgrade intentionally.
+
+## Security
+
+This stack includes Docker security hardening:
+
+- **Read-only root filesystem**: Prevents container from writing to root filesystem
+- **No new privileges**: Prevents privilege escalation attacks
+- **Dropped all capabilities**: Removes all Linux capabilities (`cap_drop: ALL`)
+- **Memory limits**: `mem_limit` and `memswap_limit` set to prevent resource exhaustion
+- **Process limits**: `pids_limit: 100` prevents fork bombs

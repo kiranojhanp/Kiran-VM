@@ -42,3 +42,13 @@ Compose file: `stacks/wealthfolio/compose.yaml`
 ## Backups
 
 Wealthfolio uses Litestream for continuous SQLite replication to Garage S3. This is managed via Ansible in `provision/roles/litestream-backup` with service name `wealthfolio` and bucket `wealthfolio-backups`.
+
+## Security
+
+This stack includes Docker security hardening:
+
+- **Read-only root filesystem**: Prevents container from writing to root filesystem
+- **No new privileges**: Prevents privilege escalation attacks
+- **Dropped all capabilities**: Removes all Linux capabilities (`cap_drop: ALL`)
+- **Memory limits**: `mem_limit` and `memswap_limit` set to prevent resource exhaustion
+- **Process limits**: `pids_limit: 100` prevents fork bombs

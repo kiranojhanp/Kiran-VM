@@ -31,3 +31,13 @@ Compose file: `stacks/mealie/compose.yaml`
 This stack now uses shared Postgres (`DB_ENGINE=postgres`) instead of SQLite-only mode.
 Before switching production, create database and credentials in shared Postgres, then run
 Mealie with the Postgres variables above.
+
+## Security
+
+This stack includes Docker security hardening:
+
+- **Read-only root filesystem**: Prevents container from writing to root filesystem
+- **No new privileges**: Prevents privilege escalation attacks
+- **Dropped all capabilities**: Removes all Linux capabilities (`cap_drop: ALL`)
+- **Memory limits**: `mem_limit` and `memswap_limit` set to prevent resource exhaustion
+- **Process limits**: `pids_limit: 100` prevents fork bombs
