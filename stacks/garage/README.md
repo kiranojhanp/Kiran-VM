@@ -68,13 +68,13 @@ Or visit `https://<GARAGE_HOST>` to use the webui.
 
 ### WebUI authentication
 
-The webui requires HTTP Basic Auth. Credentials are configured in `garage-webui.env` (gitignored). Generate a new password hash with:
+The webui requires HTTP Basic Auth. Set `AUTH_USER_PASS` in Komodo stack Environment (e.g., `admin:your-password-hash`). Generate a password hash with:
 
 ```bash
 htpasswd -nbBC 10 "username" "password"
 ```
 
-Then update `garage-webui.env` with the hash (use `$$` to escape dollar signs in compose).
+Use the hash format (e.g., `admin:$2y$10$...`). Default is `admin:admin` if not set.
 
 ## Connecting apps
 

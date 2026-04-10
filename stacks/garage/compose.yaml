@@ -45,12 +45,10 @@ services:
     pids_limit: 100
     volumes:
       - /opt/garage/garage.toml:/etc/garage.toml:ro
-    env_file:
-       - garage-webui.env
     environment:
        API_BASE_URL: "http://garage:3903"
        S3_ENDPOINT_URL: "http://garage:3900"
-       AUTH_USER_PASS: ${AUTH_USER_PASS:-}
+       AUTH_USER_PASS: ${AUTH_USER_PASS:-admin:$$2y$$10$$LbC8QDVlmGnpP/Y./hSzRuvun31M.7jG5.kmLqlI/GaWQasq0zdjC}
     depends_on:
       garage:
         condition: service_started
