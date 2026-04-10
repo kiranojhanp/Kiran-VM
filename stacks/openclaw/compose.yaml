@@ -33,7 +33,6 @@ services:
         max-file: "3"
     mem_limit: 2g
     memswap_limit: 2g
-    user: "1000:1000"
     ulimits:
       nofile:
         soft: 65536

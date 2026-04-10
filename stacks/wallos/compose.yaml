@@ -9,7 +9,6 @@ services:
       - ALL
     mem_limit: 256m
     memswap_limit: 256m
-    user: "1000:1000"
     ulimits:
       nofile:
         soft: 65536
