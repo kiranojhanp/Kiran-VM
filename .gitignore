@@ -18,4 +18,6 @@ infra/bin/
 
 # Ruff lint cache
 **/.ruff_cache/
+
+# Garage WebUI env (contains credentials)
 stacks/garage/garage-webui.env
