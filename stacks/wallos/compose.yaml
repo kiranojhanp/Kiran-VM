@@ -2,15 +2,6 @@ services:
   wallos:
     image: bellamy/wallos:latest
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    mem_limit: 256m
-    memswap_limit: 256m
-    pids_limit: 100
-    environment:
-      TZ: ${TZ:-UTC}
     volumes:
       - wallos_db:/var/www/html/db
       - wallos_logos:/var/www/html/images/uploads/logos
