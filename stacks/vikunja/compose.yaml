@@ -7,11 +7,16 @@ services:
     cap_drop:
       - ALL
     user: "1000:1000"
+    tmpfs:
+      - /app
     mem_limit: 512m
     memswap_limit: 512m
     environment:
       HOME: /tmp
       XDG_CACHE_HOME: /tmp/.cache
+      XDG_CONFIG_HOME: /tmp/config
+      XDG_DATA_HOME: /tmp/data
+      TMPDIR: /tmp
       VIKUNJA_SERVICE_PUBLICURL: https://${VIKUNJA_HOST:-vikunja.fewa.app}/
       VIKUNJA_SERVICE_JWTSECRET: ${VIKUNJA_JWT_SECRET:-change-me}
       VIKUNJA_DATABASE_HOST: ${SHARED_POSTGRES_HOST:-postgres}
