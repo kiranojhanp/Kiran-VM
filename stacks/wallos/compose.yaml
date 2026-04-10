@@ -2,6 +2,11 @@ services:
   wallos:
     image: bellamy/wallos:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    memswap_limit: 256m
+    pids_limit: 100
     volumes:
       - wallos_db:/var/www/html/db
       - wallos_logos:/var/www/html/images/uploads/logos
