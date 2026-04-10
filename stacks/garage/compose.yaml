@@ -9,6 +9,7 @@ services:
       - ALL
     mem_limit: 512m
     memswap_limit: 512m
+    pids_limit: 100
     volumes:
       - /opt/garage/garage.toml:/etc/garage.toml:ro
       - garage_meta:/var/lib/garage/meta
@@ -41,13 +42,15 @@ services:
       - /tmp
     mem_limit: 256m
     memswap_limit: 256m
+    pids_limit: 100
     volumes:
       - /opt/garage/garage.toml:/etc/garage.toml:ro
     env_file:
-      - garage-webui.env
+       - garage-webui.env
     environment:
-      API_BASE_URL: "http://garage:3903"
-      S3_ENDPOINT_URL: "http://garage:3900"
+       API_BASE_URL: "http://garage:3903"
+       S3_ENDPOINT_URL: "http://garage:3900"
+       AUTH_USER_PASS: ${AUTH_USER_PASS:-}
     depends_on:
       garage:
         condition: service_started
