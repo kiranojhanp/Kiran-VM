@@ -2,6 +2,15 @@ services:
   mealie:
     image: hkotel/mealie:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 1g
+    memswap_limit: 1g
     environment:
       ALLOW_SIGNUP: "${MEALIE_ALLOW_SIGNUP:-true}"
       PUID: ${PUID:-1000}

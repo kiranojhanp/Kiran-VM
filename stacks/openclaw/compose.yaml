@@ -38,6 +38,8 @@ services:
     read_only: true
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   openclaw-cli:
     image: alpine/openclaw:latest
@@ -56,6 +58,8 @@ services:
         max-file: "3"
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
 
 networks:
   shared:

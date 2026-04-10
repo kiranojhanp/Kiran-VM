@@ -3,6 +3,12 @@ services:
     image: dxflrs/garage:v2.1.0
     container_name: garage
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    memswap_limit: 512m
     volumes:
       - /opt/garage/garage.toml:/etc/garage.toml:ro
       - garage_meta:/var/lib/garage/meta
@@ -26,6 +32,15 @@ services:
   garage-webui:
     image: khairul169/garage-webui:1.1.0
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 256m
+    memswap_limit: 256m
     volumes:
       - /opt/garage/garage.toml:/etc/garage.toml:ro
     env_file:

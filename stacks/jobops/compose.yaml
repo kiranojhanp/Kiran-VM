@@ -3,6 +3,13 @@ services:
     image: ghcr.io/dakheera47/job-ops:latest
     container_name: jobops
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
     volumes:
       - jobops_data:/app/data
     environment:
@@ -22,6 +29,7 @@ services:
       resources:
         limits:
           memory: 1G
+          pids: 100
     logging:
       driver: "json-file"
       options:

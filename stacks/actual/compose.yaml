@@ -2,6 +2,17 @@ services:
   actual-server:
     image: docker.io/actualbudget/actual-server:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 512m
+    memswap_limit: 512m
     environment:
       ACTUAL_PORT: "5006"
       # OpenID / authentik SSO

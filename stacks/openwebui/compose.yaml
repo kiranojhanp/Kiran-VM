@@ -2,6 +2,15 @@ services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:v0.8.12
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 2g
+    memswap_limit: 2g
     environment:
       ENABLE_OLLAMA_API: "false"
       OPENAI_API_BASE_URLS: ${OPENAI_API_BASE_URLS:-https://api.openai.com/v1}

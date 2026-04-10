@@ -2,6 +2,15 @@ services:
   wealthfolio:
     image: ghcr.io/afadil/wealthfolio:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 512m
+    memswap_limit: 512m
     environment:
       WF_DB_PATH: ${WF_DB_PATH:-/data/wealthfolio.db}
       WF_CORS_ALLOW_ORIGINS: ${WF_CORS_ALLOW_ORIGINS:-https://wealthfolio.fewa.app}

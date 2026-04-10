@@ -3,6 +3,16 @@ services:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.2.2}
     command: server
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+    mem_limit: 1g
+    memswap_limit: 1g
     environment:
       AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:-change-me}
       AUTHENTIK_POSTGRESQL__HOST: ${SHARED_POSTGRES_HOST:-postgres}
@@ -31,6 +41,16 @@ services:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.2.2}
     command: worker
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+    mem_limit: 1g
+    memswap_limit: 1g
     environment:
       AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:-change-me}
       AUTHENTIK_POSTGRESQL__HOST: ${SHARED_POSTGRES_HOST:-postgres}

@@ -2,6 +2,15 @@ services:
   vaultwarden:
     image: docker.io/vaultwarden/server:1.35.4
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 512m
+    memswap_limit: 512m
     environment:
       WEBSOCKET_ENABLED: "true"
       SIGNUPS_ALLOWED: ${VAULTWARDEN_SIGNUPS_ALLOWED:-false}

@@ -1,8 +1,16 @@
 services:
   vikunja:
     image: vikunja/vikunja:2.1.0
-    user: "0:0"
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 512m
+    memswap_limit: 512m
     environment:
       HOME: /tmp
       XDG_CACHE_HOME: /tmp/.cache

@@ -2,6 +2,15 @@ services:
   wallos:
     image: bellamy/wallos:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 256m
+    memswap_limit: 256m
     environment:
       TZ: ${TZ:-UTC}
     volumes:

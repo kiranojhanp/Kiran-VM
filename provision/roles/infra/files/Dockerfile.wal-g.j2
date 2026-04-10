@@ -5,9 +5,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        wget \
-        ca-certificates \
-        tzdata \
+        wget=1.21.2-2ubuntu1.1 \
+        ca-certificates=20240203~22.04.1 \
+        tzdata=2026a-0ubuntu0.22.04.1 \
     && arch="$(dpkg --print-architecture)" \
     && if [ "$arch" = "arm64" ]; then arch="aarch64"; fi \
     && wget -q "https://github.com/wal-g/wal-g/releases/download/v${WALG_VERSION}/wal-g-pg-ubuntu20.04-${arch}" -O /usr/local/bin/wal-g \
