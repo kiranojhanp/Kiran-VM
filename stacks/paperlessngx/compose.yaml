@@ -36,10 +36,28 @@ services:
   gotenberg:
     image: gotenberg/gotenberg:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 100
+    networks:
+      - shared
 
   tika:
     image: apache/tika:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 100
+    networks:
+      - shared
 
 networks:
   shared:
