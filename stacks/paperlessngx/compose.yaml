@@ -2,6 +2,11 @@ services:
   paperlessngx:
     image: ghcr.io/paperless-ngx/paperless-ngx:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
+    memswap_limit: 1g
+    pids_limit: 100
     depends_on:
       - gotenberg
       - tika
