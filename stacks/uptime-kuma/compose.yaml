@@ -20,7 +20,9 @@ services:
       start_period: 60s
     mem_limit: 512m
 
-networks:
+volumes:
+      - uptime-kuma_data:/app/data
+    networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
     external: true
