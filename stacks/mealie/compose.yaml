@@ -6,15 +6,12 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    read_only: true
-    tmpfs:
-      - /tmp
+    user: "1000:1000"
     mem_limit: 1g
     memswap_limit: 1g
+    pids_limit: 100
     environment:
       ALLOW_SIGNUP: "${MEALIE_ALLOW_SIGNUP:-true}"
-      PUID: ${PUID:-1000}
-      PGID: ${PGID:-1000}
       TZ: ${TZ:-UTC}
       MAX_WORKERS: ${MEALIE_MAX_WORKERS:-1}
       WEB_CONCURRENCY: ${MEALIE_WEB_CONCURRENCY:-1}
