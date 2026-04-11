@@ -44,7 +44,7 @@ services:
     read_only: true
     security_opt:
       - no-new-privileges:true
-      - apparmor:docker-default
+# apparmor:docker-default
 
       - ALL
 
@@ -65,7 +65,7 @@ services:
         max-file: "3"
     security_opt:
       - no-new-privileges:true
-      - apparmor:docker-default
+# apparmor:docker-default
 
       - ALL
 

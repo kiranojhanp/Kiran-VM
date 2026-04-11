@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-      - apparmor:docker-default
+    # apparmor:docker-default - too restrictive
     mem_limit: 256m
     memswap_limit: 256m
     ulimits:
