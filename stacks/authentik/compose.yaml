@@ -3,20 +3,13 @@ services:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.2.2}
     command: server
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-      - apparmor:docker-default
-
-    cap_drop:
-      - ALL
+    mem_limit: 1g
+    memswap_limit: 1g
+    pids_limit: 100
     read_only: true
     tmpfs:
       - /tmp
       - /run
-    mem_limit: 1g
-    memswap_limit: 1g
-    pids_limit: 100
-    user: "1000:1000"
     ulimits:
       nofile:
         soft: 65536
@@ -50,20 +43,13 @@ services:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.2.2}
     command: worker
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-      - apparmor:docker-default
-
-    cap_drop:
-      - ALL
+    mem_limit: 1g
+    memswap_limit: 1g
+    pids_limit: 100
     read_only: true
     tmpfs:
       - /tmp
       - /run
-    mem_limit: 1g
-    memswap_limit: 1g
-    pids_limit: 100
-    user: "1000:1000"
     ulimits:
       nofile:
         soft: 65536
