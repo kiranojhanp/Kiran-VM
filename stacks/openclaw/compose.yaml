@@ -1,78 +1,53 @@
 services:
-  openclaw-gateway:
-    image: alpine/openclaw:latest
-    container_name: infra-openclaw-1
+  jobops:
+    image: ghcr.io/dakheera47/job-ops:latest
+    container_name: jobops
     restart: unless-stopped
-    environment:
-      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
-      OPENCLAW_TELEGRAM_BOT_TOKEN: ${OPENCLAW_TELEGRAM_BOT_TOKEN:-}
-    volumes:
-      - ${OPENCLAW_CONFIG_DIR:-/opt/openclaw/config}:/home/node/.openclaw:rw
-      - ${OPENCLAW_WORKSPACE_DIR:-/opt/openclaw/workspace}:/home/node/.openclaw/workspace:rw
-      - /tmp:/tmp:rw
-    networks:
-      - shared
-    labels:
-      traefik.enable: "true"
-      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.openclaw.rule: Host(`${OPENCLAW_FQDN:-openclaw.fewa.app}`)
-      traefik.http.routers.openclaw.entrypoints: websecure
-      traefik.http.routers.openclaw.tls: "true"
-      traefik.http.routers.openclaw.tls.certresolver: letsencrypt
-      traefik.http.services.openclaw.loadbalancer.server.port: "18789"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18789/healthz || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    mem_limit: 2g
-    memswap_limit: 2g
-    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 1G
+    pids_limit: 100
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
       nproc: 100
-    pids_limit: 100
-    tmpfs:
-      - /home/node/.npm:size=500m
-    read_only: true
-    security_opt:
-      - no-new-privileges:true
-      - apparmor:docker-default
-
-    cap_drop:
-      - ALL
-
-  openclaw-cli:
-    image: alpine/openclaw:latest
-    profiles:
-      - cli
-    environment:
-      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
     volumes:
-      - ${OPENCLAW_CONFIG_DIR:-/opt/openclaw/config}:/home/node/.openclaw:rw
-      - ${OPENCLAW_WORKSPACE_DIR:-/opt/openclaw/workspace}:/home/node/.openclaw/workspace:rw
-    network_mode: "service:openclaw-gateway"
+      - jobops_data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - PYTHON_PATH=/usr/bin/python3
+    env_file:
+      - path: ./.env
+        required: false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     logging:
-      driver: json-file
+      driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-    security_opt:
-      - no-new-privileges:true
-      - apparmor:docker-default
-
-    cap_drop:
-      - ALL
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.jobops.rule: Host(`${JOBOPS_HOST:-jobops.fewa.app}`)
+      traefik.http.routers.jobops.entrypoints: websecure
+      traefik.http.routers.jobops.tls: "true"
+      traefik.http.routers.jobops.tls.certresolver: letsencrypt
+      traefik.http.services.jobops.loadbalancer.server.port: "3001"
 
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
     external: true
+
+volumes:
+  jobops_data:

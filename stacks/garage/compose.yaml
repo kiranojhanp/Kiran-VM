@@ -1,83 +1,48 @@
 services:
-  garage:
-    image: dxflrs/garage:v2.1.0
-    container_name: garage
+  jobops:
+    image: ghcr.io/dakheera47/job-ops:latest
+    container_name: jobops
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-      - apparmor:docker-default
-
-    cap_drop:
-      - ALL
-    mem_limit: 512m
-    memswap_limit: 512m
-    pids_limit: 100
-    user: "1000:1000"
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
-      nproc: 100
-    volumes:
-      - /opt/garage/garage.toml:/etc/garage.toml:ro
-      - garage_meta:/var/lib/garage/meta
-      - garage_data:/var/lib/garage/data
-    ports:
-      - "3900:3900"
-      - "3901:3901"
-      - "3902:3902"
-      - "3903:3903"
-    networks:
-      - shared
-    labels:
-      traefik.enable: "true"
-      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.garage-s3.rule: Host(`${S3_GARAGE_HOST:-s3.fewa.app}`)
-      traefik.http.routers.garage-s3.entrypoints: websecure
-      traefik.http.routers.garage-s3.tls: "true"
-      traefik.http.routers.garage-s3.tls.certresolver: letsencrypt
-      traefik.http.services.garage-s3.loadbalancer.server.port: "3900"
-
-  garage-webui:
-    image: khairul169/garage-webui:1.1.0
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-      - apparmor:docker-default
-
-    cap_drop:
-      - ALL
     read_only: true
     tmpfs:
       - /tmp
-    mem_limit: 256m
-    memswap_limit: 256m
+    mem_limit: 1G
     pids_limit: 100
-    user: "1000:1000"
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
       nproc: 100
     volumes:
-      - /opt/garage/garage.toml:/etc/garage.toml:ro
+      - jobops_data:/app/data
     environment:
-       API_BASE_URL: "http://garage:3903"
-       S3_ENDPOINT_URL: "http://garage:3900"
-       AUTH_USER_PASS: ${AUTH_USER_PASS:-admin:$$2y$$10$$LbC8QDVlmGnpP/Y./hSzRuvun31M.7jG5.kmLqlI/GaWQasq0zdjC}
-    depends_on:
-      garage:
-        condition: service_started
+      - NODE_ENV=production
+      - PORT=3001
+      - PYTHON_PATH=/usr/bin/python3
+    env_file:
+      - path: ./.env
+        required: false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - shared
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.garage-webui.rule: Host(`${GARAGE_HOST:-garage.fewa.app}`)
-      traefik.http.routers.garage-webui.entrypoints: websecure
-      traefik.http.routers.garage-webui.tls: "true"
-      traefik.http.routers.garage-webui.tls.certresolver: letsencrypt
-      traefik.http.services.garage-webui.loadbalancer.server.port: "3909"
+      traefik.http.routers.jobops.rule: Host(`${JOBOPS_HOST:-jobops.fewa.app}`)
+      traefik.http.routers.jobops.entrypoints: websecure
+      traefik.http.routers.jobops.tls: "true"
+      traefik.http.routers.jobops.tls.certresolver: letsencrypt
+      traefik.http.services.jobops.loadbalancer.server.port: "3001"
 
 networks:
   shared:
@@ -85,5 +50,4 @@ networks:
     external: true
 
 volumes:
-  garage_meta:
-  garage_data:
+  jobops_data:

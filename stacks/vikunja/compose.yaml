@@ -1,64 +1,53 @@
 services:
-  vikunja:
-    image: vikunja/vikunja:2.1.0
+  jobops:
+    image: ghcr.io/dakheera47/job-ops:latest
+    container_name: jobops
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-      - apparmor:docker-default
-
-    cap_drop:
-      - ALL
-    mem_limit: 512m
-    memswap_limit: 512m
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 1G
     pids_limit: 100
-    user: "1000:1000"
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
       nproc: 100
-    environment:
-      HOME: /tmp
-      XDG_CACHE_HOME: /tmp/.cache
-      XDG_CONFIG_HOME: /tmp/config
-      XDG_DATA_HOME: /tmp/data
-      TMPDIR: /tmp
-      VIKUNJA_SERVICE_PUBLICURL: https://${VIKUNJA_HOST:-vikunja.fewa.app}/
-      VIKUNJA_SERVICE_JWTSECRET: ${VIKUNJA_JWT_SECRET:-change-me}
-      VIKUNJA_DATABASE_HOST: ${SHARED_POSTGRES_HOST:-postgres}
-      VIKUNJA_DATABASE_PASSWORD: ${VIKUNJA_DB_PASSWORD:-vikunja}
-      VIKUNJA_DATABASE_TYPE: postgres
-      VIKUNJA_DATABASE_USER: ${VIKUNJA_DB_USER:-vikunja}
-      VIKUNJA_DATABASE_DATABASE: ${VIKUNJA_DB_NAME:-vikunja}
-      # OpenID / authentik SSO
-      VIKUNJA_AUTH_OPENID_ENABLED: "true"
-      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_NAME: "authentik Login"
-      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_AUTHURL: ${VIKUNJA_AUTH_OPENID_AUTHURL:-}
-      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_CLIENTID: ${VIKUNJA_AUTH_OPENID_CLIENTID:-}
-      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_CLIENTSECRET: ${VIKUNJA_AUTH_OPENID_CLIENTSECRET:-}
-      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_SCOPE: "openid email profile"
-      VIKUNJA_AUTH_LOCAL_ENABLED: ${VIKUNJA_AUTH_LOCAL_ENABLED:-true}
     volumes:
-      - vikunja_files:/app/vikunja/files
+      - jobops_data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - PYTHON_PATH=/usr/bin/python3
+    env_file:
+      - path: ./.env
+        required: false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - shared
-      - infra
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.vikunja.rule: Host(`${VIKUNJA_HOST:-vikunja.fewa.app}`)
-      traefik.http.routers.vikunja.entrypoints: websecure
-      traefik.http.routers.vikunja.tls: "true"
-      traefik.http.routers.vikunja.tls.certresolver: letsencrypt
-      traefik.http.services.vikunja.loadbalancer.server.port: "3456"
+      traefik.http.routers.jobops.rule: Host(`${JOBOPS_HOST:-jobops.fewa.app}`)
+      traefik.http.routers.jobops.entrypoints: websecure
+      traefik.http.routers.jobops.tls: "true"
+      traefik.http.routers.jobops.tls.certresolver: letsencrypt
+      traefik.http.services.jobops.loadbalancer.server.port: "3001"
 
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
     external: true
-  infra:
-    name: ${SHARED_INFRA_NETWORK:-infra_net}
-    external: true
 
 volumes:
-  vikunja_files:
+  jobops_data:

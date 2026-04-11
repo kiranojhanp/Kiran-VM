@@ -1,42 +1,48 @@
 services:
-  audiobookshelf:
-    image: ghcr.io/advplyr/audiobookshelf:latest
+  jobops:
+    image: ghcr.io/dakheera47/job-ops:latest
+    container_name: jobops
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-      - apparmor:docker-default
-
-    cap_drop:
-      - ALL
     read_only: true
     tmpfs:
       - /tmp
-    mem_limit: 512m
-    memswap_limit: 512m
-    user: "1000:1000"
+    mem_limit: 1G
+    pids_limit: 100
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
       nproc: 100
-    environment:
-      TZ: ${TZ:-UTC}
     volumes:
-      - audiobookshelf_config:/config
-      - audiobookshelf_metadata:/metadata
-      - audiobookshelf_audiobooks:/audiobooks
-      - audiobookshelf_podcasts:/podcasts
-      - audiobookshelf_books:/books
+      - jobops_data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - PYTHON_PATH=/usr/bin/python3
+    env_file:
+      - path: ./.env
+        required: false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - shared
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.audiobookshelf.rule: Host(`${AUDIOBOOKSHELF_HOST:-audiobookshelf.fewa.app}`)
-      traefik.http.routers.audiobookshelf.entrypoints: websecure
-      traefik.http.routers.audiobookshelf.tls: "true"
-      traefik.http.routers.audiobookshelf.tls.certresolver: letsencrypt
-      traefik.http.services.audiobookshelf.loadbalancer.server.port: "80"
+      traefik.http.routers.jobops.rule: Host(`${JOBOPS_HOST:-jobops.fewa.app}`)
+      traefik.http.routers.jobops.entrypoints: websecure
+      traefik.http.routers.jobops.tls: "true"
+      traefik.http.routers.jobops.tls.certresolver: letsencrypt
+      traefik.http.services.jobops.loadbalancer.server.port: "3001"
 
 networks:
   shared:
@@ -44,8 +50,4 @@ networks:
     external: true
 
 volumes:
-  audiobookshelf_config:
-  audiobookshelf_metadata:
-  audiobookshelf_audiobooks:
-  audiobookshelf_podcasts:
-  audiobookshelf_books:
+  jobops_data:
