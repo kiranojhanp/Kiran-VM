@@ -3,7 +3,6 @@ services:
     image: ghcr.io/dakheera47/job-ops:latest
     container_name: jobops
     restart: unless-stopped
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default
 

@@ -2,7 +2,6 @@ services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:v0.8.12
     restart: unless-stopped
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default
 

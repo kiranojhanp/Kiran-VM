@@ -5,7 +5,6 @@ services:
     depends_on:
       - gotenberg
       - tika
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default - too restrictive
     mem_limit: 512m
@@ -47,7 +46,6 @@ services:
   gotenberg:
     image: gotenberg/gotenberg:latest
     restart: unless-stopped
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default - too restrictive
     mem_limit: 512m
@@ -64,7 +62,6 @@ services:
   tika:
     image: apache/tika:latest
     restart: unless-stopped
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default - too restrictive
     mem_limit: 512m

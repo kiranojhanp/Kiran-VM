@@ -3,7 +3,6 @@ services:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.2.2}
     command: server
     restart: unless-stopped
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default
 
@@ -48,7 +47,6 @@ services:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.2.2}
     command: worker
     restart: unless-stopped
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default
 

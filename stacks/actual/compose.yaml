@@ -2,7 +2,6 @@ services:
   actual-server:
     image: docker.io/actualbudget/actual-server:latest
     restart: unless-stopped
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default
 

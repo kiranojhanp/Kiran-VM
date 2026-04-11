@@ -42,7 +42,6 @@ services:
     tmpfs:
       - /home/node/.npm:size=500m
     read_only: true
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default
 
@@ -63,7 +62,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default
 

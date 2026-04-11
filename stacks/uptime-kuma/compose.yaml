@@ -2,7 +2,6 @@ services:
   uptime-kuma:
     image: louislam/uptime-kuma:2
     restart: unless-stopped
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default
 

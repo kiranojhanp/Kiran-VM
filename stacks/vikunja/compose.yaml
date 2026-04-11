@@ -2,7 +2,6 @@ services:
   vikunja:
     image: vikunja/vikunja:2.1.0
     restart: unless-stopped
-    security_opt:
       - no-new-privileges:true
 # apparmor:docker-default
 
