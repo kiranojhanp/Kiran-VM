@@ -3,13 +3,16 @@ services:
     image: ghcr.io/dakheera47/job-ops:latest
     container_name: jobops
     restart: unless-stopped
+    security_opt:
       - no-new-privileges:true
-# apparmor:docker-default
+      - apparmor:docker-default
 
+    cap_drop:
       - ALL
     read_only: true
     tmpfs:
       - /tmp
+    user: "1000:1000"
     ulimits:
       nofile:
         soft: 65536

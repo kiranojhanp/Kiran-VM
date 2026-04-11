@@ -33,6 +33,7 @@ services:
         max-file: "3"
     mem_limit: 2g
     memswap_limit: 2g
+    user: "1000:1000"
     ulimits:
       nofile:
         soft: 65536
@@ -42,9 +43,11 @@ services:
     tmpfs:
       - /home/node/.npm:size=500m
     read_only: true
+    security_opt:
       - no-new-privileges:true
-# apparmor:docker-default
+      - apparmor:docker-default
 
+    cap_drop:
       - ALL
 
   openclaw-cli:
@@ -62,9 +65,11 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    security_opt:
       - no-new-privileges:true
-# apparmor:docker-default
+      - apparmor:docker-default
 
+    cap_drop:
       - ALL
 
 networks:

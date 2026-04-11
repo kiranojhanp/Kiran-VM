@@ -2,10 +2,14 @@ services:
   wallos:
     image: bellamy/wallos:latest
     restart: unless-stopped
+    security_opt:
       - no-new-privileges:true
-    # apparmor:docker-default - too restrictive
+      - apparmor:docker-default
+    cap_drop:
+      - ALL
     mem_limit: 256m
     memswap_limit: 256m
+    user: "1000:1000"
     ulimits:
       nofile:
         soft: 65536

@@ -2,13 +2,16 @@ services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:v0.8.12
     restart: unless-stopped
+    security_opt:
       - no-new-privileges:true
-# apparmor:docker-default
+      - apparmor:docker-default
 
+    cap_drop:
       - ALL
     read_only: true
     tmpfs:
       - /tmp
+    user: "1000:1000"
     ulimits:
       nofile:
         soft: 65536
