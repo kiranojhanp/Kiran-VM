@@ -46,7 +46,6 @@ services:
       - no-new-privileges:true
       - apparmor:docker-default
 
-    cap_drop:
       - ALL
 
   openclaw-cli:
@@ -68,7 +67,6 @@ services:
       - no-new-privileges:true
       - apparmor:docker-default
 
-    cap_drop:
       - ALL
 
 networks:
