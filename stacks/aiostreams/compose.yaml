@@ -7,8 +7,8 @@ services:
       - AIOSTREAMS_PORT=3000
       - BASE_URL=${AIOSTREAMS_BASE_URL:-https://aiostreams.fewa.app}
       - SECRET_KEY=${AIOSTREAMS_SECRET_KEY:-}
-      - ADDON_PROXY=socks5://warp:1080
-      - ADDON_PROXY_CONFIG=*:false,*.strem.fun:true
+      - TORBOX_API_KEY=${TORBOX_API_KEY:-}
+      - AIOSTREAMS_BUILTIN_ADDONS=${AIOSTREAMS_BUILTIN_ADDONS:-true}
     env_file:
       - path: ./.env
         required: false
@@ -40,11 +40,6 @@ services:
     image: linuxserver/jackett:${JACKETT_TAG:-latest}
     container_name: jackett
     restart: unless-stopped
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
-      nproc: 100
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
