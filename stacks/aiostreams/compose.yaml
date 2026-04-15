@@ -58,6 +58,10 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      - HOST_NAME=https://${AIOMETADATA_HOST:-aiometadata.fewa.app}
+      - REDIS_URL=${REDIS_HOST_SHARED}
+      - PORT=3232
     volumes:
       - aiometadata_data:/app/addon/data
     networks:
