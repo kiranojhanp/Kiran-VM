@@ -69,6 +69,7 @@ services:
       - traefik.http.routers.aiometadata.entrypoints=websecure
       - traefik.http.routers.aiometadata.tls=true
       - traefik.http.routers.aiometadata.tls.certresolver=cloudflare
+      - traefik.http.services.aiometadata.loadbalancer.server.port=3232
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3232/health"]
       interval: 30s
