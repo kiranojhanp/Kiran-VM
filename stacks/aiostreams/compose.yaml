@@ -1,17 +1,11 @@
 services:
   aiostreams:
     image: ghcr.io/viren070/aiostreams:${AIOSTREAMS_TAG:-latest}
-    container_name: aiostreams
     restart: unless-stopped
-    environment:
-      - AIOSTREAMS_PORT=3000
-      - BASE_URL=${AIOSTREAMS_BASE_URL:-https://aiostreams.fewa.app}
-      - SECRET_KEY=${AIOSTREAMS_SECRET_KEY:-}
-      - TORBOX_API_KEY=${TORBOX_API_KEY:-}
-      - AIOSTREAMS_BUILTIN_ADDONS=${AIOSTREAMS_BUILTIN_ADDONS:-true}
+    ports:
+      - "3000:3000"
     env_file:
-      - path: ./.env
-        required: false
+      - .env
     volumes:
       - aiostreams_data:/app/data
     healthcheck:
@@ -28,30 +22,23 @@ services:
     networks:
       - shared
     labels:
-      traefik.enable: "true"
-      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.aiostreams.rule: Host(`${AIOSTREAMS_HOST:-aiostreams.fewa.app}`)
-      traefik.http.routers.aiostreams.entrypoints: websecure
-      traefik.http.routers.aiostreams.tls: "true"
-      traefik.http.routers.aiostreams.tls.certresolver: cloudflare
-      traefik.http.services.aiostreams.loadbalancer.server.port: "3000"
+      - traefik.enable=true
+      - traefik.http.routers.aiostreams.rule=Host(`${AIOSTREAMS_HOST:-aiostreams.fewa.app}`)
+      - traefik.http.routers.aiostreams.entrypoints=websecure
+      - traefik.http.routers.aiostreams.tls=true
+      - traefik.http.routers.aiostreams.tls.certresolver=cloudflare
 
   jackett:
     image: linuxserver/jackett:${JACKETT_TAG:-latest}
-    container_name: jackett
     restart: unless-stopped
+    ports:
+      - "9117:9117"
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
       - jackett_data:/config
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9117/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
     logging:
       driver: "json-file"
       options:
@@ -60,15 +47,11 @@ services:
     networks:
       - shared
     labels:
-      traefik.enable: "true"
-      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.jackett.rule: Host(`${JACKETT_HOST:-jackett.fewa.app}`)
-      traefik.http.routers.jackett.entrypoints: websecure
-      traefik.http.routers.jackett.tls: "true"
-      traefik.http.routers.jackett.tls.certresolver: cloudflare
-      traefik.http.services.jackett.loadbalancer.server.port: "9117"
-
-  
+      - traefik.enable=true
+      - traefik.http.routers.jackett.rule=Host(`${JACKETT_HOST:-jackett.fewa.app}`)
+      - traefik.http.routers.jackett.entrypoints=websecure
+      - traefik.http.routers.jackett.tls=true
+      - traefik.http.routers.jackett.tls.certresolver=cloudflare
 
 networks:
   shared:
