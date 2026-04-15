@@ -13,7 +13,7 @@ Self-hosted Stremio addon aggregator with Jackett for custom torrent indexers.
    - `AIOMETADATA_HOST` = `aiometadata.fewa.app`
    - `SHARED_DOCKER_NETWORK` = `internal-network`
    - `SHARED_INFRA_NETWORK` = `infra_net`
-   - `REDIS_PASSWORD` = (get from `/opt/infra/.env`)
+   - `REDIS_HOST_SHARED` = (from Komodo secrets, format: `redis://:password@redis:6379`)
 5. Deploy
 
 ## Required Variables
