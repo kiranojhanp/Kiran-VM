@@ -64,6 +64,7 @@ services:
       - HOST_NAME=https://${AIOMETADATA_HOST:-aiometadata.fewa.app}
       - PORT=3232
       - DATABASE_URI=sqlite://addon/data/db.sqlite
+      - REDIS_URL=${REDIS_HOST_SHARED}
     volumes:
       - aiometadata_data:/app/addon/data
     networks:
