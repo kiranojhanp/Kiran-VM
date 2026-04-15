@@ -43,29 +43,9 @@ AIOSTREAMS_BUILTIN_ADDONS=true
 
 ### Jackett Integration
 
-1. Add indexers in Jackett UI at `https://<JACKETT_HOST>` or `http://<JACKETT_HOST>:9117`
-2. Configure AIOStreams to use Jackett as the indexer source
-
-### How Content Sources Work
-
-| Source | Description |
-|--------|-------------|
-| **TorBox (built-in)** | Already cached content - fast, reliable |
-| **Torrentio (via Jackett)** | Finds torrents, sends to debrid - fills gaps |
-
-When TorBox doesn't have content, AIOStreams falls back to Torrentio via Jackett.
-
-### Bypassing Torrentio Blocks
-
-Torrentio blocks Oracle IPs. Use Cloudflare Warp to bypass:
-
-1. Warp runs as a SOCKS5 proxy on port 1080
-2. Configure Jackett to use the proxy:
-   ```
-   HTTP_PROXY=socks5h://warp:1080
-   HTTPS_PROXY=socks5h://warp:1080
-   ```
-   Or configure in Jackett UI under Settings > General.
+1. Open Jackett at `https://jackett.fewa.app`
+2. Add your preferred torrent indexers (e.g., 1337x, RARBG, YTS, etc.)
+3. Configure AIOStreams to use Jackett as a source
 
 ## Services
 
@@ -73,7 +53,6 @@ Torrentio blocks Oracle IPs. Use Cloudflare Warp to bypass:
 |---------|------|---------|
 | AIOStreams | 3000 | Stremio addon server |
 | Jackett | 9117 | Torrent indexer proxy |
-| Cloudflare Warp | 1080 | SOCKS5 proxy to bypass IP blocks |
 
 ## Security
 
