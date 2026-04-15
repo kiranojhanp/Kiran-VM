@@ -15,7 +15,8 @@ services:
       nproc: 100
     environment:
       - AIOSTREAMS_PORT=3000
-      - AIOSTREAMS_BASE_URL=${AIOSTREAMS_BASE_URL:-}
+      - BASE_URL=${AIOSTREAMS_BASE_URL:-https://aiostreams.fewa.app}
+      - SECRET_KEY=${AIOSTREAMS_SECRET_KEY:-}
     env_file:
       - path: ./.env
         required: false
@@ -47,7 +48,6 @@ services:
     image: linuxserver/jackett:${JACKETT_TAG:-latest}
     container_name: jackett
     restart: unless-stopped
-    read_only: true
     tmpfs:
       - /tmp
     mem_limit: 512m
@@ -89,9 +89,9 @@ services:
     image: caomingjun/warp:latest
     container_name: warp
     restart: unless-stopped
-    read_only: true
     tmpfs:
       - /tmp
+      - /run
     pids_limit: 100
     mem_limit: 256m
     device_cgroup_rules:

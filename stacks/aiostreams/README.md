@@ -14,10 +14,12 @@ Compose file: `stacks/aiostreams/compose.yaml`
 ### Required
 
 - `AIOSTREAMS_HOST` (required): public hostname. Example: `aiostreams.fewa.app`.
+- `AIOSTREAMS_SECRET_KEY` (required): 64-character hex secret key. Generate with: `openssl rand -hex 32`
 
 ### Optional
 
 - `JACKETT_HOST` (optional): hostname for Jackett UI. Default: `jackett.fewa.app`.
+- `AIOSTREAMS_BASE_URL` (optional): base URL with protocol. Default: `https://aiostreams.fewa.app`.
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
 - `PUID` (optional): user ID for file ownership. Default: `1000`.
 - `PGID` (optional): group ID for file ownership. Default: `1000`.
