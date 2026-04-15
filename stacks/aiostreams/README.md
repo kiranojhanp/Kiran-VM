@@ -10,7 +10,10 @@ Self-hosted Stremio addon aggregator with Jackett for custom torrent indexers.
 4. Add stack environment variables:
    - `AIOSTREAMS_HOST` = `aiostreams.fewa.app`
    - `JACKETT_HOST` = `jackett.fewa.app` (optional)
-   - `SHARED_DOCKER_NETWORK` = `internal-network` (optional)
+   - `AIOMETADATA_HOST` = `aiometadata.fewa.app`
+   - `SHARED_DOCKER_NETWORK` = `internal-network`
+   - `SHARED_INFRA_NETWORK` = `infra_net`
+   - `REDIS_PASSWORD` = (get from `/opt/infra/.env`)
 5. Deploy
 
 ## Required Variables
