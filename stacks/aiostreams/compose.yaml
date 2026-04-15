@@ -1,0 +1,132 @@
+services:
+  aiostreams:
+    image: ghcr.io/viren070/aiostreams:${AIOSTREAMS_TAG:-latest}
+    container_name: aiostreams
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 1G
+    pids_limit: 100
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      nproc: 100
+    environment:
+      - AIOSTREAMS_PORT=3000
+      - AIOSTREAMS_BASE_URL=${AIOSTREAMS_BASE_URL:-}
+    env_file:
+      - path: ./.env
+        required: false
+    volumes:
+      - aiostreams_data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.aiostreams.rule: Host(`${AIOSTREAMS_HOST:-aiostreams.fewa.app}`)
+      traefik.http.routers.aiostreams.entrypoints: websecure
+      traefik.http.routers.aiostreams.tls: "true"
+      traefik.http.routers.aiostreams.tls.certresolver: letsencrypt
+      traefik.http.services.aiostreams.loadbalancer.server.port: "3000"
+
+  jackett:
+    image: linuxserver/jackett:${JACKETT_TAG:-latest}
+    container_name: jackett
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 512m
+    pids_limit: 100
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      nproc: 100
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - jackett_data:/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9117/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.jackett.rule: Host(`${JACKETT_HOST:-jackett.fewa.app}`)
+      traefik.http.routers.jackett.entrypoints: websecure
+      traefik.http.routers.jackett.tls: "true"
+      traefik.http.routers.jackett.tls.certresolver: letsencrypt
+      traefik.http.services.jackett.loadbalancer.server.port: "9117"
+
+  warp:
+    image: caomingjun/warp:latest
+    container_name: warp
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    pids_limit: 100
+    mem_limit: 256m
+    device_cgroup_rules:
+      - 'c 10:200 rwm'
+    expose:
+      - "1080"
+    environment:
+      - WARP_SLEEP=5
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - warp_data:/var/lib/cloudflare-warp
+    healthcheck:
+      test: ["CMD", "curl", "-x", "socks5h://127.0.0.1:1080", "-fsSL", "https://www.cloudflare.com/cdn-cgi/trace", "grep", "-qE", "warp=(plus|on)", "||", "exit", "1"]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - shared
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+
+volumes:
+  aiostreams_data:
+  jackett_data:
+  warp_data:
