@@ -6,6 +6,8 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    environment:
+      - BASE_URL=https://${AIOSTREAMS_HOST:-aiostreams.fewa.app}
     volumes:
       - aiostreams_data:/app/data
     healthcheck:
@@ -60,7 +62,6 @@ services:
       - .env
     environment:
       - HOST_NAME=https://${AIOMETADATA_HOST:-aiometadata.fewa.app}
-      - REDIS_URL=${REDIS_HOST_SHARED}
       - PORT=3232
     volumes:
       - aiometadata_data:/app/addon/data
