@@ -7,9 +7,8 @@ services:
       - AIOSTREAMS_PORT=3000
       - BASE_URL=${AIOSTREAMS_BASE_URL:-https://aiostreams.fewa.app}
       - SECRET_KEY=${AIOSTREAMS_SECRET_KEY:-}
-      - HTTP_PROXY=socks5h://warp:1080
-      - HTTPS_PROXY=socks5h://warp:1080
-      - ALL_PROXY=socks5h://warp:1080
+      - ADDON_PROXY=socks5://warp:1080
+      - ADDON_PROXY_CONFIG=*:false,*.strem.fun:true
     env_file:
       - path: ./.env
         required: false
