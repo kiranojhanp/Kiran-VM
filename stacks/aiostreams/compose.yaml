@@ -53,11 +53,38 @@ services:
       - traefik.http.routers.jackett.tls=true
       - traefik.http.routers.jackett.tls.certresolver=cloudflare
 
+  aiometadata:
+    image: ghcr.io/cedya77/aiometadata:${AIOMETADATA_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - aiometadata_data:/app/addon/data
+    networks:
+      - shared
+      - infra
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.aiometadata.rule=Host(`${AIOMETADATA_HOST:-aiometadata.fewa.app}`)
+      - traefik.http.routers.aiometadata.entrypoints=websecure
+      - traefik.http.routers.aiometadata.tls=true
+      - traefik.http.routers.aiometadata.tls.certresolver=cloudflare
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3232/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+  infra:
+    name: ${SHARED_INFRA_NETWORK:-infra_net}
     external: true
 
 volumes:
   aiostreams_data:
   jackett_data:
+  aiometadata_data:
