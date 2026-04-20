@@ -1,0 +1,15 @@
+http:
+  routers:
+    aiostreams-static:
+      rule: "Host(`aiostreams.fewa.app`)"
+      entryPoints:
+        - websecure
+      service: aiostreams-svc
+      tls:
+        certResolver: cloudflare
+
+  services:
+    aiostreams-svc:
+      loadBalancer:
+        servers:
+          - url: http://aiostreams:3000

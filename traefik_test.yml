@@ -1,0 +1,53 @@
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+  file:
+    directory: /etc/traefik
+    watch: true
+
+http:
+  routers:
+    fewa-root:
+      rule: "Host(`fewa.app`)"
+      entryPoints:
+        - websecure
+      service: fewa-site
+      tls:
+        certResolver: cloudflare
+
+    test-new:
+      rule: "Host(`aiostreams.fewa.app`)"
+      entryPoints:
+        - websecure
+      service: fewa-site
+
+  services:
+    fewa-site:
+      loadBalancer:
+        servers:
+          - url: http://fewa-site:5678
+
+certificatesResolvers:
+  cloudflare:
+    acme:
+      email: admin@fewa.app
+      storage: /letsencrypt/acme.json
+      dnsChallenge:
+        provider: cloudflare
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
+
+log:
+  level: DEBUG
