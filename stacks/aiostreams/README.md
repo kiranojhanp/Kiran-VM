@@ -2,6 +2,14 @@
 
 Self-hosted Stremio addon aggregator with Jackett for custom torrent indexers.
 
+## Important Hosting Warnings
+
+| Warning | Details |
+| ------- | ------- |
+| **No Free Tiers** | HuggingFace/Render free tiers are NOT suitable for media streaming. You WILL get kicked due to bandwidth usage. |
+| **Use VPS/Home** | Use a VPS (Oracle, Hetzner) or home server instead |
+| **HTTPS Required** | Stremio only connects to HTTPS endpoints. Port 443 must be open. |
+
 ## Quick Start
 
 1. Create/open the `aiostreams` stack in Komodo
@@ -11,6 +19,7 @@ Self-hosted Stremio addon aggregator with Jackett for custom torrent indexers.
    - `AIOSTREAMS_HOST` = `aiostreams.fewa.app`
    - `JACKETT_HOST` = `jackett.fewa.app` (optional)
    - `AIOMETADATA_HOST` = `aiometadata.fewa.app`
+   - `MEDIAFLOW_HOST` = `mediaflow.fewa.app` (optional, for proxy services)
    - `SHARED_DOCKER_NETWORK` = `internal-network`
    - `SHARED_INFRA_NETWORK` = `infra_net`
    - `REDIS_HOST_SHARED` = (from Komodo secrets, format: `redis://:password@redis:6379`)
@@ -52,19 +61,43 @@ TORBOX_API_KEY=your_api_key_here
 
 ## Services
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| AIOStreams | `https://aiostreams.fewa.app` | Stremio addon |
-| Jackett | `https://jackett.fewa.app` | Torrent indexers |
+| Service | URL | Purpose | Profile |
+|---------|-----|---------|---------|
+| AIOStreams | `https://aiostreams.fewa.app` | Stremio addon | default |
+| Jackett | `https://jackett.fewa.app` | Torrent indexers | default |
+| AIOMetadata | `https://aiometadata.fewa.app` | Metadata cache | default |
+| WARP | `internal:1080` | Cloudflare WARP for IP rotation | proxy |
+| MediaFlow Proxy | `https://mediaflow.fewa.app` | Proxy for Torrentio/DRM | proxy |
+
+### Proxy Services (Optional)
+
+Enable with: `docker compose --profile proxy up`
+
+- **WARP**: Cloudflare WARP to rotate source IPs and bypass rate limits
+- **MediaFlow Proxy**: Proxy DRM-protected streams and bypass IP restrictions
 
 ## Troubleshooting
 
 ### 403 errors with Torrentio
 
-Torrentio blocks Oracle VPS IPs. Options:
-1. Disable Torrentio - use Jackett + other sources instead
-2. Use a VPN proxy (gluetun) - see [AIOStreams docs](https://docs.aiostreams.viren070.me/getting-started/deployment/)
+Torrentio blocks Oracle VPS IPs. Use the proxy services:
+1. Enable WARP + MediaFlow Proxy: `docker compose --profile proxy up`
+2. Configure AIOStreams to use MediaFlow Proxy as the transport route
+3. This routes Torrentio requests through WARP to bypass IP blocks
+
+### "Copy Install URL" does nothing
+
+This is a known bug in self-hosted instances:
+- Make sure you're running HTTPS (port 443)
+- Try manually copying the URL from browser devtools
 
 ### Jackett not working
 
 Ensure indexers are configured and the Jackett API key is added to AIOStreams.
+
+### Hosting on free tiers (HuggingFace/Render)
+
+**Don't do it.** You will get kicked. Free tiers aren't meant for media streaming bandwidth.
+- Use Oracle Cloud Free Tier (10TB egress, 1Gbps)
+- Use Hetzner or a cheap VPS
+- Run at home with proper port forwarding

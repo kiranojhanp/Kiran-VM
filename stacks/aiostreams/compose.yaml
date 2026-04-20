@@ -8,8 +8,9 @@ services:
       - .env
     environment:
       - BASE_URL=https://${AIOSTREAMS_HOST:-aiostreams.fewa.app}
+      - ADDON_PROXY=http://warp:1080
     volumes:
-      - aiostreams_data:/app/data
+      - aio-data:/app/data
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
       interval: 30s
@@ -84,6 +85,55 @@ services:
       retries: 3
       start_period: 60s
 
+  warp:
+    image: caomingjun/warp:${WARP_TAG:-latest}
+    restart: unless-stopped
+    expose:
+      - "1080"
+    environment:
+      - WARP_SLEEP=2
+    cap_add:
+      - NET_ADMIN
+    device_cgroup_rules:
+      - 'c 10:200 rwm'
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - warp-data:/var/lib/cloudflare-warp
+    networks:
+      - shared
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mediaflow-proxy:
+    image: mhdzumair/mediaflow-proxy:${MEDIAFLOW_TAG:-latest}
+    restart: unless-stopped
+    expose:
+      - "8888"
+    environment:
+      - API_PASSWORD=${MEDIAFLOW_PASSWORD:-}
+      - PROXY_URL=http://warp:1080
+      - TRANSPORT_ROUTES='{"https://torrentio.strem.fun":{"proxy":true}}'
+    volumes:
+      - mediaflow_data:/app/data
+    networks:
+      - shared
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mediaflow.rule=Host(`${MEDIAFLOW_HOST:-mediaflow.fewa.app}`)
+      - traefik.http.routers.mediaflow.entrypoints=websecure
+      - traefik.http.routers.mediaflow.tls=true
+      - traefik.http.routers.mediaflow.tls.certresolver=cloudflare
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
@@ -93,6 +143,8 @@ networks:
     external: true
 
 volumes:
-  aiostreams_data:
+  aio-data:
   jackett_data:
   aiometadata_data:
+  warp-data:
+  mediaflow_data:
