@@ -117,7 +117,7 @@ services:
     environment:
       - API_PASSWORD=${MEDIAFLOW_PASSWORD:-}
       - PROXY_URL=http://warp:1080
-      - TRANSPORT_ROUTES='{"https://torrentio.strem.fun":{"proxy":true}}'
+      - TRANSPORT_ROUTES={"https://torrentio.strem.fun":{"proxy":true}}
     volumes:
       - mediaflow_data:/app/data
     networks:
