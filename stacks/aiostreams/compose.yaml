@@ -66,6 +66,9 @@ services:
       - PORT=3232
       - DATABASE_URI=sqlite://addon/data/db.sqlite
       - REDIS_URL=${REDIS_HOST_SHARED}
+      - POSTER_PROXY_PREFIX_URL=https://poster-cache.fewa.app
+      - POSTER_WARMUP_URL=http://poster-cache:8888
+      - POSTER_WARMUP_DELAY_MS=50
     volumes:
       - aiometadata_data:/app/addon/data
     networks:
@@ -134,6 +137,31 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  poster-cache:
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - ./poster-cache-nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./poster-cache-stats.sh:/stats.sh:ro
+      - poster_cache:/var/cache/nginx
+    entrypoint: ["/bin/sh", "-c", "/stats.sh & exec nginx -g 'daemon off;'"]
+    expose:
+      - "8888"
+    networks:
+      - shared
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.poster-cache.rule=Host(`poster-cache.fewa.app`)
+      - traefik.http.routers.poster-cache.entrypoints=websecure
+      - traefik.http.routers.poster-cache.tls=true
+      - traefik.http.routers.poster-cache.tls.certresolver=cloudflare
+      - traefik.http.services.poster-cache.loadbalancer.server.port=8888
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8888/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
@@ -148,3 +176,4 @@ volumes:
   aiometadata_data:
   warp-data:
   mediaflow_data:
+  poster_cache:
