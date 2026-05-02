@@ -58,6 +58,7 @@ When adding a new stack that needs PostgreSQL, see [DATABASE.md](DATABASE.md) fo
 - [Wealthfolio](wealthfolio/README.md)
 - [JobOps](jobops/README.md)
 - [Mealie](mealie/README.md)
+- [Media Stack](media-stack/README.md)
 - [Open WebUI](openwebui/README.md)
 - [Paperless-ngx](paperlessngx/README.md)
 - [Uptime Kuma](uptime-kuma/README.md)

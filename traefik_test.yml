@@ -26,12 +26,6 @@ http:
       tls:
         certResolver: cloudflare
 
-    test-new:
-      rule: "Host(`aiostreams.fewa.app`)"
-      entryPoints:
-        - websecure
-      service: fewa-site
-
   services:
     fewa-site:
       loadBalancer:
