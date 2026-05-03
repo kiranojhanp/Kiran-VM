@@ -1,0 +1,37 @@
+{
+  "mount": {
+    "type": "dfs",
+    "mount_path": "/mnt/decypharr",
+    "dfs": {
+      "cache_dir": "/cache/dfs",
+      "chunk_size": "10MB",
+      "disk_cache_size": "50GB",
+      "cache_expiry": "24h",
+      "daemon_timeout": "30m",
+      "uid": 1000,
+      "gid": 1000,
+      "allow_other": true
+    }
+  },
+  "debrids": [
+    {
+      "provider": "realdebrid",
+      "name": "Real Debrid",
+      "api_key": "${REAL_DEBRID_API_KEY}"
+    }
+  ],
+  "arrs": [
+    {
+      "name": "Sonarr",
+      "host": "http://sonarr:8989",
+      "token": "${SONARR_TOKEN}",
+      "download_action": "symlink"
+    },
+    {
+      "name": "Radarr",
+      "host": "http://radarr:7878",
+      "token": "${RADARR_TOKEN}",
+      "download_action": "symlink"
+    }
+  ]
+}
