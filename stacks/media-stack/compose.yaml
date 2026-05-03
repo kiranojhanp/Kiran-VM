@@ -1,39 +1,4 @@
 services:
-  decypharr:
-    image: cy01/blackhole:latest
-    container_name: decypharr
-    restart: unless-stopped
-    env_file:
-      - .env
-    ports:
-      - "8282:8282"
-    volumes:
-      - /mnt/:/mnt:rshared
-      - ./decypharr-config.json:/app/config.json
-      - decypharr_cache:/cache
-    devices:
-      - /dev/fuse:/dev/fuse:rwm
-    cap_add:
-      - SYS_ADMIN
-    security_opt:
-      - apparmor:unconfined
-    networks:
-      - shared
-      - infra
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.decypharr.rule=Host(`${DECYPHARR_HOST:-decypharr.fewa.app}`)
-      - traefik.http.routers.decypharr.entrypoints=websecure
-      - traefik.http.routers.decypharr.tls=true
-      - traefik.http.routers.decypharr.tls.certresolver=cloudflare
-      - traefik.http.services.decypharr.loadbalancer.server.port=8282
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8282/version"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
   aiometadata:
     image: ghcr.io/cedya77/aiometadata:${AIOMETADATA_TAG:-latest}
     restart: unless-stopped
@@ -104,5 +69,3 @@ volumes:
     name: aiometadata_data
   poster_cache:
     name: poster_cache
-  decypharr_cache:
-    name: decypharr_cache

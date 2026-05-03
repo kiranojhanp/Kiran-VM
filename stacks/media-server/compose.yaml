@@ -1,4 +1,39 @@
 services:
+  decypharr:
+    image: cy01/blackhole:latest
+    container_name: decypharr
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8282:8282"
+    volumes:
+      - /mnt/:/mnt:rshared
+      - ./decypharr-config.json:/app/config.json
+      - decypharr_cache:/cache
+    devices:
+      - /dev/fuse:/dev/fuse:rwm
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    networks:
+      - shared
+      - infra
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.decypharr.rule=Host(`${DECYPHARR_HOST:-decypharr.fewa.app}`)
+      - traefik.http.routers.decypharr.entrypoints=websecure
+      - traefik.http.routers.decypharr.tls=true
+      - traefik.http.routers.decypharr.tls.certresolver=cloudflare
+      - traefik.http.services.decypharr.loadbalancer.server.port=8282
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8282/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   plex:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
@@ -77,43 +112,17 @@ services:
       retries: 3
       start_period: 60s
 
-  prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
-    container_name: prowlarr
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-UTC}
-    volumes:
-      - prowlarr_config:/config
-    networks:
-      - shared
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.prowlarr.rule=Host(`${PROWLARR_HOST:-prowlarr.fewa.app}`)
-      - traefik.http.routers.prowlarr.entrypoints=websecure
-      - traefik.http.routers.prowlarr.tls=true
-      - traefik.http.routers.prowlarr.tls.certresolver=cloudflare
-      - traefik.http.services.prowlarr.loadbalancer.server.port=9696
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:9696/ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
     external: true
 
 volumes:
+  decypharr_cache:
+    name: decypharr_cache
   plex_config:
     name: plex_config
   sonarr_config:
     name: sonarr_config
   radarr_config:
     name: radarr_config
-  prowlarr_config:
-    name: prowlarr_config
