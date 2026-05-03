@@ -116,6 +116,9 @@ networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
     external: true
+  infra:
+    name: ${SHARED_INFRA_NETWORK:-infra_net}
+    external: true
 
 volumes:
   decypharr_cache:
