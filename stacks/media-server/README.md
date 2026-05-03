@@ -31,6 +31,7 @@ Torbox → Decypharr (mounts at /mnt/decypharr via DFS)
 
 | Variable | Description | Example |
 | -------- | ----------- | ------- |
+| `PLEX_HOST` | Public hostname for Plex | `plex.fewa.app` |
 | `DECYPHARR_HOST` | Public hostname for Decypharr | `decypharr.fewa.app` |
 | `SONARR_HOST` | Public hostname for Sonarr | `sonarr.fewa.app` |
 | `RADARR_HOST` | Public hostname for Radarr | `radarr.fewa.app` |

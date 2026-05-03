@@ -36,7 +36,6 @@ services:
   plex:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
-    network_mode: host
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
@@ -47,6 +46,15 @@ services:
       - plex_config:/config
       - /mnt/decypharr/tv:/tv:ro
       - /mnt/decypharr/movies:/movies:ro
+    networks:
+      - shared
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.plex.rule=Host(`${PLEX_HOST:-plex.fewa.app}`)
+      - traefik.http.routers.plex.entrypoints=websecure
+      - traefik.http.routers.plex.tls=true
+      - traefik.http.routers.plex.tls.certresolver=cloudflare
+      - traefik.http.services.plex.loadbalancer.server.port=32400
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:32400/identity"]
