@@ -15,9 +15,9 @@
   },
   "debrids": [
     {
-      "provider": "realdebrid",
-      "name": "Real Debrid",
-      "api_key": "${REAL_DEBRID_API_KEY}"
+      "provider": "torbox",
+      "name": "Torbox",
+      "api_key": "${TORBOX_API_KEY}"
     }
   ],
   "arrs": [

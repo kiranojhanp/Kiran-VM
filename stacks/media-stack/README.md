@@ -22,7 +22,7 @@ Self-hosted AIOMetadata service for Stremio metadata caching with poster caching
 | `AIOMETADATA_HOST` | Public hostname for AIOMetadata | `aiometadata.fewa.app` |
 | `DECYPHARR_HOST` | Public hostname for Decypharr | `decypharr.fewa.app` |
 | `REDIS_HOST_SHARED` | Redis connection URL | `redis://:password@redis:6379` |
-| `REAL_DEBRID_API_KEY` | Real Debrid API key | (from https://real-debrid.com/apitoken) |
+| `TORBOX_API_KEY` | Torbox API key | (from Torbox dashboard) |
 | `SONARR_TOKEN` | Sonarr API token | (from Sonarr -> Settings -> General) |
 | `RADARR_TOKEN` | Radarr API token | (from Radarr -> Settings -> General) |
 
@@ -79,9 +79,9 @@ Copy `decypharr-config.json.sample` to `decypharr-config.json` and configure:
   },
   "debrids": [
     {
-      "provider": "realdebrid",
-      "name": "Real Debrid",
-      "api_key": "YOUR_REAL_DEBRID_API_KEY"
+      "provider": "torbox",
+      "name": "Torbox",
+      "api_key": "YOUR_TORBOX_API_KEY"
     }
   ],
   "arrs": [
