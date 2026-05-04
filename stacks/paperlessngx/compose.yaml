@@ -1,26 +1,25 @@
 services:
   paperlessngx:
-    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    image: ghcr.io/paperless-ngx/paperless-ngx:2.15.3
     restart: unless-stopped
     depends_on:
       - gotenberg
       - tika
-    mem_limit: 512m
-    memswap_limit: 512m
-    pids_limit: 100
+    mem_limit: 1536m
+    memswap_limit: 2048m
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
-      nproc: 100
     environment:
-      PAPERLESS_TIME_ZONE: ${TZ:-UTC}
-      PAPERLESS_URL: https://${PAPERLESS_HOST:-paperless.fewa.app}
-      PAPERLESS_REDIS: redis://${SHARED_REDIS_HOST:-redis}:6379
-      PAPERLESS_DBHOST: ${SHARED_POSTGRES_HOST:-postgres}
-      PAPERLESS_DBNAME: ${PAPERLESS_DB_NAME:-paperless}
-      PAPERLESS_DBUSER: ${PAPERLESS_DB_USER:-paperless}
-      PAPERLESS_DBPASS: ${PAPERLESS_DB_PASSWORD:-paperless}
+      PAPERLESS_TIME_ZONE: ${TZ}
+      PAPERLESS_URL: https://${PAPERLESS_HOST}
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
+      PAPERLESS_REDIS: redis://${SHARED_REDIS_HOST}:6379
+      PAPERLESS_DBHOST: ${SHARED_POSTGRES_HOST}
+      PAPERLESS_DBNAME: ${PAPERLESS_DB_NAME}
+      PAPERLESS_DBUSER: ${PAPERLESS_DB_USER}
+      PAPERLESS_DBPASS: ${PAPERLESS_DB_PASSWORD}
       PAPERLESS_TIKA_ENABLED: "1"
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
       PAPERLESS_TIKA_ENDPOINT: http://tika:9998
@@ -34,47 +33,65 @@ services:
       - infra
     labels:
       traefik.enable: "true"
-      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.paperlessngx.rule: Host(`${PAPERLESS_HOST:-paperless.fewa.app}`)
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK}
+      traefik.http.routers.paperlessngx.rule: Host(`${PAPERLESS_HOST}`)
       traefik.http.routers.paperlessngx.entrypoints: websecure
       traefik.http.routers.paperlessngx.tls: "true"
       traefik.http.routers.paperlessngx.tls.certresolver: letsencrypt
       traefik.http.services.paperlessngx.loadbalancer.server.port: "8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   gotenberg:
-    image: gotenberg/gotenberg:latest
+    image: gotenberg/gotenberg:8.20
     restart: unless-stopped
-    mem_limit: 512m
-    memswap_limit: 512m
-    pids_limit: 100
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+    mem_limit: 1024m
+    memswap_limit: 1536m
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
-      nproc: 100
     networks:
       - shared
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   tika:
-    image: apache/tika:latest
+    image: apache/tika:3.1.0
     restart: unless-stopped
-    mem_limit: 512m
-    memswap_limit: 512m
-    pids_limit: 100
+    mem_limit: 1024m
+    memswap_limit: 1536m
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
-      nproc: 100
     networks:
       - shared
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9998/tika"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 networks:
   shared:
-    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    name: ${SHARED_DOCKER_NETWORK}
     external: true
   infra:
-    name: ${SHARED_INFRA_NETWORK:-infra_net}
+    name: ${SHARED_INFRA_NETWORK}
     external: true
 
 volumes:
