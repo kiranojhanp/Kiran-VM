@@ -23,8 +23,6 @@ services:
       NODE_ENV: production
       PORT: 3001
       PYTHON_PATH: /usr/bin/python3
-      DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
