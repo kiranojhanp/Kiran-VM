@@ -3,25 +3,28 @@ services:
     image: ghcr.io/dakheera47/job-ops:latest
     container_name: jobops
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+      - apparmor:docker-default
+    cap_drop:
+      - ALL
     read_only: true
     tmpfs:
       - /tmp
-    mem_limit: 1G
-    pids_limit: 100
+    mem_limit: 1g
+    memswap_limit: 2g
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
-      nproc: 100
     volumes:
       - jobops_data:/app/data
     environment:
-      - NODE_ENV=production
-      - PORT=3001
-      - PYTHON_PATH=/usr/bin/python3
-    env_file:
-      - path: ./.env
-        required: false
+      NODE_ENV: production
+      PORT: 3001
+      PYTHON_PATH: /usr/bin/python3
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -37,8 +40,8 @@ services:
       - shared
     labels:
       traefik.enable: "true"
-      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.jobops.rule: Host(`${JOBOPS_HOST:-jobops.fewa.app}`)
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK}
+      traefik.http.routers.jobops.rule: Host(`${JOBOPS_HOST}`)
       traefik.http.routers.jobops.entrypoints: websecure
       traefik.http.routers.jobops.tls: "true"
       traefik.http.routers.jobops.tls.certresolver: letsencrypt
@@ -46,7 +49,7 @@ services:
 
 networks:
   shared:
-    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    name: ${SHARED_DOCKER_NETWORK}
     external: true
 
 volumes:
