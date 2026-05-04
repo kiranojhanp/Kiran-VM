@@ -42,8 +42,6 @@ services:
       - TZ=${TZ:-UTC}
       - VERSION=docker
       - PLEX_CLAIM=${PLEX_CLAIM:-}
-    ports:
-      - "32400:32400"
     volumes:
       - plex_config:/config
       - /mnt/decypharr/tv:/tv:ro
