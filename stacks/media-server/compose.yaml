@@ -44,8 +44,8 @@ services:
       - PLEX_CLAIM=${PLEX_CLAIM:-}
     volumes:
       - plex_config:/config
-      - /mnt/decypharr/tv:/tv:ro
-      - /mnt/decypharr/movies:/movies:ro
+      - media_tv:/tv:ro
+      - media_movies:/movies:ro
     networks:
       - shared
     labels:
@@ -72,8 +72,8 @@ services:
       - TZ=${TZ:-UTC}
     volumes:
       - sonarr_config:/config
-      - /mnt/decypharr/tv:/tv
-      - /mnt/decypharr/downloads:/downloads
+      - media_tv:/tv
+      - media_downloads:/downloads
     networks:
       - shared
     labels:
@@ -100,8 +100,8 @@ services:
       - TZ=${TZ:-UTC}
     volumes:
       - radarr_config:/config
-      - /mnt/decypharr/movies:/movies
-      - /mnt/decypharr/downloads:/downloads
+      - media_movies:/movies
+      - media_downloads:/downloads
     networks:
       - shared
     labels:
@@ -137,3 +137,9 @@ volumes:
     name: sonarr_config
   radarr_config:
     name: radarr_config
+  media_tv:
+    name: media_tv
+  media_movies:
+    name: media_movies
+  media_downloads:
+    name: media_downloads
