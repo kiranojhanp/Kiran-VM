@@ -19,10 +19,13 @@ services:
         hard: 65536
     volumes:
       - jobops_data:/app/data
+      - jobops_codex_home:/app/codex-home
+      - jobops_tectonic_cache:/root/.cache/Tectonic
     environment:
       NODE_ENV: production
       PORT: 3001
       PYTHON_PATH: /usr/bin/python3
+      CODEX_HOME: /app/codex-home
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -52,3 +55,5 @@ networks:
 
 volumes:
   jobops_data:
+  jobops_codex_home:
+  jobops_tectonic_cache:

@@ -34,6 +34,12 @@ Create a `.env` file in the stack directory for additional configuration:
 - Resume tailoring with RxResume v4
 - Gmail integration for automatic application tracking
 
+## Volumes
+
+- `jobops_data`: SQLite database and generated PDFs
+- `jobops_codex_home`: Codex login/session data (for Codex app-server provider)
+- `jobops_tectonic_cache`: LaTeX support-bundle cache (avoids re-downloading on recreate)
+
 ## Security
 
 This stack includes Docker security hardening:
