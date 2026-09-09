@@ -4,7 +4,6 @@ services:
     container_name: jobops
     restart: unless-stopped
     security_opt:
-      - no-new-privileges:true
       - apparmor:docker-default
     cap_drop:
       - ALL
