@@ -32,7 +32,10 @@ services:
       start_period: 60s
 
   live-sports:
+    build:
+      context: https://github.com/rajhodedara/live-sport-plugin.git
     image: ghcr.io/rajhodedara/live-sport-plugin:latest
+    pull_policy: never
     container_name: live-sports
     restart: unless-stopped
     mem_limit: 2g
