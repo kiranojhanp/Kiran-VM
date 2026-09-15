@@ -31,6 +31,43 @@ services:
       retries: 3
       start_period: 60s
 
+  live-sports:
+    image: ghcr.io/rajhodedara/live-sport-plugin:latest
+    container_name: live-sports
+    restart: unless-stopped
+    mem_limit: 2g
+    memswap_limit: 2g
+    pids_limit: 200
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      nproc: 200
+    environment:
+      - PORT=7000
+      - NODE_ENV=production
+      - ADDON_URL=https://${LIVE_SPORTS_HOST:-live-sports.fewa.app}
+    networks:
+      - shared
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.live-sports.rule=Host(`${LIVE_SPORTS_HOST:-live-sports.fewa.app}`)
+      - traefik.http.routers.live-sports.entrypoints=websecure
+      - traefik.http.routers.live-sports.tls=true
+      - traefik.http.routers.live-sports.tls.certresolver=cloudflare
+      - traefik.http.services.live-sports.loadbalancer.server.port=7000
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:7000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   poster-cache:
     image: nginx:alpine
     restart: unless-stopped

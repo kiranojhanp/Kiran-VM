@@ -1,6 +1,6 @@
 # Media Stack
 
-Self-hosted AIOMetadata service for Stremio metadata caching with poster caching via nginx.
+Self-hosted Stremio/Nuvio addons: AIOMetadata metadata caching, poster cache, and the Live Sports addon.
 
 ## Quick Start
 
@@ -9,6 +9,7 @@ Self-hosted AIOMetadata service for Stremio metadata caching with poster caching
 3. Copy `.env.sample` to `.env` and fill in values
 4. Add stack environment variables:
    - `AIOMETADATA_HOST` = `aiometadata.fewa.app`
+   - `LIVE_SPORTS_HOST` = `live-sports.fewa.app`
    - `SHARED_DOCKER_NETWORK` = `internal-network`
    - `SHARED_INFRA_NETWORK` = `infra_net`
    - `REDIS_HOST_SHARED` = (from Komodo secrets, format: `redis://:password@redis:6379`)
@@ -19,7 +20,8 @@ Self-hosted AIOMetadata service for Stremio metadata caching with poster caching
 | Variable | Description | Example |
 | -------- | ----------- | ------- |
 | `AIOMETADATA_HOST` | Public hostname for AIOMetadata | `aiometadata.fewa.app` |
-| `REDIS_HOST_SHARED` | Redis connection URL | `redis://:password@redis:6379` |
+| `LIVE_SPORTS_HOST` | Public hostname for Live Sports | `live-sports.fewa.app` |
+| `REDIS_HOST_SHARED` | Redis connection URL (AIOMetadata only) | `redis://:password@redis:6379` |
 
 ## Services
 
@@ -27,6 +29,14 @@ Self-hosted AIOMetadata service for Stremio metadata caching with poster caching
 |---------|-----|---------|
 | AIOMetadata | `https://aiometadata.fewa.app` | Metadata cache for Stremio |
 | Poster Cache | `https://poster-cache.fewa.app` | Nginx-based poster image cache |
+| Live Sports | `https://live-sports.fewa.app` | Live sports addon (scrapes/aggregates public fixtures and streams) |
+
+## Live Sports setup
+
+- Add `https://live-sports.fewa.app/manifest.json` as an addon in Nuvio / Stremio.
+- Open `https://live-sports.fewa.app/configure` to filter sports categories, providers, timezone, and favorite teams.
+- Runs from the official `ghcr.io/rajhodedara/live-sport-plugin:latest` image (published on every upstream push to `main`).
+- **Stateless:** uses no Postgres/Redis (persistent prefs live in the addon config URL, catalogs are held in memory), so it joins only the `shared` network — no `infra` network, no shared DB access.
 
 ## Notes
 
