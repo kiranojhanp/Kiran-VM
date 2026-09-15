@@ -33,7 +33,10 @@ services:
 
   live-sports:
     build:
-      context: https://github.com/rajhodedara/live-sport-plugin.git
+      context: .
+      dockerfile: live-sports.Dockerfile
+      args:
+        PLUGIN_REF: ${LIVE_SPORTS_REF:-main}
     image: ghcr.io/rajhodedara/live-sport-plugin:latest
     pull_policy: never
     container_name: live-sports

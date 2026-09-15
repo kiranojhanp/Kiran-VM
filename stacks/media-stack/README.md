@@ -35,7 +35,7 @@ Self-hosted Stremio/Nuvio addons: AIOMetadata metadata caching, poster cache, an
 
 - Add `https://live-sports.fewa.app/manifest.json` as an addon in Nuvio / Stremio.
 - Open `https://live-sports.fewa.app/configure` to filter sports categories, providers, timezone, and favorite teams.
-- **Built from source** (`ghcr.io/rajhodedara/live-sport-plugin:latest` is published amd64-only, and this host is ARM64 Ampere with no QEMU emulation). The service uses `build.context` pointed at the upstream git repo + `pull_policy: never`; Deploy builds a native arm64 image (~5–10 min on first deploy, afterwards reused).
+- **Built from source via `live-sports.Dockerfile`** (`ghcr.io/rajhodedara/live-sport-plugin:latest` is amd64-only, and this host is ARM64 Ampere with no QEMU emulation). Multi-stage Dockerfile clones the upstream repo, builds the ncc bundle, and produces a native arm64 image tagged `ghcr.io/rajhodedara/live-sport-plugin:latest` locally. `pull_policy: never` keeps Komodo's `pull` stage from trying to fetch the amd64-only published image. First/refresh build takes ~1 min on the server. Set `LIVE_SPORTS_REF` to pin the upstream ref (default `main`).
 - **Stateless:** uses no Postgres/Redis (persistent prefs live in the addon config URL, catalogs are held in memory), so it joins only the `shared` network — no `infra` network, no shared DB access.
 
 ## Notes
