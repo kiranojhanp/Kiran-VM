@@ -8,7 +8,7 @@ ARG ARVIO_REF=main
 ARG ARVIO_REPO=https://github.com/ProdigyV21/ARVIO.git
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git ca-certificates \
+    && apt-get install -y --no-install-recommends git ca-certificates python3 python3-pip build-essential make pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git clone --depth 1 --branch "${ARVIO_REF}" "${ARVIO_REPO}" /arvio
