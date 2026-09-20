@@ -1,6 +1,6 @@
 # Media Stack
 
-Self-hosted Stremio/Nuvio addons: AIOMetadata metadata caching, poster cache, the Live Sports addon, and the ARVIO browser media hub.
+Self-hosted media web apps: the Live Sports addon and the ARVIO browser media hub.
 
 ## Quick Start
 
@@ -8,12 +8,9 @@ Self-hosted Stremio/Nuvio addons: AIOMetadata metadata caching, poster cache, th
 2. Set compose path to `stacks/media-stack/compose.yaml`
 3. Copy `.env.sample` to `.env` and fill in values
 4. Add stack environment variables:
-   - `AIOMETADATA_HOST` = `aiometadata.fewa.app`
    - `LIVE_SPORTS_HOST` = `live-sports.fewa.app`
    - `ARVIO_HOST` = `arvio.fewa.app`
    - `SHARED_DOCKER_NETWORK` = `internal-network`
-   - `SHARED_INFRA_NETWORK` = `infra_net`
-   - `REDIS_HOST_SHARED` = (from Komodo secrets, format: `redis://:password@redis:6379`)
    - `TMDB_API_KEY` = (your TMDB API v3 key, required for ARVIO)
 5. Deploy
 
@@ -21,18 +18,14 @@ Self-hosted Stremio/Nuvio addons: AIOMetadata metadata caching, poster cache, th
 
 | Variable | Description | Example |
 | -------- | ----------- | ------- |
-| `AIOMETADATA_HOST` | Public hostname for AIOMetadata | `aiometadata.fewa.app` |
 | `LIVE_SPORTS_HOST` | Public hostname for Live Sports | `live-sports.fewa.app` |
 | `ARVIO_HOST` | Public hostname for ARVIO | `arvio.fewa.app` |
-| `REDIS_HOST_SHARED` | Redis connection URL (AIOMetadata only) | `redis://:password@redis:6379` |
 | `TMDB_API_KEY` | TMDB API v3 key (ARVIO built-in catalogs) | (your key) |
 
 ## Services
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| AIOMetadata | `https://aiometadata.fewa.app` | Metadata cache for Stremio |
-| Poster Cache | `https://poster-cache.fewa.app` | Nginx-based poster image cache |
 | Live Sports | `https://live-sports.fewa.app` | Live sports addon (scrapes/aggregates public fixtures and streams) |
 | ARVIO | `https://arvio.fewa.app` | Browser media hub (profiles, home-server libraries, addons) |
 
@@ -55,5 +48,3 @@ Self-hosted Stremio/Nuvio addons: AIOMetadata metadata caching, poster cache, th
 ## Notes
 
 - This stack replaces the old `aiostreams` stack which included AIOStreams, Jackett, WARP, and MediaFlow Proxy
-- You can use AIOMetadata with Torrentio addon directly in Stremio for a simpler setup
-- Poster cache uses nginx to cache poster images for 30 days

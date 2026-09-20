@@ -2,7 +2,4 @@
 **/.env
 *.pem
 *.key
-decypharr-config.json
-poster-cache-nginx.conf
-poster-cache-stats.sh
 README.md
