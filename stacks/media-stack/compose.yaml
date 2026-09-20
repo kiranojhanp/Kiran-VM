@@ -74,6 +74,51 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  arvio:
+    build:
+      context: .
+      dockerfile: arvio.Dockerfile
+      args:
+        ARVIO_REF: ${ARVIO_REF:-main}
+        TRAKT_CLIENT_ID: ${TRAKT_CLIENT_ID:-}
+        SIMKL_CLIENT_ID: ${SIMKL_CLIENT_ID:-}
+        NEXT_PUBLIC_TELEGRAM_API_ID: ${NEXT_PUBLIC_TELEGRAM_API_ID:-}
+        NEXT_PUBLIC_TELEGRAM_API_HASH: ${NEXT_PUBLIC_TELEGRAM_API_HASH:-}
+        NEXT_PUBLIC_ARVIO_RESOLVER_URL: ${NEXT_PUBLIC_ARVIO_RESOLVER_URL:-}
+    image: arvio:latest
+    pull_policy: never
+    restart: unless-stopped
+    environment:
+      - HOSTNAME=0.0.0.0
+      - PORT=3000
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SELF_HOSTED=true
+      - NEXT_PUBLIC_PAYWALL_ENABLED=false
+      - NEXT_TELEMETRY_DISABLED=1
+      - TMDB_API_KEY=${TMDB_API_KEY}
+      - TRAKT_CLIENT_SECRET=${TRAKT_CLIENT_SECRET:-}
+      - SIMKL_CLIENT_SECRET=${SIMKL_CLIENT_SECRET:-}
+      - ALLOW_PRIVATE_PROXY=${ALLOW_PRIVATE_PROXY:-false}
+    networks:
+      - shared
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.arvio.rule=Host(`${ARVIO_HOST:-arvio.fewa.app}`)
+      - traefik.http.routers.arvio.entrypoints=websecure
+      - traefik.http.routers.arvio.tls=true
+      - traefik.http.routers.arvio.tls.certresolver=cloudflare
+      - traefik.http.services.arvio.loadbalancer.server.port=3000
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/version.json').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
   poster-cache:
     image: nginx:alpine
     restart: unless-stopped
