@@ -38,7 +38,7 @@ Self-hosted media web apps: the Live Sports addon and the ARVIO browser media hu
 
 ## ARVIO setup
 
-- **Built from source via `arvio.Dockerfile`** (no prebuilt official image). The multi-stage Dockerfile clones `ProdigyV21/ARVIO`, runs `npm ci` and `npm run build`, and produces a native Next.js standalone image. First/refresh build takes a few minutes on the server. Set `ARVIO_REF` to pin the upstream ref (default `main`).
+- **Built from source via `arvio.Dockerfile`** (no prebuilt official image). The multi-stage Dockerfile clones `ProdigyV21/ARVIO`, runs `npm ci` and `npm run build`, and produces a native Next.js standalone image. First/refresh build takes a few minutes on the server. Set `ARVIO_REF` to pin the upstream ref (default `main`). The base stage installs `python3` + a C++ toolchain because `bufferutil` (a native WebSocket dep in the telegram/gramjs tree) needs `node-gyp` to compile.
 - **Stateless:** uses browser local storage only (profiles, settings, history stay in the browser), so it joins only the `shared` network — no `infra` network, no shared DB/Redis.
 - Open `https://arvio.fewa.app`, choose/create a local profile, and add your sources in Settings.
 - `TMDB_API_KEY` (API v3 key, not the bearer token) is required for the built-in movie/show catalogs. Trakt, Simkl, and Telegram are optional.
