@@ -57,6 +57,7 @@ When adding a new stack that needs PostgreSQL, see [DATABASE.md](DATABASE.md) fo
 - [Garage](garage/README.md)
 - [Wealthfolio](wealthfolio/README.md)
 - [JobOps](jobops/README.md)
+- [Finance Stack](finance-stack/README.md) (Yuvomi)
 - [Mealie](mealie/README.md)
 - [Media Stack](media-stack/README.md) (AIOMetadata + Poster Cache + Live Sports + ARVIO)
 - [Media Server](media-server/README.md) (Plex + Sonarr + Radarr + Decypharr)

@@ -1,0 +1,54 @@
+services:
+  yuvomi:
+    image: ghcr.io/ulsklyc/yuvomi:latest
+    container_name: yuvomi
+    restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
+    pids_limit: 200
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      NODE_ENV: production
+      DB_PATH: /data/yuvomi.db
+      BACKUP_DIR: /backups
+      SESSION_SECRET: ${SESSION_SECRET}
+      SESSION_SECURE: ${SESSION_SECURE:-true}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      DB_ENCRYPTION_KEY: ${DB_ENCRYPTION_KEY:-}
+      TZ: ${TZ:-UTC}
+      WEATHER_LAT: ${WEATHER_LAT:-}
+      WEATHER_LON: ${WEATHER_LON:-}
+      WEATHER_CITY: ${WEATHER_CITY:-}
+      WEATHER_UNITS: ${WEATHER_UNITS:-metric}
+      BASE_URL: https://${YUVOMI_HOST}
+    volumes:
+      - yuvomi_data:/data
+      - yuvomi_backups:/backups
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', r => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - shared
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.yuvomi.rule: Host(`${YUVOMI_HOST:-yuvomi.fewa.app}`)
+      traefik.http.routers.yuvomi.entrypoints: websecure
+      traefik.http.routers.yuvomi.tls: "true"
+      traefik.http.routers.yuvomi.tls.certresolver: letsencrypt
+      traefik.http.services.yuvomi.loadbalancer.server.port: "3000"
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+
+volumes:
+  yuvomi_data:
+  yuvomi_backups:
