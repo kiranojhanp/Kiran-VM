@@ -63,6 +63,7 @@ When adding a new stack that needs PostgreSQL, see [DATABASE.md](DATABASE.md) fo
 - [Media Server](media-server/README.md) (Plex + Sonarr + Radarr + Decypharr)
 - [Open WebUI](openwebui/README.md)
 - [Papra](papra/README.md)
+- [Penpot](penpot/README.md)
 - [Uptime Kuma](uptime-kuma/README.md)
 - [Vikunja](vikunja/README.md)
 - [Vaultwarden](vaultwarden/README.md)

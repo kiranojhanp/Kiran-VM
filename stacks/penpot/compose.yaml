@@ -1,0 +1,121 @@
+x-flags: &penpot-flags
+  PENPOT_FLAGS: disable-email-verification enable-prepl-server enable-mcp enable-admin-console
+
+x-public-uri: &penpot-public-uri
+  PENPOT_PUBLIC_URI: https://${PENPOT_HOST}
+
+x-body-size: &penpot-http-body-size
+  PENPOT_HTTP_SERVER_MAX_BODY_SIZE: 367001600
+  PENPOT_HTTP_SERVER_MAX_MULTIPART_BODY_SIZE: 367001600
+
+services:
+  penpot-frontend:
+    image: "penpotapp/frontend:${PENPOT_VERSION:-2.18}"
+    restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
+    pids_limit: 200
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - penpot_assets:/opt/data/assets
+    depends_on:
+      - penpot-backend
+      - penpot-admin-console
+      - penpot-mcp
+      - penpot-exporter
+    networks:
+      - shared
+    environment:
+      << : [*penpot-flags, *penpot-http-body-size, *penpot-public-uri]
+      PENPOT_ADMIN_CONSOLE_URI: http://penpot-admin-console:3000
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.penpot.rule: Host(`${PENPOT_HOST:-penpot.fewa.app}`)
+      traefik.http.routers.penpot.entrypoints: websecure
+      traefik.http.routers.penpot.tls: "true"
+      traefik.http.routers.penpot.tls.certresolver: letsencrypt
+      traefik.http.services.penpot.loadbalancer.server.port: "8080"
+
+  penpot-backend:
+    image: "penpotapp/backend:${PENPOT_VERSION:-2.18}"
+    restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
+    pids_limit: 200
+    volumes:
+      - penpot_assets:/opt/data/assets
+    networks:
+      - shared
+      - infra
+    environment:
+      << : [*penpot-flags, *penpot-public-uri, *penpot-http-body-size]
+      PENPOT_ADMIN_CONSOLE_URI: http://penpot-admin-console:3000
+      PENPOT_SECRET_KEY: ${PENPOT_SECRET_KEY}
+      PENPOT_DATABASE_URI: postgresql://infra-postgres-1/penpot
+      PENPOT_DATABASE_USERNAME: penpot
+      PENPOT_DATABASE_PASSWORD: ${PENPOT_DB_PASSWORD}
+      PENPOT_REDIS_URI: redis://:${PENPOT_REDIS_PASSWORD}@infra-redis-1/0
+      PENPOT_OBJECTS_STORAGE_BACKEND: fs
+      PENPOT_OBJECTS_STORAGE_FS_DIRECTORY: /opt/data/assets
+      PENPOT_TELEMETRY_ENABLED: "false"
+
+  penpot-admin-console:
+    image: "penpotapp/admin-console:${PENPOT_VERSION:-2.18}"
+    restart: unless-stopped
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 100
+    networks:
+      - shared
+      - infra
+    environment:
+      PENPOT_PUBLIC_URI: https://${PENPOT_HOST}
+      PENPOT_SECRET_KEY: ${PENPOT_SECRET_KEY}
+      PENPOT_DATABASE_URI: postgresql://infra-postgres-1/penpot
+      PENPOT_DATABASE_USERNAME: penpot
+      PENPOT_DATABASE_PASSWORD: ${PENPOT_DB_PASSWORD}
+      PENPOT_INTERNAL_URI: http://penpot-frontend:8080
+
+  penpot-mcp:
+    image: "penpotapp/mcp:${PENPOT_VERSION:-2.18}"
+    restart: unless-stopped
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 100
+    networks:
+      - shared
+      - infra
+    environment:
+      << : [*penpot-flags, *penpot-public-uri]
+      PENPOT_SECRET_KEY: ${PENPOT_SECRET_KEY}
+      PENPOT_REDIS_URI: redis://:${PENPOT_REDIS_PASSWORD}@infra-redis-1/0
+
+  penpot-exporter:
+    image: "penpotapp/exporter:${PENPOT_VERSION:-2.18}"
+    restart: unless-stopped
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 100
+    networks:
+      - shared
+      - infra
+    environment:
+      << : [*penpot-flags, *penpot-public-uri]
+      PENPOT_INTERNAL_URI: http://penpot-frontend:8080
+      PENPOT_SECRET_KEY: ${PENPOT_SECRET_KEY}
+      PENPOT_REDIS_URI: redis://:${PENPOT_REDIS_PASSWORD}@infra-redis-1/0
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+  infra:
+    name: ${SHARED_INFRA_NETWORK:-infra_net}
+    external: true
+
+volumes:
+  penpot_assets:

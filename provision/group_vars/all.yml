@@ -96,6 +96,7 @@ postgres_databases_list:
   - actual
   - jobops
   - openclaw
+  - penpot
 
 # ── OpenClaw ──────────────────────────────────────────────────────────────────
 openclaw_fqdn: "openclaw.{{ domain }}"

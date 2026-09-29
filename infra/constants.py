@@ -5,7 +5,7 @@
 PROJECT_NAME_DEFAULT = 'kiran-self-hosting'
 DOMAIN_NAME_DEFAULT = 'fewa.app'
 CLOUDFLARE_ZONE_ID_DEFAULT = '58dce5945a8941e4c38a3611af123052'
-DNS_SUBDOMAIN_LABELS = ['actual', 'audiobookshelf', 'authentik', 'garage', 'wealthfolio', 's3', 'jobops', 'komodo', 'openwebui', 'uptime', 'vaultwarden', 'mealie', 'papra', 'vikunja', 'wallos', 'live-sports', 'arvio', 'yuvomi']
+DNS_SUBDOMAIN_LABELS = ['actual', 'audiobookshelf', 'authentik', 'garage', 'wealthfolio', 's3', 'jobops', 'komodo', 'openwebui', 'uptime', 'vaultwarden', 'mealie', 'papra', 'vikunja', 'wallos', 'live-sports', 'arvio', 'yuvomi', 'penpot']
 
 # -- Resource Name Suffixes ---------------------------------------------------
 SUFFIX_COMPARTMENT = '-compartment'
