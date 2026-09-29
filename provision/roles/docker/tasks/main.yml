@@ -81,8 +81,7 @@
           "max-file": "3"
         },
         "live-restore": true,
-        "userland-proxy": false,
-        "content-trust": true
+        "userland-proxy": false
       }
   notify: Restart docker
 
