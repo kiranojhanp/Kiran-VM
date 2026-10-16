@@ -17,7 +17,7 @@ services:
       nofile:
         soft: 65536
         hard: 65536
-      nproc: 100
+      nproc: 500
     depends_on:
       postgresql:
         condition: service_healthy
@@ -87,7 +87,10 @@ services:
       nofile:
         soft: 65536
         hard: 65536
-      nproc: 100
+      # NOTE: intentionally no `nproc` ulimit. RLIMIT_NPROC is enforced per-UID
+      # host-wide (these containers do not use user namespaces), and the postgres
+      # UID (999) is shared with every other Postgres on this host. A low nproc
+      # therefore makes gosu/exec fail with EAGAIN ("resource temporarily unavailable").
     # Keep the image's default preload list: its first-start bootstrap creates
     # the pg_cron extension and aborts initialization when pg_cron is missing.
     command: ["postgres", "-c", "shared_preload_libraries=pg_search,pg_cron,pg_stat_statements"]
