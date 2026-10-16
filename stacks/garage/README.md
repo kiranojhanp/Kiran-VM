@@ -74,7 +74,7 @@ The webui requires HTTP Basic Auth. Set `AUTH_USER_PASS` in Komodo stack Environ
 htpasswd -nbBC 10 "username" "password"
 ```
 
-Use the hash format (e.g., `admin:$2y$10$...`). Default is `admin:admin` if not set.
+Use the hash format (e.g., `admin:$2y$10$...`). This value is **required** — the stack refuses to deploy without it, so the webui can never come up unauthenticated.
 
 ## Connecting apps
 
