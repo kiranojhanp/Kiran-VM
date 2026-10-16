@@ -1,0 +1,124 @@
+# LobeHub (LobeChat) — self-hosted AI chat platform.
+#
+# Database: dedicated ParadeDB (Postgres 17 + pgvector + pg_search) in this
+# stack, because the shared infra Postgres does not ship pgvector/pg_search.
+# Files: reused from Garage (S3-compatible object storage) at s3.fewa.app.
+# Redis: shared infra Redis (infra-redis-1).
+# Auth:  built-in Better Auth (email/password), restricted by AUTH_ALLOWED_EMAILS.
+services:
+  lobe:
+    image: lobehub/lobehub:${LOBEHUB_VERSION:-2.2.19}
+    container_name: lobehub
+    restart: unless-stopped
+    mem_limit: 2g
+    memswap_limit: 3g
+    pids_limit: 512
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      nproc: 100
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment:
+      # ── Database ───────────────────────────────────────────────────────────
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgresql:5432/${LOBE_DB_NAME:-lobe}
+      # ParadeDB provides pg_search, so LobeHub's default backend works.
+      FTS_SEARCH_PROVIDER: pg_search
+      # ── Secrets / crypto ───────────────────────────────────────────────────
+      KEY_VAULTS_SECRET: ${KEY_VAULTS_SECRET:?KEY_VAULTS_SECRET must be set}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET must be set}
+      # ── Public URLs ────────────────────────────────────────────────────────
+      APP_URL: https://${LOBEHUB_HOST:-chat.fewa.app}
+      INTERNAL_APP_URL: http://localhost:3210
+      # ── Auth (Better Auth, email/password) ─────────────────────────────────
+      # Comma-separated domains/emails allowed to register, e.g. fewa.app,me@example.com
+      # Fail closed: without a value LobeHub allows public signups, so require it.
+      AUTH_ALLOWED_EMAILS: ${AUTH_ALLOWED_EMAILS:?AUTH_ALLOWED_EMAILS must be set to restrict signups}
+      # ── Redis (shared infra) ───────────────────────────────────────────────
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@${SHARED_REDIS_HOST:-infra-redis-1}:6379
+      REDIS_PREFIX: lobechat
+      REDIS_TLS: "0"
+      # ── S3-compatible storage (Garage) ─────────────────────────────────────
+      # S3_ENDPOINT is used by browsers for presigned uploads; the server uses
+      # S3_INTERNAL_ENDPOINT to stay on the Docker network.
+      S3_ENDPOINT: https://${S3_GARAGE_HOST:-s3.fewa.app}
+      S3_INTERNAL_ENDPOINT: http://garage:3900
+      S3_BUCKET: ${S3_BUCKET:-lobe}
+      S3_REGION: ${S3_REGION:-ap-southeast-1}
+      S3_ENABLE_PATH_STYLE: "1"
+      S3_SET_ACL: "0"
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY_ID:?S3_ACCESS_KEY_ID must be set}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?S3_ACCESS_KEY_ID must be set}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?S3_SECRET_ACCESS_KEY must be set}
+      # Send vision images as base64 (avoids plain-HTTP image fetch errors).
+      LLM_VISION_IMAGE_USE_BASE64: "1"
+    networks:
+      - shared
+      - infra
+      - internal
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.lobehub.rule: Host(`${LOBEHUB_HOST:-chat.fewa.app}`)
+      traefik.http.routers.lobehub.entrypoints: websecure
+      traefik.http.routers.lobehub.tls: "true"
+      traefik.http.routers.lobehub.tls.certresolver: letsencrypt
+      traefik.http.services.lobehub.loadbalancer.server.port: "3210"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Dedicated Postgres for LobeHub. ParadeDB bundles pgvector + pg_search,
+  # which the shared infra Postgres image does not provide.
+  postgresql:
+    image: paradedb/paradedb:latest-pg17
+    container_name: lobehub-postgres
+    restart: unless-stopped
+    mem_limit: 2g
+    memswap_limit: 2g
+    pids_limit: 200
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      nproc: 100
+    # Keep the image's default preload list: its first-start bootstrap creates
+    # the pg_cron extension and aborts initialization when pg_cron is missing.
+    command: ["postgres", "-c", "shared_preload_libraries=pg_search,pg_cron,pg_stat_statements"]
+    environment:
+      POSTGRES_DB: ${LOBE_DB_NAME:-lobe}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    volumes:
+      - lobe_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      # Probe over TCP: during first-time initialization the image runs a
+      # temporary server that only listens on the Unix socket.
+      test: ["CMD-SHELL", "pg_isready -U postgres -h 127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - internal
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  shared:
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
+    external: true
+  infra:
+    name: ${SHARED_INFRA_NETWORK:-infra_net}
+    external: true
+  internal:
+    name: lobe_internal
+
+volumes:
+  lobe_pg_data:

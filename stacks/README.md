@@ -4,7 +4,7 @@ This directory contains app stacks deployed from Komodo.
 
 ## What to do in Komodo
 
-Use the same flow for every stack (`actual`, `audiobookshelf`, `authentik`, `garage`, `wealthfolio`, `jobops`, `mealie`, `openwebui`, `papra`, `uptime-kuma`, `vikunja`, `vaultwarden`, `wallos`):
+Use the same flow for every stack (`actual`, `audiobookshelf`, `authentik`, `garage`, `wealthfolio`, `jobops`, `lobehub`, `mealie`, `openwebui`, `papra`, `uptime-kuma`, `vikunja`, `vaultwarden`, `wallos`):
 
 1. Create the stack in Komodo (or open the existing one).
 2. Set run directory to `stacks/<stack-name>`.
@@ -58,6 +58,7 @@ When adding a new stack that needs PostgreSQL, see [DATABASE.md](DATABASE.md) fo
 - [Wealthfolio](wealthfolio/README.md)
 - [JobOps](jobops/README.md)
 - [Finance Stack](finance-stack/README.md) (Yuvomi)
+- [LobeHub](lobehub/README.md) (LobeChat)
 - [Mealie](mealie/README.md)
 - [Media Stack](media-stack/README.md) (AIOMetadata + Poster Cache + Live Sports + ARVIO)
 - [Media Server](media-server/README.md) (Plex + Sonarr + Radarr + Decypharr)

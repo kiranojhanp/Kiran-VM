@@ -103,6 +103,7 @@ pulumi down
 | Actual Budget | Litestream → Garage    | ✅     |
 | Wallos        | Litestream → Garage    | ✅     |
 | Wealthfolio   | Litestream → Garage    | ✅     |
+| LobeHub DB    | Manual `pg_dump` ([stack README](stacks/lobehub/README.md)) | ⚠️ Manual |
 
 ### Encryption
 - **OCI Block Volumes**: AES-256 encrypted at rest (default)
