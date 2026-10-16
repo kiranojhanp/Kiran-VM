@@ -36,6 +36,9 @@ services:
       # Comma-separated domains/emails allowed to register, e.g. fewa.app,me@example.com
       # Fail closed: without a value LobeHub allows public signups, so require it.
       AUTH_ALLOWED_EMAILS: ${AUTH_ALLOWED_EMAILS:?AUTH_ALLOWED_EMAILS must be set to restrict signups}
+      # OIDC provider — required by the LobeHub desktop/mobile apps to sign in.
+      ENABLE_OIDC: ${ENABLE_OIDC:-1}
+      JWKS_KEY: ${JWKS_KEY:?JWKS_KEY must be set (RS256 JWKS JSON)}
       # ── Redis (shared infra) ───────────────────────────────────────────────
       # Full connection URL, set in Komodo (e.g. redis://:password@infra-redis-1:6379,
       # or rediss://... for TLS). Use the value already stored in Komodo secrets.

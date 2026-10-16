@@ -22,6 +22,7 @@ Required:
 - `POSTGRES_PASSWORD` (required): password for the in-stack Postgres superuser (`postgres`). Generate with: `openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 24`.
 - `KEY_VAULTS_SECRET` (required): encrypts sensitive data (e.g. stored provider API keys). Generate with: `openssl rand -base64 32`. **Keep this stable** — changing it makes encrypted data undecryptable.
 - `AUTH_SECRET` (required): Better Auth session encryption key. Generate with: `openssl rand -base64 32`.
+- `JWKS_KEY` (required): RS256 JWKS key set used to sign OIDC tokens (the desktop/mobile apps require it). Generate with LobeHub's generator (docs → Authentication) or `node scripts/generate-oidc-jwk.mjs`. **Keep this stable** — rotating it invalidates existing app sessions.
 - `REDIS_URL` (required): full Redis connection URL for the shared infra Redis (e.g. `redis://:password@infra-redis-1:6379`).
 - `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` (required): Garage access key pair for the `lobe` bucket (see [Garage storage](#garage-storage)).
 - `AUTH_ALLOWED_EMAILS` (required): comma-separated emails/domains allowed to register, e.g. `fewa.app,me@example.com`. The stack fails closed without it, so public signups cannot happen by accident.
@@ -29,6 +30,7 @@ Required:
 Optional:
 
 - `LOBEHUB_VERSION` (optional): image tag. Default: `2.2.19`.
+- `ENABLE_OIDC` (optional): enables the built-in OIDC provider used by the desktop/mobile apps. Default: `1`.
 - `LOBE_DB_NAME` (optional): database name. Default: `lobe`.
 - `S3_BUCKET` (optional): Garage bucket name. Default: `lobe`.
 - `S3_REGION` (optional): Garage region. Default: `ap-southeast-1`.
