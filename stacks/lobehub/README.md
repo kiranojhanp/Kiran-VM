@@ -22,7 +22,7 @@ Required:
 - `POSTGRES_PASSWORD` (required): password for the in-stack Postgres superuser (`postgres`). Generate with: `openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 24`.
 - `KEY_VAULTS_SECRET` (required): encrypts sensitive data (e.g. stored provider API keys). Generate with: `openssl rand -base64 32`. **Keep this stable** — changing it makes encrypted data undecryptable.
 - `AUTH_SECRET` (required): Better Auth session encryption key. Generate with: `openssl rand -base64 32`.
-- `REDIS_PASSWORD` (required): password for the shared infra Redis (`redis_password` from `provision/secrets.yml`).
+- `REDIS_URL` (required): full Redis connection URL for the shared infra Redis (e.g. `redis://:password@infra-redis-1:6379`).
 - `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` (required): Garage access key pair for the `lobe` bucket (see [Garage storage](#garage-storage)).
 - `AUTH_ALLOWED_EMAILS` (required): comma-separated emails/domains allowed to register, e.g. `fewa.app,me@example.com`. The stack fails closed without it, so public signups cannot happen by accident.
 
@@ -33,7 +33,7 @@ Optional:
 - `S3_BUCKET` (optional): Garage bucket name. Default: `lobe`.
 - `S3_REGION` (optional): Garage region. Default: `ap-southeast-1`.
 - `S3_GARAGE_HOST` (optional): public Garage S3 hostname. Default: `s3.fewa.app`.
-- `SHARED_REDIS_HOST` (optional): shared Redis host. Default: `infra-redis-1`.
+- `REDIS_TLS` (optional): set to `1` if the Redis URL uses `rediss://`. Default: `0`.
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
 - `SHARED_INFRA_NETWORK` (optional): shared infra network for Redis. Default: `infra_net`.
 

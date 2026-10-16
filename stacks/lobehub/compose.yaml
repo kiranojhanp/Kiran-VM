@@ -37,9 +37,11 @@ services:
       # Fail closed: without a value LobeHub allows public signups, so require it.
       AUTH_ALLOWED_EMAILS: ${AUTH_ALLOWED_EMAILS:?AUTH_ALLOWED_EMAILS must be set to restrict signups}
       # ── Redis (shared infra) ───────────────────────────────────────────────
-      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@${SHARED_REDIS_HOST:-infra-redis-1}:6379
+      # Full connection URL, set in Komodo (e.g. redis://:password@infra-redis-1:6379,
+      # or rediss://... for TLS). Use the value already stored in Komodo secrets.
+      REDIS_URL: ${REDIS_URL:?REDIS_URL must be set}
       REDIS_PREFIX: lobechat
-      REDIS_TLS: "0"
+      REDIS_TLS: ${REDIS_TLS:-0}
       # ── S3-compatible storage (Garage) ─────────────────────────────────────
       # S3_ENDPOINT is used by browsers for presigned uploads; the server uses
       # S3_INTERNAL_ENDPOINT to stay on the Docker network.
