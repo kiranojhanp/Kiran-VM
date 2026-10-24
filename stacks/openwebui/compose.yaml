@@ -1,6 +1,6 @@
 services:
   open-webui:
-    image: ghcr.io/open-webui/open-webui:v0.8.12
+    image: ghcr.io/open-webui/open-webui:v0.12.3
     restart: unless-stopped
     # NOTE: intentionally no `user:`, `read_only:`, or `cap_drop:`. The existing
     # openwebui_open_webui_data volume is root-owned (created by the original

@@ -1,6 +1,6 @@
 services:
   authentik-server:
-    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.2.2}
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.8.5}
     command: server
     restart: unless-stopped
     mem_limit: 1g
@@ -25,6 +25,10 @@ services:
       AUTHENTIK_ERROR_REPORTING__ENABLED: ${AUTHENTIK_ERROR_REPORTING__ENABLED:-false}
       AUTHENTIK_DISABLE_UPDATE_CHECK: ${AUTHENTIK_DISABLE_UPDATE_CHECK:-false}
       AUTHENTIK_OUTPOSTS__DISCOVER: ${AUTHENTIK_OUTPOSTS__DISCOVER:-false}
+      # Since 2026.8, forwarded headers (X-Forwarded-Proto/Host/For) are only
+      # honoured when the peer is in this list. Traefik reaches authentik over
+      # the shared/infra Docker networks; override if those subnets change.
+      AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS: ${AUTHENTIK_TRUSTED_PROXY_CIDRS:-172.18.0.0/16,172.19.0.0/16}
     volumes:
       - authentik_data:/data
     networks:
@@ -40,7 +44,7 @@ services:
       traefik.http.services.authentik.loadbalancer.server.port: "9000"
 
   authentik-worker:
-    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.2.2}
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.8.5}
     command: worker
     restart: unless-stopped
     mem_limit: 1g

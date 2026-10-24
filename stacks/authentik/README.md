@@ -20,7 +20,11 @@ Compose file: `stacks/authentik/compose.yaml`
 - `SHARED_POSTGRES_PORT` (optional): shared Postgres port. Default: `5432`.
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
 - `SHARED_INFRA_NETWORK` (optional): shared infra network for Postgres. Default: `infra_net`.
-- `AUTHENTIK_TAG` (optional): pinned image tag. Default: `2026.2.2`.
+- `AUTHENTIK_TAG` (optional): pinned image tag. Default: `2026.8.5`.
+- `AUTHENTIK_TRUSTED_PROXY_CIDRS` (optional): comma-separated proxy networks
+  whose `X-Forwarded-*` headers are trusted. Default:
+  `172.18.0.0/16,172.19.0.0/16` (the `internal-network` and `infra_net` Docker
+  subnets). Required since 2026.8; change it if those subnets differ.
 - `AUTHENTIK_ERROR_REPORTING__ENABLED` (optional): send anonymized error reports. Default: `false`.
 - `AUTHENTIK_DISABLE_UPDATE_CHECK` (optional): disable release checks. Default: `false`.
 - `AUTHENTIK_OUTPOSTS__DISCOVER` (optional): docker/k8s auto-discovery for outposts. Default: `false`.
