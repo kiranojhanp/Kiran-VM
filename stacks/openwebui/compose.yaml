@@ -2,36 +2,36 @@ services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:v0.8.12
     restart: unless-stopped
+    # NOTE: intentionally no `user:`, `read_only:`, or `cap_drop:`. The existing
+    # openwebui_open_webui_data volume is root-owned (created by the original
+    # deployment), so the process must run as root to write to it. Likewise no
+    # `nproc` ulimit: RLIMIT_NPROC is enforced per-UID host-wide, and the host
+    # root UID already runs far more than 100 processes.
     security_opt:
       - no-new-privileges:true
-      - apparmor:docker-default
-    cap_drop:
-      - ALL
-    read_only: true
-    tmpfs:
-      - /tmp
-    user: "1000:1000"
+    mem_limit: 2g
+    memswap_limit: 2g
+    pids_limit: 200
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
-      nproc: 100
-    mem_limit: 2g
-    memswap_limit: 2g
     environment:
       ENABLE_OLLAMA_API: "false"
-      OPENAI_API_BASE_URLS: ${OPENAI_API_BASE_URLS}
-      OPENAI_API_KEYS: ${OPENAI_API_KEYS}
-      DATABASE_URL: ${DATABASE_URL}
-      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
-      WEBUI_URL: ${WEBUI_URL}
-      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN}
-      # OAuth/OIDC Configuration
-      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID}
-      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET}
+      OPENAI_API_BASE_URLS: ${OPENAI_API_BASE_URLS:-https://api.openai.com/v1}
+      OPENAI_API_KEYS: ${OPENAI_API_KEYS:-}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:?WEBUI_SECRET_KEY must be set}
+      WEBUI_URL: ${WEBUI_URL:-https://chat.fewa.app}
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-https://chat.fewa.app}
+      # OAuth/OIDC Configuration (Authentik)
+      # Required: the login form is disabled below, so an unconfigured OIDC
+      # provider would leave the app with no way to sign in. Fail closed here.
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:?OAUTH_CLIENT_ID must be set}
+      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:?OAUTH_CLIENT_SECRET must be set}
       OAUTH_PROVIDER_NAME: authentik
-      OPENID_PROVIDER_URL: ${OPENID_PROVIDER_URL}
-      OPENID_REDIRECT_URI: https://${OPENWEBUI_HOST}/oauth/oidc/callback
+      OPENID_PROVIDER_URL: ${OPENID_PROVIDER_URL:-https://authentik.fewa.app/application/o/open-web-ui/.well-known/openid-configuration}
+      OPENID_REDIRECT_URI: https://${OPENWEBUI_HOST:-chat.fewa.app}/oauth/oidc/callback
       ENABLE_OAUTH_SIGNUP: "true"
       ENABLE_LOGIN_FORM: "false"
       OAUTH_MERGE_ACCOUNTS_BY_EMAIL: "true"
@@ -42,8 +42,8 @@ services:
       - infra
     labels:
       traefik.enable: "true"
-      traefik.docker.network: ${SHARED_DOCKER_NETWORK}
-      traefik.http.routers.openwebui.rule: Host(`${OPENWEBUI_HOST}`)
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.openwebui.rule: Host(`${OPENWEBUI_HOST:-chat.fewa.app}`)
       traefik.http.routers.openwebui.entrypoints: websecure
       traefik.http.routers.openwebui.tls: "true"
       traefik.http.routers.openwebui.tls.certresolver: letsencrypt
@@ -51,11 +51,14 @@ services:
 
 networks:
   shared:
-    name: ${SHARED_DOCKER_NETWORK}
+    name: ${SHARED_DOCKER_NETWORK:-internal-network}
     external: true
   infra:
-    name: ${SHARED_INFRA_NETWORK}
+    name: ${SHARED_INFRA_NETWORK:-infra_net}
     external: true
 
 volumes:
+  # Pin the volume name so the existing data is reused regardless of the
+  # Komodo stack/project name.
   open_webui_data:
+    name: openwebui_open_webui_data
