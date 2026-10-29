@@ -73,6 +73,16 @@
         litestream_backup_bucket: wallos-backups
 
     - role: litestream-backup
+      tags: [koito-backup, backup, services]
+      vars:
+        litestream_backup_enabled: true
+        litestream_backup_service_name: koito
+        litestream_backup_data_volume: koito_koito_data
+        litestream_backup_data_path: /var/lib/docker/volumes/koito_koito_data/_data
+        litestream_backup_pattern: "koito.db"
+        litestream_backup_bucket: koito-backups
+
+    - role: litestream-backup
       tags: [wealthfolio-backup, backup, services]
       vars:
         litestream_backup_enabled: true

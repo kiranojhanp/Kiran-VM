@@ -103,6 +103,7 @@ pulumi down
 | Actual Budget | Litestream → Garage    | ✅     |
 | Wallos        | Litestream → Garage    | ✅     |
 | Wealthfolio   | Litestream → Garage    | ✅     |
+| Koito         | Litestream → Garage    | ✅     |
 
 ### Encryption
 - **OCI Block Volumes**: AES-256 encrypted at rest (default)

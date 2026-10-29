@@ -269,10 +269,10 @@ tasks:
     cmds:
       - >-
         {{.ANSIBLE_ALL_BECOME}} -m shell -a
-        "set -e; systemctl status kiran-vaultwarden-litestream.service kiran-actual-litestream.service kiran-wallos-litestream.service kiran-wealthfolio-litestream.service --no-pager"
+        "set -e; systemctl status kiran-vaultwarden-litestream.service kiran-actual-litestream.service kiran-wallos-litestream.service kiran-wealthfolio-litestream.service kiran-koito-litestream.service --no-pager"
       - >-
         {{.ANSIBLE_ALL_BECOME}} -m shell -a
-        "set -e; systemctl list-timers --all | grep -E 'vaultwarden-litestream|actual-litestream|wallos-litestream|wealthfolio-litestream'"
+        "set -e; systemctl list-timers --all | grep -E 'vaultwarden-litestream|actual-litestream|wallos-litestream|wealthfolio-litestream|koito-litestream'"
       - >-
         {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; journalctl -u kiran-vaultwarden-litestream.service -n 10 --no-pager"
@@ -285,3 +285,6 @@ tasks:
       - >-
         {{.ANSIBLE_ALL_BECOME}} -m shell -a
         "set -e; journalctl -u kiran-wealthfolio-litestream.service -n 10 --no-pager"
+      - >-
+        {{.ANSIBLE_ALL_BECOME}} -m shell -a
+        "set -e; journalctl -u kiran-koito-litestream.service -n 10 --no-pager"
