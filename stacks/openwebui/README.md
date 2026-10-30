@@ -38,7 +38,6 @@ Served at `https://chat.fewa.app` (this was its original hostname; see commit
   (the Authentik application slug is `open-web-ui`).
 - `SHARED_DOCKER_NETWORK` (optional): shared proxy network. Default: `internal-network`.
 - `SHARED_INFRA_NETWORK` (optional): network with Postgres. Default: `infra_net`.
-- `VANEWEBUI_HOST` (optional): Vane web UI hostname. Default: `vane.fewa.app`.
 
 ### Web Search (SearXNG + Vane)
 
@@ -48,7 +47,8 @@ at `http://searxng:8080/search`. Web search is toggled on in the chat UI next
 to the input box.
 
 SearXNG configuration lives in `stacks/openwebui/searxng/settings.yml`. The
-`json` format is required so Open WebUI can parse results. To regenerate the
+`json` format is required so Open WebUI can parse results. A `valkey` (Redis-compatible)
+cache service is included for faster repeated searches. To regenerate the
 config after a fresh pull of the SearXNG image:
 
 ```bash
@@ -57,22 +57,6 @@ docker compose stop searxng
 # edit stacks/openwebui/searxng/settings.yml as needed
 docker compose up -d
 ```
-
-### Vane (Perplexity-style AI Search)
-
-Vane is a self-hosted, open-source AI-powered answering engine. It reads your
-question, searches the live web through the shared SearXNG instance, and
-composes a Perplexity-style answer with source citations. It uses the same
-SearXNG backend as Open WebUI's native search.
-
-- **Web UI**: `https://vane.fewa.app` (set `VANEWEBUI_HOST` to change)
-- **Internal API**: `http://vane:3000` (on the `infra` network)
-- **Data volume**: `openwebui_vane_data`
-
-Vane is useful for testing its own search behavior independently of Open
-WebUI. If you later decide you don't need the separate web UI, you can remove
-the Vane service from this compose file without affecting Open WebUI's native
-SearXNG integration.
 
 ### Authentik
 

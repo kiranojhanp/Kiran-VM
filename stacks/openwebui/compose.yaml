@@ -65,6 +65,7 @@ services:
       - infra
     volumes:
       - ./searxng:/etc/searxng:rw
+      - searxng-data:/var/cache/searxng/
     environment:
       - SEARXNG_BASE_URL=http://searxng:8080/
     logging:
@@ -73,30 +74,21 @@ services:
         max-size: "1m"
         max-file: "1"
 
-  vane:
-    image: itzcrazykns1337/vane:slim-latest
-    container_name: vane
+  valkey:
+    image: docker.io/valkey/valkey:9-alpine
+    container_name: searxng-valkey
     restart: unless-stopped
-    mem_limit: 2g
-    memswap_limit: 2g
-    pids_limit: 100
-    ports:
-      - "3000:3000"
+    command: valkey-server --save 300 1 --save 60 1000 --loglevel warning
+    mem_limit: 512m
     networks:
-      - shared
       - infra
     volumes:
-      - vane-data:/home/vane/data
-    environment:
-      - SEARXNG_API_URL=http://searxng:8080/search
-    labels:
-      traefik.enable: "true"
-      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
-      traefik.http.routers.vane.rule: Host(`${VANEWEBUI_HOST:-vane.fewa.app}`)
-      traefik.http.routers.vane.entrypoints: websecure
-      traefik.http.routers.vane.tls: "true"
-      traefik.http.routers.vane.tls.certresolver: letsencrypt
-      traefik.http.services.vane.loadbalancer.server.port: "3000"
+      - valkey-data:/data/
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
 
 networks:
   shared:
@@ -111,5 +103,7 @@ volumes:
   # Komodo stack/project name.
   open_webui_data:
     name: openwebui_open_webui_data
-  vane-data:
-    name: openwebui_vane_data
+  searxng-data:
+    name: openwebui_searxng_data
+  valkey-data:
+    name: openwebui_valkey_data
