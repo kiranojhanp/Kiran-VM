@@ -68,22 +68,7 @@ services:
       - searxng-data:/var/cache/searxng/
     environment:
       - SEARXNG_BASE_URL=http://searxng:8080/
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "1m"
-        max-file: "1"
-
-  valkey:
-    image: docker.io/valkey/valkey:9-alpine
-    container_name: searxng-valkey
-    restart: unless-stopped
-    command: valkey-server --save 300 1 --save 60 1000 --loglevel warning
-    mem_limit: 512m
-    networks:
-      - infra
-    volumes:
-      - valkey-data:/data/
+      - REDIS_URL=${REDIS_URL:-}
     logging:
       driver: "json-file"
       options:
@@ -105,5 +90,3 @@ volumes:
     name: openwebui_open_webui_data
   searxng-data:
     name: openwebui_searxng_data
-  valkey-data:
-    name: openwebui_valkey_data

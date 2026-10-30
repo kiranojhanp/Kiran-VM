@@ -47,9 +47,9 @@ at `http://searxng:8080/search`. Web search is toggled on in the chat UI next
 to the input box.
 
 SearXNG configuration lives in `stacks/openwebui/searxng/settings.yml`. The
-`json` format is required so Open WebUI can parse results. A `valkey` (Redis-compatible)
-cache service is included for faster repeated searches. To regenerate the
-config after a fresh pull of the SearXNG image:
+`json` format is required so Open WebUI can parse results. To use a shared
+Redis/Valkey for result caching, set `REDIS_URL` in the stack Environment and
+add `redis:` to `settings.yml`. To regenerate the config:
 
 ```bash
 docker compose up -d searxng
@@ -57,6 +57,18 @@ docker compose stop searxng
 # edit stacks/openwebui/searxng/settings.yml as needed
 docker compose up -d
 ```
+
+### External Cache (optional — your shared Redis)
+
+Add to `stacks/openwebui/searxng/settings.yml`:
+
+```yaml
+redis:
+  url: redis://your-shared-redis:6379/0
+```
+
+Then set `REDIS_URL=redis://your-shared-redis:6379/0` in Komodo Stack Environment.
+No `valkey` container included — you manage the shared cache yourself.
 
 ### Authentik
 
