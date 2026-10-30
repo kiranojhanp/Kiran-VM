@@ -1,0 +1,11 @@
+use_default_settings: true
+
+server:
+  secret_key: "local-secret-key-change-me"
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  formats:
+    - html
+    - json

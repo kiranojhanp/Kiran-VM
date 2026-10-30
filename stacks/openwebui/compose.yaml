@@ -35,6 +35,12 @@ services:
       ENABLE_OAUTH_SIGNUP: "true"
       ENABLE_LOGIN_FORM: "false"
       OAUTH_MERGE_ACCOUNTS_BY_EMAIL: "true"
+      # --- Native Web Search Integration ---
+      ENABLE_WEB_SEARCH: "true"
+      WEB_SEARCH_ENGINE: "searxng"
+      SEARXNG_QUERY_URL: "http://searxng:8080/search"
+      WEB_SEARCH_RESULT_COUNT: "3"
+      WEB_SEARCH_CONCURRENT_REQUESTS: "5"
     volumes:
       - open_webui_data:/app/backend/data
     networks:
@@ -49,6 +55,49 @@ services:
       traefik.http.routers.openwebui.tls.certresolver: letsencrypt
       traefik.http.services.openwebui.loadbalancer.server.port: "8080"
 
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
+    networks:
+      - infra
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    environment:
+      - SEARXNG_BASE_URL=http://searxng:8080/
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
+
+  vane:
+    image: itzcrazykns1337/vane:slim-latest
+    container_name: vane
+    restart: unless-stopped
+    mem_limit: 2g
+    memswap_limit: 2g
+    pids_limit: 100
+    ports:
+      - "3000:3000"
+    networks:
+      - shared
+      - infra
+    volumes:
+      - vane-data:/home/vane/data
+    environment:
+      - SEARXNG_API_URL=http://searxng:8080/search
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SHARED_DOCKER_NETWORK:-internal-network}
+      traefik.http.routers.vane.rule: Host(`${VANEWEBUI_HOST:-vane.fewa.app}`)
+      traefik.http.routers.vane.entrypoints: websecure
+      traefik.http.routers.vane.tls: "true"
+      traefik.http.routers.vane.tls.certresolver: letsencrypt
+      traefik.http.services.vane.loadbalancer.server.port: "3000"
+
 networks:
   shared:
     name: ${SHARED_DOCKER_NETWORK:-internal-network}
@@ -62,3 +111,5 @@ volumes:
   # Komodo stack/project name.
   open_webui_data:
     name: openwebui_open_webui_data
+  vane-data:
+    name: openwebui_vane_data
